@@ -1,7 +1,6 @@
 <script setup>
 import HelloWorld from './components/HelloWorld.vue'
 import Home from './components/Home.vue';
-import Login from './components/Login.vue';
 import router from './router';
 import { RouterLink } from 'vue-router';
 </script>
