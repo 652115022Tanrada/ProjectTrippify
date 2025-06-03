@@ -57,7 +57,7 @@ const logout = async () => {
     withCredentials: true
   })
   user.value = null
-  window.location.reload()
+  router.push('/') 
 }
 
 onMounted(getUser)
