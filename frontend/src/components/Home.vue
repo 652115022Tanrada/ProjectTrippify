@@ -37,16 +37,33 @@ onMounted(getUser)
       <router-link to="/">
         <img src="/logo.png" alt="Logo" class="h-15 w-auto object-contain" />
       </router-link>
-      <nav class="space-x-6 text-gray-800 font-medium">
+
+      <nav class="flex items-center space-x-6 text-gray-800 font-medium">
         <router-link to="/" class="hover:text-sky-600">Home</router-link>
         <router-link to="/planner" class="hover:text-sky-600">Planner</router-link>
         <router-link to="/expense" class="hover:text-sky-600">Expense Tracker</router-link>
         <router-link to="/review" class="hover:text-sky-600">Trip Review</router-link>
+
+        <!-- ปุ่ม Login เฉพาะเมื่อไม่ได้ login -->
         <button
+          v-if="!user"
           @click="showLoginModal = true"
           class="ml-4 bg-sky-400 text-white px-4 py-2 rounded-full hover:bg-sky-600"
         >
           Login
+        </button>
+
+        <!-- แสดงโปรไฟล์เล็กๆ เมื่อ login -->
+        <button
+          v-else
+          @click="showLoginModal = true"
+          class="ml-4 h-10 w-10 rounded-full overflow-hidden hover:ring-2 hover:ring-sky-300 transition-all flex items-center justify-center"
+        >
+          <img
+            :src="user.photos[0].value"
+            alt="User"
+            class="w-full h-full object-cover"
+          />
         </button>
       </nav>
     </header>

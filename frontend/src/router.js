@@ -6,7 +6,6 @@ import Tripdetail from './components/Tripdetail.vue'
 
 const routes = [
   { path: '/', component: Home },
-  { path: '/login', component: Login },
   { path: '/planner', component: Planner },
   { path: '/tripdetail', component: Tripdetail }
 ]
