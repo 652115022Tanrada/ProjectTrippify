@@ -5,36 +5,61 @@ import axios from 'axios'
 const showLoginModal = ref(false)
 const user = ref(null)
 const travelType = ref('group') // ตั้งค่าทดสอบ
-const friendEmails = ref([{ input: '', confirmed: false }]) // เปลี่ยนจาก string เป็น object
+// const friendEmails = ref([{ input: '', confirmed: false }]) // เปลี่ยนจาก string เป็น object
 
-const addFriendEmail = () => {
-  friendEmails.value.push({ input: '', confirmed: false })
-}
+// const addFriendEmail = () => {
+//   friendEmails.value.push({ input: '', confirmed: false })
+// }
 
-const removeFriendEmail = (index) => {
-  friendEmails.value.splice(index, 1)
-}
+// const removeFriendEmail = (index) => {
+//   friendEmails.value.splice(index, 1)
+// }
 
-const confirmAddEmail = (index) => {
-  const emailObj = friendEmails.value[index]
-  if (validateEmail(emailObj.input)) {
-    emailObj.confirmed = true
-  } else {
-    alert('กรุณากรอกอีเมลให้ถูกต้อง')
-  }
-}
+// const confirmAddEmail = (index) => {
+//   const emailObj = friendEmails.value[index]
+//   if (validateEmail(emailObj.input)) {
+//     emailObj.confirmed = true
+//   } else {
+//     alert('กรุณากรอกอีเมลให้ถูกต้อง')
+//   }
+// }
 
-const validateEmail = (email) => {
-  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return re.test(email)
-}
+// const validateEmail = (email) => {
+//   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+//   return re.test(email)
+// }
 
-// User & auth
+const from = ref('')
+const to = ref('')
+const startDate = ref('')
+const endDate = ref('')
+const budget = ref('')
+const currency = ref('THB')
+
 const travelPreferences = ref([])
 const travelStyles = [
   'Temple Hopper', 'Cafe', 'Photo Spot Seeker', 'Foodie',
   'Adventure', 'Nature', 'Beach', 'Family', 'Content Creator'
 ]
+const submitTrip = async () => {
+  const payload = {
+    from: from.value,
+    to: to.value,
+    startDate: startDate.value,
+    endDate: endDate.value,
+    budget: budget.value,
+    currency: currency.value,
+    preferences: travelPreferences.value,
+    travelType: travelType.value
+  }
+
+  try {
+    const res = await axios.post('http://localhost:5000/api/trip', payload)
+    console.log('Trip submitted:', res.data)
+  } catch (err) {
+    console.error('Error submitting trip:', err)
+  }
+}
 
 const getUser = async () => {
   try {
@@ -162,7 +187,7 @@ onMounted(getUser)
           <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
         </svg>
       </span>
-      <input
+      <input v-model="from"
         type="text"
         placeholder="From"
         class="w-full pl-12 border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm focus:ring-2 focus:ring-green-200 outline-none"
@@ -177,7 +202,7 @@ onMounted(getUser)
           <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
         </svg>
       </span>
-      <input
+      <input  v-model="to"
         type="text"
         placeholder="To"
         class="w-full pl-12 border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm focus:ring-2 focus:ring-green-200 outline-none"
@@ -187,14 +212,14 @@ onMounted(getUser)
 
     <!-- Date Inputs -->
     <div class="flex flex-col sm:flex-row gap-4">
-      <input
+      <input  v-model="startDate"
         type="text"
         placeholder="Start Date"
         class="w-full border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm focus:ring-2 focus:ring-green-200 outline-none"
         onfocus="this.type='date'"
         onblur="if(!this.value) this.type='text'"
       />
-      <input
+      <input v-model="endDate"
         type="text"
         placeholder="End Date"
         class="w-full border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm focus:ring-2 focus:ring-green-200 outline-none"
@@ -216,14 +241,14 @@ onMounted(getUser)
         </span>
 
         <!-- Dropdown สกุลเงินด้านขวา -->
-        <select
+        <select  v-model="currency"
           class="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent text-sm text-gray-700 outline-none"
         >
-          <option>THB</option>
-          <option>USD</option>
+          <option value="THB">THB</option>
+          <option value="USD">USD</option>
         </select>
 
-        <input
+        <input v-model="budget"
           type="number"
           min="0"
           placeholder="Budget Plan"
@@ -300,33 +325,33 @@ onMounted(getUser)
           </label>
       </div>
 
-      <div
+      <!-- <div
         v-for="(email, index) in friendEmails"
         :key="index"
         class="relative w-full"
-      >
+      > -->
         <!-- Input -->
-        <input
+        <!-- <input
           v-model="email.input"
           type="email"
           :readonly="email.confirmed"
           placeholder="Enter friend's email"
           class="w-full pl-4 pr-28 py-2 text-sm border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-200 outline-none"
-        />
+        /> -->
 
         <!-- Div ด้านใน input: ปุ่ม Add และไอคอน -->
-        <div class="absolute inset-y-0 right-2 flex items-center space-x-2">
+        <!-- <div class="absolute inset-y-0 right-2 flex items-center space-x-2"> -->
           <!-- Add / Added button -->
-          <div
+          <!-- <div
             @click="!email.confirmed && confirmAddEmail(index)"
             class="text-xs px-2 py-1 rounded-lg cursor-pointer"
             :class="email.confirmed ? 'text-gray-400 bg-gray-100' : 'text-green-600 hover:bg-green-100'"
           >
             {{ email.confirmed ? 'Added' : 'Add' }}
-          </div>
+          </div> -->
 
           <!-- Trash icon -->
-          <div
+          <!-- <div
             v-if="friendEmails.length > 1"
             @click="removeFriendEmail(index)"
             class="text-red-500 hover:text-red-700 cursor-pointer text-sm"
@@ -339,35 +364,25 @@ onMounted(getUser)
           </span>
           </div>
         </div>
-      </div>
+      </div> -->
 
         <!-- Add new email field button -->
-        <button
+        <!-- <button
           type="button"
           @click="addFriendEmail"
           class="mt-1 w-fit text-sm text-green-600 hover:underline"
         >
           + Add Another Friend
-        </button>
+        </button> -->
       
         <!-- Start Planning Button -->
         <div class="text-center pt-4">
           <!-- <router-link to="/tripdetail">
             <button class="bg-sky-400 text-white px-8 py-3 rounded-full font-semibold hover:bg-sky-600 transition">Start Planning</button>
           </router-link> -->
-          <router-link
-            :to="{
-              path: '/tripdetail',
-              query: {
-                preferences: travelPreferences.join(','),
-                type: travelType,
-                // เพิ่ม field อื่นๆ ได้ตามต้องการ
-              }
-            }"
-          >
-            <button class="bg-sky-400 text-white px-8 py-3 rounded-full font-semibold hover:bg-sky-600 transition">Start Planning</button>
-          </router-link>
-
+         
+            <button @click="submitTrip" class="bg-sky-400 text-white px-8 py-3 rounded-full font-semibold hover:bg-sky-600 transition">Start Planning</button>
+          
         </div>
     </div>
     </div>
