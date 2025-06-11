@@ -44,9 +44,21 @@ const callGeminiAPI = async (tripData) => {
   const result = await model.generateContent(prompt);
   const response = await result.response;
   const text = response.text();
-  console.log(text); // 👉 โชว์คำตอบที่ได้จาก Gemini
+  console.log(text); // Debug
 
-};
+  // ✅ ล้าง markdown ถ้ามี
+  const cleanText = text
+    .replace(/```json/g, '')
+    .replace(/```/g, '')
+    .trim();
+
+  try {
+    return JSON.parse(cleanText);
+  } catch (err) {
+    console.error("Invalid JSON from Gemini:", err);
+    return null;
+  }
+}
 
 module.exports = {
   generateTripPrompt,

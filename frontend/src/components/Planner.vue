@@ -1,7 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
+import { useRouter } from 'vue-router'
+import { useStore } from 'vuex'
 
+const store = useStore()
+const router = useRouter()
 const showLoginModal = ref(false)
 const user = ref(null)
 const travelType = ref('group') // ตั้งค่าทดสอบ
@@ -56,6 +60,12 @@ const submitTrip = async () => {
   try {
     const res = await axios.post('http://localhost:5000/api/trip', payload)
     console.log('Trip submitted:', res.data)
+     
+    // บันทึกลง Vuex
+    store.commit('trip/setTripPlan', res.data)
+
+    // หรือเปลี่ยน route ไปหน้า Tripdetail
+    router.push('/tripdetail')
   } catch (err) {
     console.error('Error submitting trip:', err)
   }

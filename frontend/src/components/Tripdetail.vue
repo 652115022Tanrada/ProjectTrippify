@@ -1,79 +1,35 @@
+<script setup>
+import { computed } from 'vue'
+import { useStore } from 'vuex'
+
+const store = useStore()
+const tripPlan = computed(() => store.state.trip.tripPlan)
+</script>
+
 <template>
-  <div class="min-h-screen flex flex-col bg-gradient-to-b from-sky-100 via-white to-green-100 text-gray-800">
-    <header class="w-full flex justify-between items-center py-6 px-8">
-    <router-link to="/">
-      <img src="/logo.png" alt="Logo" class="h-15 w-auto object-contain" />
-    </router-link>
-      <nav class="space-x-6 text-gray-800 font-medium">
-      <router-link to="/" class="hover:text-sky-600">Home</router-link>
-      <router-link to="/planner" class="hover:text-sky-600">Planner</router-link>
-      <router-link to="/expense" class="hover:text-sky-600">Expense Tracker</router-link>
-      <router-link to="/review" class="hover:text-sky-600">Trip Review</router-link>
-      <router-link to="/login">
-      <button class="ml-4 bg-sky-400 text-white px-4 py-2 rounded-full hover:bg-sky-600">
-        Login
-      </button>
-      </router-link>
-      </nav>
-    </header>
+  <div v-if="tripPlan">
+    <h1>{{ tripPlan.trip_name }}</h1>
 
-    <!-- Main content -->
-    <main class="flex flex-col md:flex-row w-full">
-      <!-- Timeline -->
-      <div class="w-full md:w-2/3 p-6">
-        <h2 class="text-lg font-bold mb-4">Day 1</h2>
-        <div class="border-l-2 border-dashed border-gray-400 pl-6 space-y-8">
-          <!-- Activity 1 -->
-          <div>
-            <p class="text-sm text-gray-600">09.00 a.m.</p>
-            <div class="flex items-start space-x-4">
-              <div class="w-6 h-6 rounded-full bg-black text-white text-sm flex items-center justify-center">1</div>
-              <div>
-                <!-- <img src="/example.jpg" alt="place" class="w-full h-24 object-cover rounded mb-2" /> -->
-                <!-- Nearby Suggestion -->
-                <div class="border border-red-400 p-2 rounded text-red-500 bg-red-50 mb-2">
-                  <p class="font-semibold mb-1">Nearby Suggestion</p>
-                  <div class="flex items-center justify-between text-gray-700">
-                    <span>📍 Location name</span>
-                    <div class="space-x-2">
-                      <button class="text-green-600">✔️</button>
-                      <button class="text-red-600">❌</button>
-                      <button class="text-yellow-600">📌</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+    <div v-for="(day, index) in tripPlan.days" :key="index" class="day-plan">
+      <h2>Day {{ index + 1 }}: {{ day.title }} ({{ day.date }})</h2>
+      <p>{{ day.description || day.narrative }}</p>
 
-          <!-- Activity 2 -->
-          <div>
-            <p class="text-sm text-gray-600">02.00 p.m.</p>
-            <div class="flex items-start space-x-4">
-              <div class="w-6 h-6 rounded-full bg-black text-white text-sm flex items-center justify-center">2</div>
-              <div>
-                <!-- <img src="/example.jpg" alt="place" class="w-full h-24 object-cover rounded mb-2" /> -->
-              </div>
-            </div>
-          </div>
+      <ul>
+        <li v-for="(loc, i) in day.locations" :key="i">
+          🗺 {{ loc.time }} - {{ loc.name }} ({{ loc.category }}) - 
+          {{ loc.estimated_cost }} {{ loc.currency }}
+        </li>
+      </ul>
 
-          <!-- Buttons -->
-          <div class="flex space-x-4 mt-6">
-            <button class="bg-yellow-400 px-4 py-2 rounded font-semibold hover:bg-yellow-500">Modify trip</button>
-            <button class="bg-green-500 text-white px-4 py-2 rounded font-semibold hover:bg-green-600">Confirm</button>
-          </div>
-        </div>
-      </div>
+      <p v-if="day.daily_tips">💡 Tips: {{ day.daily_tips.join(', ') }}</p>
+      <p>💰 Total Cost: {{ day.total_day_cost || 0 }} {{ tripPlan.currency || tripPlan.budget_currency }}</p>
+    </div>
 
-      <!-- Map -->
-      <div class="w-full md:w-1/3 p-6 border-l">
-        <!-- <img src="/map-placeholder.png" alt="Map" class="w-full h-[500px] object-contain" /> -->
-        <div class="mt-4 text-sm text-gray-600 space-y-1">
-          <p>🟢 0 km</p>
-          <p class="text-red-600">🔴 10 km</p>
-          <p class="text-pink-600">🔴 20 km</p>
-        </div>
-      </div>
-    </main>
+    <h3>🧾 Total Trip Cost: {{ tripPlan.total_trip_cost }} {{ tripPlan.currency || tripPlan.budget_currency }}</h3>
+  </div>
+
+  <div v-else>
+    <p>Loading trip plan...</p>
   </div>
 </template>
+
