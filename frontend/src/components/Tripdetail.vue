@@ -1,13 +1,16 @@
 <script setup>
 import { computed } from 'vue'
 import { useStore } from 'vuex'
-
+import Tripmap from './Tripmap.vue'
 const store = useStore()
 const tripPlan = computed(() => store.state.trip.tripPlan)
 </script>
 
 <template>
   <div v-if="tripPlan">
+      <div>
+<Tripmap :locations="tripPlan.days.flatMap(day => day.locations)" />
+  </div>
     <h1>{{ tripPlan.trip_name }}</h1>
 
     <div v-for="(day, index) in tripPlan.days" :key="index" class="day-plan">

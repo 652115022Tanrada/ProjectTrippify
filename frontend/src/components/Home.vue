@@ -1,7 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
-
 const showLoginModal = ref(false)
 const user = ref(null)
 

@@ -32,9 +32,10 @@ Please follow these guidelines:
 5. Calculate and include:
    - total_day_cost: Daily total cost
    - total_trip_cost: Total for the whole trip
-
-Return ONLY valid JSON without markdown, code blocks, or explanation.
-`;
+Return ONLY valid and parseable JSON.
+Do not include markdown, code blocks, or any explanation.
+Ensure the response is strictly JSON format, wrapped in '{}' or '[]' as needed.
+Escape all double quotes in strings correctly.`
 };
 
 const callGeminiAPI = async (tripData) => {
@@ -48,9 +49,10 @@ const callGeminiAPI = async (tripData) => {
 
   // ✅ ล้าง markdown ถ้ามี
   const cleanText = text
-    .replace(/```json/g, '')
-    .replace(/```/g, '')
-    .trim();
+   .replace(/```json|```/g, '')
+      .replace(/[\r\n]+/g, ' ')
+      .replace(/(\w):(\s*")/g, '"$1":$2') // Fix missing quotes around keys
+      .trim();
 
   try {
     return JSON.parse(cleanText);
