@@ -21,7 +21,8 @@ Please follow these guidelines:
 3. List 3-4 locations per day with the following for each:
    - name: Name of the place
    - time: Estimated time spent (e.g., "09:00-10:30")
-   - transport: Travel method from the previous location (e.g., walk, Grab, metro)
+   - transport: Use only generic transportation terms such as "walk", "motorcycle taxi", "local taxi", "public van", etc.
+    ⚠️ DO NOT mention any brand names, company names, or specific service names like "Grab", "MRT", "BTS", or any similar.
    - estimated_cost: Approximate cost to visit (entrance fee, transportation)
    - currency: Use the specified currency
    - category: Type of place (e.g., temple, cafe, nature, shopping)

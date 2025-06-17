@@ -8,7 +8,7 @@ const store = useStore()
 const router = useRouter()
 const showLoginModal = ref(false)
 const user = ref(null)
-const travelType = ref('group') // ตั้งค่าทดสอบ
+const travelType = ref('') // ตั้งค่าทดสอบ
 // const friendEmails = ref([{ input: '', confirmed: false }]) // เปลี่ยนจาก string เป็น object
 
 // const addFriendEmail = () => {
