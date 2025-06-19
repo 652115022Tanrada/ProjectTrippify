@@ -6,15 +6,18 @@ export default {
   }),
   mutations: {
     setTripPlan(state, data) {
-      state.tripPlan = data
+      state.tripPlan = data;
+    },
+    updateTripPlan(state, newPlan) {
+      state.tripPlan = newPlan;
     },
     clearTripPlan(state) {
-      state.tripPlan = null
+      state.tripPlan = null;
     }
   },
   getters: {
     getTripPlan(state) {
-      return state.tripPlan
+      return state.tripPlan;
     }
   }
 }

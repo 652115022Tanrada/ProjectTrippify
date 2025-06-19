@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
+import { thaiProvinces } from '../assets/provinces'
 
 const store = useStore()
 const router = useRouter()
@@ -188,35 +189,48 @@ onMounted(getUser)
 
     <!-- Destination Input -->
     <div class="flex flex-col sm:flex-row gap-4">
-    <!-- From Field with Icon -->
+    <!-- From Field with Icon + Dropdown -->
     <div class="relative w-full">
+      <!-- Icon -->
       <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
-        <!-- Location Icon from Heroicons (or Font Awesome) -->
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
           <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
         </svg>
       </span>
-      <input v-model="from"
-        type="text"
-        placeholder="From"
+
+      <!-- Select -->
+      <select
+        v-model="from"
         class="w-full pl-12 border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm focus:ring-2 focus:ring-green-200 outline-none"
-      />
+      >
+        <option disabled value="">From</option>
+        <option v-for="province in thaiProvinces" :key="province" :value="province">
+          {{ province }}
+        </option>
+      </select>
     </div>
 
-    <!-- To Field with Icon -->
+    <!-- To Field with Icon + Dropdown -->
     <div class="relative w-full">
+      <!-- Icon -->
       <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
           <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
         </svg>
       </span>
-      <input  v-model="to"
-        type="text"
-        placeholder="To"
+
+      <!-- Select -->
+      <select
+        v-model="to"
         class="w-full pl-12 border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm focus:ring-2 focus:ring-green-200 outline-none"
-      />
+      >
+        <option disabled value="">To</option>
+        <option v-for="province in thaiProvinces" :key="province" :value="province">
+          {{ province }}
+        </option>
+      </select>
     </div>
     </div>
 

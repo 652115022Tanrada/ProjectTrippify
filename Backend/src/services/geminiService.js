@@ -12,13 +12,25 @@ Traveler's interests: ${data.preferences.join(', ') || 'None'}
 
 Please follow these guidelines:
 
-1. Divide the trip into daily plans (Day 1, Day 2, etc.)
-2. For each day, include:
+1. Provide a travel summary object named "transport_info" that estimates distance and travel time from "${data.from}" to "${data.to}" using each transportation method: "car", "bus", "train", "flight".
+   - If a method is unavailable, use null.
+   - Format:
+     "transport_info": {
+       "car": { "distance": "xxx km", "duration": "x hr" } or null,
+       "bus": { "distance": "xxx km", "duration": "x hr" } or null,
+       "train": { "distance": "xxx km", "duration": "x hr" } or null,
+       "flight": { "distance": "xxx km", "duration": "x hr" } or null
+     }
+
+2. Divide the trip into daily plans (Day 1, Day 2, etc.)
+  ⚠️ Return the daily plan array under the property name **"days"** instead of "trip_plan".
+  
+3. For each day, include:
    - Date in YYYY-MM-DD format
    - A short title (title) describing the theme of the day
    - A brief narrative description (1-2 sentences) to set the mood of the day
 
-3. List 3-4 locations per day with the following for each:
+4. List 3-4 locations per day with the following for each:
    - name: Name of the place
    - time: Estimated time spent (e.g., "09:00-10:30")
    - transport: Use only generic transportation terms such as "walk", "motorcycle taxi", "local taxi", "public van", etc.
@@ -29,8 +41,8 @@ Please follow these guidelines:
    - google_maps_url: Link to Google Maps
    - lat and lng: Coordinates (if available)
 
-4. Include a list of 1-3 useful daily travel tips (e.g., what to bring, when to avoid traffic)
-5. Calculate and include:
+5. Include a list of 1-3 useful daily travel tips (e.g., what to bring, when to avoid traffic)
+6. Calculate and include:
    - total_day_cost: Daily total cost
    - total_trip_cost: Total for the whole trip
 Return ONLY valid and parseable JSON.

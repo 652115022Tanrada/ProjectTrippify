@@ -162,7 +162,7 @@ watch(() => props.locations, async (newLocs) => {
   }
   addMarkers();
   await calculateDistances();
-  await drawRoute(); // อัปเดตเส้นทางเมื่อเปลี่ยน
+  await drawRoute(); 
 });
 </script>
 
