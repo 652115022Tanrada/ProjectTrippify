@@ -1,22 +1,12 @@
 const mysql = require('mysql2/promise');
-require('dotenv').config();
 
 const pool = mysql.createPool({
-  host: 'localhost',        
-  user: 'root',
-  password: '200447nn',         
-  database: 'trippify'       
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT,
+  charset: 'utf8mb4',
 });
 
 module.exports = pool;
-
-// async function testConnection() {
-//   try {
-//     const [rows] = await pool.query('SELECT 1 + 1 AS result'); // แก้จาก db เป็น pool
-//     console.log('DB connected ✅', rows);
-//   } catch (error) {
-//     console.error('DB connection error ❌', error);
-//   }
-// }
-
-// testConnection();

@@ -1,5 +1,4 @@
-const db = require('../utils/db'); // เช่พอยู่ดึง mysql2
-
+const db = require('../utils/db');
 const createUserIfNotExists = async (profile) => {
   const [rows] = await db.query('SELECT * FROM users WHERE id_google = ?', [profile.id]);
   if (rows.length === 0) {

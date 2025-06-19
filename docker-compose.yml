@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: mysql-server
+    environment:
+      MYSQL_ROOT_PASSWORD: cmu65
+      MYSQL_DATABASE: trippify
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+    networks:
+      - backend-network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin-server
+    environment:
+      PMA_HOST: mysql
+    ports:
+      - "8080:80"
+    networks:
+      - backend-network
+
+  backend:
+    build:
+      context: ./backend
+    container_name: express-backend
+    env_file:
+      - ./backend/.env
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mysql
+    networks:
+      - backend-network
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: vue-frontend
+    ports:
+      - "5173:5173"  # Vite default port
+    depends_on:
+      - backend
+    networks:
+      - backend-network
+    command: npm run dev  # ถ้าใช้ Vite
+
+networks:
+  backend-network:
+    driver: bridge
