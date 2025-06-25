@@ -1,6 +1,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
+import Swal from 'sweetalert2'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 const showLoginModal = ref(false)
 const user = ref(null)
 
@@ -27,6 +31,34 @@ const logout = async () => {
   window.location.reload()
 }
 
+const handleStartPlanning = () => {
+  if (user.value) {
+    router.push('/planner')
+  } else {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Please log in first',
+      text: 'You need to log in to start planning your trip.',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#0ea5e9'
+    })
+  }
+}
+const goToPage = (path) => {
+  if (user.value) {
+    router.push(path)
+  } else {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Please log in first',
+      text: 'You need to log in to access this page.',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#0ea5e9'
+    })
+  }
+}
+
+
 onMounted(getUser)
 </script>
 
@@ -38,10 +70,10 @@ onMounted(getUser)
       </router-link>
 
       <nav class="flex items-center space-x-6 text-gray-800 font-medium">
-        <router-link to="/" class="hover:text-sky-600">Home</router-link>
-        <router-link to="/planner" class="hover:text-sky-600">Planner</router-link>
-        <router-link to="/expense" class="hover:text-sky-600">Expense Tracker</router-link>
-        <router-link to="/review" class="hover:text-sky-600">Trip Review</router-link>
+        <button @click="goToPage('/')" class="hover:text-sky-600">Home</button>
+        <button @click="goToPage('/trips')" class="hover:text-sky-600">Planner</button>
+        <button @click="goToPage('/expense')" class="hover:text-sky-600">Expense Tracker</button>
+        <button @click="goToPage('/review')" class="hover:text-sky-600">Trip Review</button>
 
         <!-- ปุ่ม Login เฉพาะเมื่อไม่ได้ login -->
         <button
@@ -76,11 +108,12 @@ onMounted(getUser)
         Plan trips effortlessly with Trippify, your all-in-one travel assistant.
         From smart itineraries to shared expense tracking, everything your group needs in one place.
       </p>
-      <router-link to="/planner">
-        <button class="bg-sky-400 text-white px-6 py-3 rounded-full font-semibold hover:bg-sky-600 transition">
-          Start Planning
-        </button>
-      </router-link>
+      <button
+        @click="handleStartPlanning"
+        class="bg-sky-400 text-white px-6 py-3 rounded-full font-semibold hover:bg-sky-600 transition"
+      >
+        Start Planning
+      </button>
     </main>
 
     <!-- Login Modal -->

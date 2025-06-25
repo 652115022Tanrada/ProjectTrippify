@@ -109,7 +109,7 @@ onMounted(getUser)
 
       <nav class="flex items-center space-x-6 text-gray-800 font-medium">
         <router-link to="/" class="hover:text-sky-600">Home</router-link>
-        <router-link to="/planner" class="hover:text-sky-600">Planner</router-link>
+        <router-link to="/trips" class="hover:text-sky-600">Planner</router-link>
         <router-link to="/expense" class="hover:text-sky-600">Expense Tracker</router-link>
         <router-link to="/review" class="hover:text-sky-600">Trip Review</router-link>
 
