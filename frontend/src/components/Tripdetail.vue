@@ -18,9 +18,16 @@ watch(() => tripPlan.value, (newVal) => {
 
 const saveTrip = async () => {
   try {
-    if (!tripPlan.value) return
+    if (!tripPlan.value) return;
 
-    const response = await axios.post('http://localhost:5000/api/trips/save', tripPlan.value)
+    // 👇 เพิ่ม user_id ลงใน tripPlan ที่จะส่งไป
+    const user = store.state.user?.userData; // หรือปรับตาม Vuex ที่คุณใช้จริง
+    const payload = {
+      ...tripPlan.value,
+      user_id: user?.id_users || 1 // เปลี่ยน fallback id 1 ตามจริง
+    };
+
+    const response = await axios.post('http://localhost:5000/api/trip/save', payload);
 
     Swal.fire({
       icon: 'success',
@@ -39,7 +46,8 @@ const saveTrip = async () => {
       text: 'There was a problem saving your trip.',
     })
   }
-}
+};
+
 
 const cancelTrip = () => {
   Swal.fire({
