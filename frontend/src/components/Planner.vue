@@ -40,6 +40,7 @@ const startDate = ref('')
 const endDate = ref('')
 const budget = ref('')
 const currency = ref('THB')
+const tripName = ref('')
 
 const travelPreferences = ref([])
 const travelStyles = [
@@ -48,6 +49,7 @@ const travelStyles = [
 ]
 const submitTrip = async () => {
   const payload = {
+    tripName: tripName.value, // เพิ่มตรงนี้
     from: from.value,
     to: to.value,
     startDate: startDate.value,
@@ -107,7 +109,7 @@ onMounted(getUser)
         <img src="/logo.png" alt="Logo" class="h-15 w-auto object-contain" />
       </router-link>
 
-      <nav class="flex items-center space-x-6 text-gray-800 font-medium">
+      <nav class="flex items-center space-x-6 text-gray-800 font-bold font-kanit">
         <router-link to="/" class="hover:text-sky-600">Home</router-link>
         <router-link to="/trips" class="hover:text-sky-600">Planner</router-link>
         <router-link to="/expense" class="hover:text-sky-600">Expense Tracker</router-link>
@@ -180,19 +182,27 @@ onMounted(getUser)
     </div>
 
     <!-- Title -->
-    <h2 class="text-3xl font-extrabold text-center mb-10">SMART TRIP PLANNER</h2>
+    <h2 class="text-3xl font-extrabold text-center mb-10 font-kanit">SMART TRIP PLANNER</h2>
 
     <!-- Center Wrapper -->
     <div class="flex items-center justify-center">
     <!-- Form -->
     <div class="w-full max-w-xl space-y-4">
+      <!-- Trip Name Input -->
+      <div class="flex flex-col gap-4">
+        <input v-model="tripName"
+          type="text"
+          placeholder="Trip Name"
+          class="w-full border border-gray-300 rounded-xl px-5 py-4 text-base text-gray-500 shadow-sm focus:ring-2 focus:ring-green-200 outline-none font-semibold font-kanit"
+        />
+      </div>
 
     <!-- Destination Input -->
     <div class="flex flex-col sm:flex-row gap-4">
     <!-- From Field with Icon + Dropdown -->
     <div class="relative w-full">
       <!-- Icon -->
-      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 ">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
           <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
@@ -202,9 +212,9 @@ onMounted(getUser)
       <!-- Select -->
       <select
         v-model="from"
-        class="w-full pl-12 border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm focus:ring-2 focus:ring-green-200 outline-none"
+        class="w-full pl-12 border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm text-gray-500 focus:ring-2 focus:ring-green-200 outline-none font-semibold font-kanit"
       >
-        <option disabled value="">From</option>
+        <option disabled value="" >From</option>
         <option v-for="province in thaiProvinces" :key="province" :value="province">
           {{ province }}
         </option>
@@ -224,7 +234,7 @@ onMounted(getUser)
       <!-- Select -->
       <select
         v-model="to"
-        class="w-full pl-12 border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm focus:ring-2 focus:ring-green-200 outline-none"
+        class="w-full pl-12 border border-gray-300 rounded-xl px-5 py-4 text-base text-gray-500 shadow-sm focus:ring-2 focus:ring-green-200 outline-none font-semibold font-kanit"
       >
         <option disabled value="">To</option>
         <option v-for="province in thaiProvinces" :key="province" :value="province">
@@ -239,14 +249,14 @@ onMounted(getUser)
       <input  v-model="startDate"
         type="text"
         placeholder="Start Date"
-        class="w-full border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm focus:ring-2 focus:ring-green-200 outline-none"
+        class="w-full border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm  text-gray-500 focus:ring-2 focus:ring-green-200 outline-none font-semibold font-kanit"
         onfocus="this.type='date'"
         onblur="if(!this.value) this.type='text'"
       />
       <input v-model="endDate"
         type="text"
         placeholder="End Date"
-        class="w-full border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm focus:ring-2 focus:ring-green-200 outline-none"
+        class="w-full border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm  text-gray-500 focus:ring-2 focus:ring-green-200 outline-none font-semibold font-kanit"
         onfocus="this.type='date'"
         onblur="if(!this.value) this.type='text'"
       />
@@ -254,9 +264,9 @@ onMounted(getUser)
 
     <!-- Budget plan Input with currency dropdown -->
     <div class="flex flex-col sm:flex-row gap-4">
-      <div class="relative w-full">
+      <div class="relative w-full ">
         <!-- Icon ด้านซ้าย -->
-        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 ">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
             stroke-width="1.5" stroke="currentColor" class="size-6">
             <path stroke-linecap="round" stroke-linejoin="round"
@@ -266,7 +276,7 @@ onMounted(getUser)
 
         <!-- Dropdown สกุลเงินด้านขวา -->
         <select  v-model="currency"
-          class="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent text-sm text-gray-700 outline-none"
+          class="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent text-sm text-gray-400 outline-none font-semibold font-kanit"
         >
           <option value="THB">THB</option>
           <option value="USD">USD</option>
@@ -276,18 +286,18 @@ onMounted(getUser)
           type="number"
           min="0"
           placeholder="Budget Plan"
-          class="w-full pl-12 pr-28 border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm focus:ring-2 focus:ring-green-200 outline-none"
+          class="w-full pl-12 pr-28 border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm text-gray-500 focus:ring-2 focus:ring-green-200 outline-none font-semibold font-kanit"
         />
       </div>
     </div>
 
     <!-- Travel Preferences -->
-      <h3 class="font-semibold mb-2">Choose Your Travel Style:</h3>
+      <h3 class="font-semibold mb-5 font-mitr">Choose Your Travel Style:</h3>
       <div class="w-full max-w-xl grid grid-cols-2 sm:grid-cols-3 gap-4">
         <label
           v-for="style in travelStyles"
           :key="style"
-          class="relative flex items-center justify-center text-sm px-4 py-3 rounded-xl border border-gray-300 shadow-sm cursor-pointer transition-all duration-200 hover:bg-green-50 hover:border-green-300"
+          class="relative flex items-center justify-center text-base px-4 py-3 rounded-xl border border-gray-300 shadow-sm text-gray-500 cursor-pointer transition-all duration-200 hover:bg-green-50 hover:border-green-300 font-semibold font-kanit"
           :class="{ 'bg-green-100 border-green-400 text-green-800': travelPreferences.includes(style) }"
         >
           <input
@@ -300,12 +310,10 @@ onMounted(getUser)
         </label>
       </div>
 
-
-
       <div class="flex flex-col md:flex-row gap-4 w-full max-w-xl">
         <!-- Solo travel -->    
         <label
-          class="flex items-center w-full md:w-1/2 cursor-pointer"
+          class="flex items-center w-full md:w-1/2 cursor-pointer  text-base text-gray-500 font-semibold font-kanit"
           :class="travelType === 'solo' ? '' : ''"
         >
         <span class="text-gray-500">
@@ -324,7 +332,7 @@ onMounted(getUser)
 
         <!-- Group travel -->
         <label
-          class="flex items-center w-full md:w-1/2 cursor-pointer"
+          class="flex items-center w-full md:w-1/2 cursor-pointer text-base text-gray-500 font-semibold font-kanit"
           :class="travelType === 'group' ? '' : ''"
         >
         <span class="text-gray-500">
@@ -405,12 +413,13 @@ onMounted(getUser)
             <button class="bg-sky-400 text-white px-8 py-3 rounded-full font-semibold hover:bg-sky-600 transition">Start Planning</button>
           </router-link> -->
          
-            <button @click="submitTrip" class="bg-sky-400 text-white px-8 py-3 rounded-full font-semibold hover:bg-sky-600 transition">Start Planning</button>
+            <button @click="submitTrip" class="bg-sky-400 text-white px-6 py-3 rounded-full font-semibold hover:bg-sky-600 transition font-kanit"">Start Planning</button>
           
         </div>
     </div>
     </div>
   </div>
 </template>
+
 
 

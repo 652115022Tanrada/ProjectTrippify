@@ -9,6 +9,7 @@ Travel dates: from ${data.startDate} to ${data.endDate}
 Total budget: ${data.budget} ${data.currency || 'USD'}  
 Preferred mode of travel: ${data.travelType}  
 Traveler's interests: ${data.preferences.join(', ') || 'None'}
+Trip name: ${data.tripName}
 
 Please follow these guidelines:
 
@@ -30,7 +31,7 @@ Please follow these guidelines:
    - A short title (title) describing the theme of the day
    - A brief narrative description (1-2 sentences) to set the mood of the day
 
-4. List 3-4 locations per day with the following for each:
+4. For each day, provide the list of locations under the key "locations". DO NOT use any other key name.
    - name: Name of the place
    - time: Estimated time spent (e.g., "09:00-10:30")
    - transport: Use only generic transportation terms such as "walk", "motorcycle taxi", "local taxi", "public van", etc.
@@ -45,6 +46,9 @@ Please follow these guidelines:
 6. Calculate and include:
    - total_day_cost: Daily total cost
    - total_trip_cost: Total for the whole trip
+
+7. Include a trip name under the key "tripName" that briefly summarizes the theme of the trip.
+
 Return ONLY valid and parseable JSON.
 Do not include markdown, code blocks, or any explanation.
 Ensure the response is strictly JSON format, wrapped in '{}' or '[]' as needed.

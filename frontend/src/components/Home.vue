@@ -69,7 +69,7 @@ onMounted(getUser)
         <img src="/logo.png" alt="Logo" class="h-15 w-auto object-contain" />
       </router-link>
 
-      <nav class="flex items-center space-x-6 text-gray-800 font-medium">
+      <nav class="flex items-center space-x-6 text-gray-800 font-bold font-kanit">
         <button @click="goToPage('/')" class="hover:text-sky-600">Home</button>
         <button @click="goToPage('/trips')" class="hover:text-sky-600">Planner</button>
         <button @click="goToPage('/expense')" class="hover:text-sky-600">Expense Tracker</button>
@@ -100,17 +100,17 @@ onMounted(getUser)
     </header>
 
     <main class="flex flex-col items-center text-center mt-10">
-      <h1 class="text-4xl md:text-5xl font-bold text-sky-400 mb-3">
+      <h1 class="text-4xl md:text-5xl font-bold text-sky-400 mb-3 font-mitr">
         One platform for all your<br />
         <span class="text-gray-900">travel planning needs</span>
       </h1>
-      <p class="text-gray-700 max-w-xl mt-4 mb-6">
+      <p class="text-gray-700 max-w-xl mt-4 mb-6 font-kanit">
         Plan trips effortlessly with Trippify, your all-in-one travel assistant.
         From smart itineraries to shared expense tracking, everything your group needs in one place.
       </p>
       <button
         @click="handleStartPlanning"
-        class="bg-sky-400 text-white px-6 py-3 rounded-full font-semibold hover:bg-sky-600 transition"
+        class="bg-sky-400 text-white px-6 py-3 rounded-full font-semibold hover:bg-sky-600 transition font-kanit"
       >
         Start Planning
       </button>

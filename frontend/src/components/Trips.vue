@@ -89,7 +89,7 @@ onMounted(getUser)
         <img src="/logo.png" alt="Logo" class="h-15 w-auto object-contain" />
       </router-link>
 
-      <nav class="flex items-center space-x-6 text-gray-800 font-medium">
+      <nav class="flex items-center space-x-6 text-gray-800 font-bold font-kanit">
         <router-link to="/" class="hover:text-sky-600">Home</router-link>
         <router-link to="/trips" class="hover:text-sky-600">Planner</router-link>
         <router-link to="/expense" class="hover:text-sky-600">Expense Tracker</router-link>
@@ -165,11 +165,11 @@ onMounted(getUser)
     <div class="flex items-center justify-center px-4 py-8">
       <div class="w-full max-w-5xl space-y-6">
         <!-- Header with New Trip Button -->
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex justify-between items-center mb-6 font-kanit">
         <h2 class="text-2xl font-extrabold">Your Saved Trips</h2>
         <button
             @click="router.push('/planner')"
-            class="bg-sky-400 text-white px-6 py-3 rounded-full font-semibold hover:bg-sky-600 transition"
+            class="bg-sky-400 text-white px-6 py-3 rounded-full font-semibold hover:bg-sky-600 transition font-kanit"
         >
           + New Trip
         </button>
@@ -184,9 +184,9 @@ onMounted(getUser)
             <img :src="trip.coverImage" alt="Trip Cover" class="w-full lg:w-60 h-40 object-cover rounded-lg" />
 
             <div class="flex-1 space-y-2">
-              <h2 class="text-xl font-semibold">{{ trip.title }}</h2>
-              <p class="text-gray-600">{{ trip.startDate }} - {{ trip.endDate }}</p>
-              <div class="flex space-x-4 text-sm text-gray-700">
+              <h2 class="text-xl font-semibold font-kanit">{{ trip.title }}</h2>
+              <p class="text-gray-600 font-kanit">{{ trip.startDate }} - {{ trip.endDate }}</p>
+              <div class="flex space-x-4 text-sm text-gray-700 font-kanit">
                 ⏳ {{ trip.budget.toLocaleString(getLocale(trip.currency), { 
                     style: 'currency', 
                     currency: trip.currency, 
@@ -197,7 +197,7 @@ onMounted(getUser)
               </div>
               <button
                 @click="goToTripDetail(trip.id)"
-                class="mt-2 bg-sky-500 text-white px-4 py-2 rounded hover:bg-sky-600"
+                class="bg-sky-400 text-white px-6 py-3 rounded-full font-normal hover:bg-sky-600 transition font-kanit"
               >
                 View Details
               </button>
@@ -205,7 +205,7 @@ onMounted(getUser)
           </div>
         </div>
 
-        <div v-else class="text-center text-gray-500">
+        <div v-else class="text-center text-gray-500 font-kanit">
           No trips saved yet.
         </div>
       </div>

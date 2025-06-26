@@ -11,16 +11,23 @@ const store = useStore()
 const tripPlan = computed(() => store.state.trip.tripPlan)
 const router = useRouter()
 const transportInfo = computed(() => tripPlan.value?.transport_info || null)
-
+// ดึงเฉพาะชื่อทริป
+const tripName = computed(() => tripPlan.value?.tripName || 'My Trip')
 watch(() => tripPlan.value, (newVal) => {
   store.commit('trip/updateTripPlan', newVal)
-}, { deep: true });
+},{ deep: true });
 
 const saveTrip = async () => {
   try {
     if (!tripPlan.value) return
 
     const response = await axios.post('http://localhost:5000/api/trips/save', tripPlan.value)
+
+     // ✅ เพิ่มตรงนี้
+    store.commit('trip/updateTripPlan', {
+      ...response.data,
+      tripName: tripPlan.value.tripName // เอาชื่อทริปที่มีอยู่เดิมมาใส่
+    })
 
     Swal.fire({
       icon: 'success',
@@ -80,7 +87,7 @@ const removeLocation = (dayIndex, locIndex) => {
     cancelButtonText: 'Cancel'
   }).then((result) => {
     if (result.isConfirmed) {
-      tripPlan.value.trip_plan[dayIndex].locations.splice(locIndex, 1)
+      tripPlan.value.days[dayIndex].locations.splice(locIndex, 1)
       //คำนวณค่าใช้จ่ายหลังลบ
       recalculateCosts()
       store.commit('trip/updateTripPlan', tripPlan.value)
@@ -99,7 +106,7 @@ const removeLocation = (dayIndex, locIndex) => {
 const recalculateCosts = () => {
   let totalTripCost = 0
 
-  tripPlan.value.trip_plan.forEach((day) => {
+  tripPlan.value.days.forEach((day) => {
     let dayCost = 0
 
     if (day.locations && day.locations.length > 0) {
@@ -125,18 +132,18 @@ const allLocations = computed(() => {
   <div v-if="tripPlan" class="flex h-screen overflow-hidden bg-gray-100">
     <!-- Sidebar -->
     <div class="w-[50%] p-6 overflow-y-auto bg-white shadow-2xl rounded-r-3xl">
-      <h1 class="text-3xl font-extrabold text-sky-500 mb-6 tracking-tight">
-        {{ tripPlan.trip_name }}
-      </h1>
+      <h2 class="text-2xl font-extrabold text-sky-700 mb-4 font-kanit">
+        {{ tripName }}
+      </h2>
 
       <!-- Travel Summary Table -->
       <div class="mb-10 bg-sky-50 p-5 rounded-xl shadow">
-        <h2 class="text-xl font-semibold text-sky-700 mb-4">
+        <h2 class="text-xl font-semibold text-sky-700 mb-4 font-kanit">
           🚍 Transportation Methods
         </h2>
 
         <!-- Table Header -->
-        <div class="grid grid-cols-5 gap-2 px-4 py-3 bg-sky-100 text-sky-900 font-semibold text-sm rounded-t-lg border border-sky-300">
+        <div class="grid grid-cols-5 gap-2 px-4 py-3 bg-sky-100 text-sky-900 font-semibold text-sm rounded-t-lg border border-sky-300 font-kanit">
           <div></div>
           <div class="text-center">Car 🚗</div>
           <div class="text-center">Bus 🚌</div>
@@ -145,7 +152,7 @@ const allLocations = computed(() => {
         </div>
 
         <!-- Table Body -->
-        <div class="grid grid-cols-5 gap-2 px-4 py-3 bg-white text-gray-700 text-sm border-b border-gray-200 items-center">
+        <div class="grid grid-cols-5 gap-2 px-4 py-3 bg-white text-gray-700 text-sm border-b border-gray-200 items-center font-kanit">
           <div class="font-medium">Distance</div>
           <div class="text-center">{{ transportInfo.car?.distance || '-' }}</div>
           <div class="text-center">{{ transportInfo.bus?.distance || '-' }}</div>
@@ -153,7 +160,7 @@ const allLocations = computed(() => {
           <div class="text-center">{{ transportInfo.flight?.distance || '-' }}</div>
         </div>
 
-        <div class="grid grid-cols-5 gap-2 px-4 py-3 bg-white text-gray-700 text-sm border-b border-gray-200 items-center rounded-b-lg">
+        <div class="grid grid-cols-5 gap-2 px-4 py-3 bg-white text-gray-700 text-sm border-b border-gray-200 items-center rounded-b-lg font-kanit">
           <div class="font-medium">Duration</div>
           <div class="text-center">{{ transportInfo.car?.duration || '-' }}</div>
           <div class="text-center">{{ transportInfo.bus?.duration || '-' }}</div>
@@ -168,16 +175,16 @@ const allLocations = computed(() => {
         :key="index"
         class="mb-10 bg-sky-50 p-5 rounded-xl shadow"
       >
-        <h2 class="text-xl font-semibold text-sky-700 mb-2">
+        <h2 class="text-xl font-semibold text-sky-700 mb-2 font-kanit">
           📅 Day {{ index + 1 }}: {{ day.title }} ({{ day.date }})
-        </h2>
-        <p class="text-gray-700 mb-4 text-sm italic">
+        </h2> 
+        <p class="text-gray-700 mb-4 text-sm font-kanit">
           {{ day.description || day.narrative || 'No description.' }}
         </p>
 
         <!-- Table Header -->
         <div
-          class="grid grid-cols-7 gap-2 px-4 py-3 bg-sky-100 text-sky-900 font-semibold text-sm rounded-t-lg border border-sky-300"
+          class="grid grid-cols-7 gap-2 px-4 py-3 bg-sky-100 text-sky-900 font-semibold text-sm rounded-t-lg border border-sky-300 font-kanit"
         >
           <div class="col-span-2">Destination</div>
           <div class="text-center">Category</div>
@@ -197,7 +204,7 @@ const allLocations = computed(() => {
         >
           <template #item="{ element: loc, index: i }">
             <div
-              class="grid grid-cols-7 gap-2 px-4 py-3 bg-white border-b border-gray-200 text-sm items-center hover:bg-sky-50 transition rounded"
+              class="grid grid-cols-7 gap-2 px-4 py-3 bg-white border-b border-gray-200 text-sm items-center hover:bg-sky-50 transition rounded font-kanit"
             >
               <div class="col-span-2 font-medium text-green-800">{{ loc.name }}</div>
               <div class="text-center text-gray-700">{{ loc.category || 'N/A' }}</div>
@@ -220,18 +227,18 @@ const allLocations = computed(() => {
         </draggable>
 
         <!-- Tips & Day Total -->
-        <div class="mt-4 text-sm text-gray-700">
+        <div class="mt-4 text-sm text-gray-700 font-kanit">
           <p v-if="day.daily_tips && day.daily_tips.length > 0" class="mb-1">
             💡 <span class="font-medium">Tips:</span> {{ day.daily_tips.join(', ') }}
           </p>
-          <p class="font-semibold text-right text-sky-700">
+          <p class="font-semibold text-right text-sky-700 font-kanit">
             💰 Day Total: {{ day.total_day_cost || 0 }} {{ tripPlan.currency || 'THB' }}
           </p>
         </div>
       </div>
 
       <!-- Total Trip Cost -->
-      <div class="text-right mt-6 text-lg font-bold text-green-700 border-t pt-4">
+      <div class="text-right mt-6 text-lg font-bold text-green-700 border-t pt-4 font-kanit">
         🧾 Total Trip Cost: {{ tripPlan.total_trip_cost || 0 }} {{ tripPlan.currency || 'THB' }}
       </div>
 
@@ -239,15 +246,15 @@ const allLocations = computed(() => {
       <div class="mt-6 flex justify-end gap-4">
         <button
           @click="cancelTrip"
-          class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition"
+          class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition font-kanit"
         >
-          ❌ ยกเลิก
+          ❌ Cancel 
         </button>
         <button
           @click="saveTrip"
-          class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition"
+          class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition font-kanit"
         >
-          💾 บันทึกรายการเที่ยว
+          💾 Save Trip
         </button>
       </div>
     </div>
