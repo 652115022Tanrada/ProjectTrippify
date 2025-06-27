@@ -214,7 +214,7 @@ onMounted(getUser)
         v-model="from"
         class="w-full pl-12 border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm text-gray-500 focus:ring-2 focus:ring-green-200 outline-none font-semibold font-kanit"
       >
-        <option disabled value="" >From</option>
+        <option disabled value="">From</option>
         <option v-for="province in thaiProvinces" :key="province" :value="province">
           {{ province }}
         </option>
@@ -413,7 +413,7 @@ onMounted(getUser)
             <button class="bg-sky-400 text-white px-8 py-3 rounded-full font-semibold hover:bg-sky-600 transition">Start Planning</button>
           </router-link> -->
          
-            <button @click="submitTrip" class="bg-sky-400 text-white px-6 py-3 rounded-full font-semibold hover:bg-sky-600 transition font-kanit"">Start Planning</button>
+            <button @click="submitTrip" class="bg-sky-400 text-white px-6 py-3 rounded-full font-semibold hover:bg-sky-600 transition font-kanit">Start Planning</button>
           
         </div>
     </div>
