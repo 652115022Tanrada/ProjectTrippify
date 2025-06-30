@@ -16,18 +16,23 @@ const tripName = computed(() => tripPlan.value?.tripName || 'My Trip')
 watch(() => tripPlan.value, (newVal) => {
   store.commit('trip/updateTripPlan', newVal)
 },{ deep: true });
-
 const saveTrip = async () => {
   try {
     if (!tripPlan.value) return
 
-    const response = await axios.post('http://localhost:5000/api/trips/save', tripPlan.value)
+    console.log('TripPlan:', tripPlan.value)
 
-     // ✅ เพิ่มตรงนี้
+    const response = await axios.post(
+      'http://localhost:5000/api/trip/save',
+      tripPlan.value,
+      { withCredentials: true }
+    )
+
     store.commit('trip/updateTripPlan', {
       ...response.data,
-      tripName: tripPlan.value.tripName // เอาชื่อทริปที่มีอยู่เดิมมาใส่
+      tripName: tripPlan.value.tripName
     })
+
 
     Swal.fire({
       icon: 'success',

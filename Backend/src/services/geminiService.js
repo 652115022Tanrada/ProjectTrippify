@@ -49,11 +49,18 @@ Please follow these guidelines:
 
 7. Include a trip name under the key "tripName" that briefly summarizes the theme of the trip.
 
-Return ONLY valid and parseable JSON.
-Do not include markdown, code blocks, or any explanation.
-Ensure the response is strictly JSON format, wrapped in '{}' or '[]' as needed.
-Escape all double quotes in strings correctly.`
+Escape all double quotes in strings correctly.
+
+IMPORTANT:
+
+You MUST return ONLY a valid JSON object or array as the entire response. 
+- DO NOT include any explanation, greeting, apology, or additional text outside of the JSON.
+- DO NOT include markdown or code blocks.
+- The response MUST start with "{" and end with "}" or start with "[" and end with "]".
+- If you cannot produce a valid JSON for any reason, reply with an empty JSON object "{}" and nothing else.
+`;
 };
+
 
 const callGeminiAPI = async (tripData) => {
   const prompt = generateTripPrompt(tripData);

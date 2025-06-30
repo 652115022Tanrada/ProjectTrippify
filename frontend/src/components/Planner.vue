@@ -49,7 +49,8 @@ const travelStyles = [
 ]
 const submitTrip = async () => {
   const payload = {
-    tripName: tripName.value, // เพิ่มตรงนี้
+    userId: user.value.user_id, 
+    tripName: tripName.value,
     from: from.value,
     to: to.value,
     startDate: startDate.value,
@@ -63,11 +64,8 @@ const submitTrip = async () => {
   try {
     const res = await axios.post('http://localhost:5000/api/trip', payload)
     console.log('Trip submitted:', res.data)
-     
-    // บันทึกลง Vuex
-    store.commit('trip/setTripPlan', res.data)
+         store.commit('trip/setTripPlan', res.data)
 
-    // หรือเปลี่ยน route ไปหน้า Tripdetail
     router.push('/tripdetail')
   } catch (err) {
     console.error('Error submitting trip:', err)

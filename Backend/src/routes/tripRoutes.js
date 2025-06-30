@@ -2,7 +2,12 @@ const express = require('express');
 const router = express.Router();
 const tripController = require('../controllers/tripController');
 
-// ✅ ใช้งาน generateTripPlan ที่เขียนไว้ใน controller
-router.post('/', tripController.generateTripPlan);
+const isAuthenticated = (req, res, next) => {
+  if (req.isAuthenticated()) return next();
+  return res.status(401).json({ message: 'Unauthorized' });
+};
+
+router.post('/', tripController.generateTripPlan); // ถ้ามี
+router.post('/save', isAuthenticated, tripController.saveTripPlan);
 
 module.exports = router;

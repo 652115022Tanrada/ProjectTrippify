@@ -1,8 +1,16 @@
 <script setup>
+import { onMounted } from 'vue'
+import { useStore } from 'vuex'
 import HelloWorld from './components/HelloWorld.vue'
-import Home from './components/Home.vue';
-import router from './router';
-import { RouterLink } from 'vue-router';
+import Home from './components/Home.vue'
+import router from './router'
+import { RouterLink } from 'vue-router'
+
+const store = useStore()
+
+onMounted(() => {
+  store.dispatch('auth/fetchUser')
+})
 </script>
 
 <template>
