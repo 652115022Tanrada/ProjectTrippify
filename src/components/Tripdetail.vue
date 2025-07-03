@@ -6,7 +6,7 @@ import axios from 'axios'
 import { useRouter } from 'vue-router'
 import draggable from 'vuedraggable'
 import Swal from 'sweetalert2'
-
+const API_URL = import.meta.env.Railway_URL
 const store = useStore()
 const tripPlan = computed(() => store.state.trip.tripPlan)
 const router = useRouter()
@@ -23,7 +23,7 @@ const saveTrip = async () => {
     console.log('TripPlan:', tripPlan.value)
 
     const response = await axios.post(
-      'http://localhost:5000/api/trip/save',
+      `${API_URL}/api/trip/save`,
       tripPlan.value,
       { withCredentials: true }
     )

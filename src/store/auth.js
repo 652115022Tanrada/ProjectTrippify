@@ -25,7 +25,7 @@ export default {
     async fetchUser({ commit }) {
       try {
         const res = await axios.get(
-          'http://localhost:5000/api/user',
+          `${API_URL}/api/user`,
           { withCredentials: true }
         )
         commit('setUser', res.data)

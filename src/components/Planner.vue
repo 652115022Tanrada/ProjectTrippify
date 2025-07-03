@@ -4,7 +4,7 @@ import axios from 'axios'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { thaiProvinces } from '../assets/provinces'
-
+const API_URL = import.meta.env.Railway_URL
 const store = useStore()
 const router = useRouter()
 const showLoginModal = ref(false)
@@ -62,7 +62,7 @@ const submitTrip = async () => {
   }
 
   try {
-    const res = await axios.post('http://localhost:5000/api/trip', payload)
+const res = await axios.post(`${API_URL}/api/trip`, payload)
     console.log('Trip submitted:', res.data)
          store.commit('trip/setTripPlan', res.data)
 
@@ -74,7 +74,7 @@ const submitTrip = async () => {
 
 const getUser = async () => {
   try {
-    const res = await axios.get('http://localhost:5000/auth/user', {
+    const res = await axios.get(`${API_URL}/auth/user`, {
       withCredentials: true
     })
     user.value = res.data
@@ -84,11 +84,11 @@ const getUser = async () => {
 }
 
 const loginWithGoogle = () => {
-  window.location.href = 'http://localhost:5000/auth/google'
+  window.location.href = `${API_URL}/auth/google`
 }
 
 const logout = async () => {
-  await axios.get('http://localhost:5000/auth/logout', {
+  await axios.get(`${API_URL}/auth/logout`, {
     withCredentials: true
   })
   user.value = null
