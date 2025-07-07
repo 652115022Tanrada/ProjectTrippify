@@ -11,11 +11,17 @@ const store = useStore()
 const tripPlan = computed(() => store.state.trip.tripPlan)
 const router = useRouter()
 const transportInfo = computed(() => tripPlan.value?.transport_info || null)
-// ดึงเฉพาะชื่อทริป
 const tripName = computed(() => tripPlan.value?.tripName || 'My Trip')
 watch(() => tripPlan.value, (newVal) => {
   store.commit('trip/updateTripPlan', newVal)
-},{ deep: true });
+}, { deep: true });
+
+import { ref } from 'vue'
+
+const inviteLink = ref('')
+
+
+
 const saveTrip = async () => {
   try {
     if (!tripPlan.value) return
@@ -28,10 +34,10 @@ const saveTrip = async () => {
       { withCredentials: true }
     )
 
-    store.commit('trip/updateTripPlan', {
-      ...response.data,
-      tripName: tripPlan.value.tripName
-    })
+   store.commit('trip/updateTripPlan', {
+  ...tripPlan.value,              // เก็บข้อมูลเดิมไว้
+  tripId: response.data.tripId    // เพิ่ม tripId เข้ามา
+})
 
 
     Swal.fire({
@@ -52,7 +58,31 @@ const saveTrip = async () => {
     })
   }
 }
+const generateInviteLink = () => {
+  const tripId = tripPlan.value?.tripId
+  if (!tripId) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Trip not saved yet!',
+      text: 'Please save your trip before sharing.',
+    })
+    return
+  }
+  inviteLink.value = `${window.location.origin}/trip/${tripId}/join`
+  console.log('Generated invite link:', inviteLink.value)
+}
 
+
+const copyToClipboard = () => {
+  navigator.clipboard.writeText(inviteLink.value)
+  Swal.fire({
+    icon: 'success',
+    title: 'Copied!',
+    text: 'Invite link copied to clipboard.',
+    timer: 1500,
+    showConfirmButton: false
+  })
+}
 const cancelTrip = () => {
   Swal.fire({
     title: 'Cancel this trip?',
@@ -148,7 +178,8 @@ const allLocations = computed(() => {
         </h2>
 
         <!-- Table Header -->
-        <div class="grid grid-cols-5 gap-2 px-4 py-3 bg-sky-100 text-sky-900 font-semibold text-sm rounded-t-lg border border-sky-300 font-kanit">
+        <div
+          class="grid grid-cols-5 gap-2 px-4 py-3 bg-sky-100 text-sky-900 font-semibold text-sm rounded-t-lg border border-sky-300 font-kanit">
           <div></div>
           <div class="text-center">Car 🚗</div>
           <div class="text-center">Bus 🚌</div>
@@ -157,7 +188,8 @@ const allLocations = computed(() => {
         </div>
 
         <!-- Table Body -->
-        <div class="grid grid-cols-5 gap-2 px-4 py-3 bg-white text-gray-700 text-sm border-b border-gray-200 items-center font-kanit">
+        <div
+          class="grid grid-cols-5 gap-2 px-4 py-3 bg-white text-gray-700 text-sm border-b border-gray-200 items-center font-kanit">
           <div class="font-medium">Distance</div>
           <div class="text-center">{{ transportInfo.car?.distance || '-' }}</div>
           <div class="text-center">{{ transportInfo.bus?.distance || '-' }}</div>
@@ -165,7 +197,8 @@ const allLocations = computed(() => {
           <div class="text-center">{{ transportInfo.flight?.distance || '-' }}</div>
         </div>
 
-        <div class="grid grid-cols-5 gap-2 px-4 py-3 bg-white text-gray-700 text-sm border-b border-gray-200 items-center rounded-b-lg font-kanit">
+        <div
+          class="grid grid-cols-5 gap-2 px-4 py-3 bg-white text-gray-700 text-sm border-b border-gray-200 items-center rounded-b-lg font-kanit">
           <div class="font-medium">Duration</div>
           <div class="text-center">{{ transportInfo.car?.duration || '-' }}</div>
           <div class="text-center">{{ transportInfo.bus?.duration || '-' }}</div>
@@ -175,22 +208,17 @@ const allLocations = computed(() => {
       </div>
 
 
-      <div
-        v-for="(day, index) in tripPlan.days"
-        :key="index"
-        class="mb-10 bg-sky-50 p-5 rounded-xl shadow"
-      >
+      <div v-for="(day, index) in tripPlan.days" :key="index" class="mb-10 bg-sky-50 p-5 rounded-xl shadow">
         <h2 class="text-xl font-semibold text-sky-700 mb-2 font-kanit">
           📅 Day {{ index + 1 }}: {{ day.title }} ({{ day.date }})
-        </h2> 
+        </h2>
         <p class="text-gray-700 mb-4 text-sm font-kanit">
           {{ day.description || day.narrative || 'No description.' }}
         </p>
 
         <!-- Table Header -->
         <div
-          class="grid grid-cols-7 gap-2 px-4 py-3 bg-sky-100 text-sky-900 font-semibold text-sm rounded-t-lg border border-sky-300 font-kanit"
-        >
+          class="grid grid-cols-7 gap-2 px-4 py-3 bg-sky-100 text-sky-900 font-semibold text-sm rounded-t-lg border border-sky-300 font-kanit">
           <div class="col-span-2">Destination</div>
           <div class="text-center">Category</div>
           <div class="text-center">Transport</div>
@@ -200,17 +228,11 @@ const allLocations = computed(() => {
         </div>
 
         <!-- Table Body -->
-        <draggable
-          v-model="day.locations"
-          :group="'locations'"
-          item-key="name"
-          class="space-y-2"
-          @change="recalculateCosts"
-        >
+        <draggable v-model="day.locations" :group="'locations'" item-key="name" class="space-y-2"
+          @change="recalculateCosts">
           <template #item="{ element: loc, index: i }">
             <div
-              class="grid grid-cols-7 gap-2 px-4 py-3 bg-white border-b border-gray-200 text-sm items-center hover:bg-sky-50 transition rounded font-kanit"
-            >
+              class="grid grid-cols-7 gap-2 px-4 py-3 bg-white border-b border-gray-200 text-sm items-center hover:bg-sky-50 transition rounded font-kanit">
               <div class="col-span-2 font-medium text-green-800">{{ loc.name }}</div>
               <div class="text-center text-gray-700">{{ loc.category || 'N/A' }}</div>
               <div class="text-center text-gray-700">{{ loc.transport || 'N/A' }}</div>
@@ -219,11 +241,8 @@ const allLocations = computed(() => {
               </div>
               <div class="text-center text-gray-700">{{ loc.distance_to_next || 'N/A' }}</div>
               <div class="text-center">
-                <button
-                  @click="removeLocation(index, i)"
-                  class="text-red-500 hover:text-red-700 font-bold"
-                  title="Delete location"
-                >
+                <button @click="removeLocation(index, i)" class="text-red-500 hover:text-red-700 font-bold"
+                  title="Delete location">
                   ❌
                 </button>
               </div>
@@ -249,18 +268,24 @@ const allLocations = computed(() => {
 
       <!-- Buttons -->
       <div class="mt-6 flex justify-end gap-4">
-        <button
-          @click="cancelTrip"
-          class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition font-kanit"
-        >
-          ❌ Cancel 
+        <button @click="cancelTrip"
+          class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition font-kanit">
+          ❌ Cancel
         </button>
-        <button
-          @click="saveTrip"
-          class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition font-kanit"
-        >
+        <button @click="saveTrip"
+          class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition font-kanit">
           💾 Save Trip
         </button>
+        <button @click="generateInviteLink"
+          class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition font-kanit">🔗
+          Share Trip Link</button>
+      </div>
+
+      <!-- Invite Link -->
+      <div v-if="inviteLink" class="text-right font-kanit text-sm">
+        <p>📎 Invite Link:
+          <input class="border rounded px-2 py-1 ml-2 w-2/3" :value="inviteLink" readonly @click="copyToClipboard" />
+        </p>
       </div>
     </div>
 

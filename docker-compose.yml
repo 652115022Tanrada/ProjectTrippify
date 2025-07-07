@@ -1,7 +1,7 @@
 services:
   frontend:
     build:
-      context: .  # 👈 ชี้ไปที่โฟลเดอร์ปัจจุบัน (Trippify-F/)
+      context: . 
       dockerfile: Dockerfile
     container_name: vue-frontend
     ports:
