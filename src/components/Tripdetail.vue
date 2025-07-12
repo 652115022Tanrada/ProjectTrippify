@@ -89,7 +89,7 @@ const cancelTrip = () => {
     text: 'Are you sure you want to cancel and discard your trip plan?',
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonColor: '#e53e3e',
+    confirmButtonColor: '#0ea5e9',
     cancelButtonColor: '#a0aec0',
     confirmButtonText: 'Yes, cancel it',
     cancelButtonText: 'No, keep it'
@@ -116,7 +116,7 @@ const removeLocation = (dayIndex, locIndex) => {
     text: 'Do you really want to remove this location from your trip plan?',
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonColor: '#e53e3e',
+    confirmButtonColor: '#0ea5e9',
     cancelButtonColor: '#a0aec0',
     confirmButtonText: 'Yes, remove it!',
     cancelButtonText: 'Cancel'
@@ -282,10 +282,14 @@ const allLocations = computed(() => {
       </div>
 
       <!-- Invite Link -->
-      <div v-if="inviteLink" class="text-right font-kanit text-sm">
-        <p>📎 Invite Link:
-          <input class="border rounded px-2 py-1 ml-2 w-2/3" :value="inviteLink" readonly @click="copyToClipboard" />
-        </p>
+      <div v-if="inviteLink" class="text-right font-kanit text-sm mt-4">
+        <p class="text-gray-600 font-semibold mb-1">📎 Invite Link:</p>
+        <input
+          class="w-full sm:w-2/3 border border-gray-300 rounded-xl px-4 py-3 text-base text-gray-500 shadow-sm focus:ring-2 focus:ring-green-200 outline-none font-kanit cursor-pointer"
+          :value="inviteLink"
+          readonly
+          @click="copyToClipboard"
+        />
       </div>
     </div>
 

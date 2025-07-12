@@ -4,11 +4,13 @@ import axios from 'axios'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { thaiProvinces } from '../assets/provinces'
+import Swal from 'sweetalert2'
 
 const store = useStore()
 const router = useRouter()
 const showLoginModal = ref(false)
 const user = ref(null)
+const today = new Date().toISOString().split('T')[0]
 const travelType = ref('') // ตั้งค่าทดสอบ
 // const friendEmails = ref([{ input: '', confirmed: false }]) // เปลี่ยนจาก string เป็น object
 
@@ -48,8 +50,10 @@ const travelStyles = [
   'Adventure', 'Nature', 'Beach', 'Family', 'Content Creator'
 ]
 const submitTrip = async () => {
+  if (!validateForm()) return;
+
   const payload = {
-    userId: user.value.user_id, 
+    userId: user.value.user_id,
     tripName: tripName.value,
     from: from.value,
     to: to.value,
@@ -64,11 +68,17 @@ const submitTrip = async () => {
   try {
     const res = await axios.post('http://localhost:5000/api/trip', payload)
     console.log('Trip submitted:', res.data)
-         store.commit('trip/setTripPlan', res.data)
-
+    store.commit('trip/setTripPlan', res.data)
     router.push('/tripdetail')
   } catch (err) {
     console.error('Error submitting trip:', err)
+    Swal.fire({
+      icon: 'error',
+      title: 'Submission Failed',
+      text: 'Something went wrong while submitting your trip. Please try again.',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#0ea5e9'
+    })
   }
 }
 
@@ -78,6 +88,7 @@ const getUser = async () => {
       withCredentials: true
     })
     user.value = res.data
+    console.log('User data:', user.value)
   } catch (err) {
     user.value = null
   }
@@ -88,16 +99,72 @@ const loginWithGoogle = () => {
 }
 
 const logout = async () => {
-  await axios.get('http://localhost:5000/auth/logout', {
-    withCredentials: true
-  })
-  user.value = null
-  window.location.reload()
+  try {
+    await axios.get('http://localhost:5000/auth/logout', {
+      withCredentials: true
+    })
+    user.value = null
+
+    await Swal.fire({
+      icon: 'success',
+      title: 'Logged Out',
+      text: 'You have successfully logged out.',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#0ea5e9'
+    })
+
+    router.push('/') // เปลี่ยนหน้าเมื่อกด OK แล้ว
+  } catch (error) {
+    console.error('Logout failed:', error)
+    Swal.fire({
+      icon: 'error',
+      title: 'Logout Failed',
+      text: 'Something went wrong. Please try again.',
+      confirmButtonColor: '#0ea5e9'
+    })
+  }
+}
+
+const validateForm = () => {
+  if (!tripName.value || !from.value || !to.value || !startDate.value || !endDate.value || !budget.value || !travelType.value) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Incomplete Information',
+      text: 'Please fill out all required fields before starting your trip plan.',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#0ea5e9'
+    })
+    return false
+  }
+
+  // Optional: additional validation
+  if (from.value === to.value) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Invalid Route',
+      text: 'Origin and destination cannot be the same.',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#0ea5e9'
+    })
+    return false
+  }
+
+  if (new Date(startDate.value) > new Date(endDate.value)) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Invalid Dates',
+      text: 'Start date cannot be later than end date.',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#0ea5e9'
+    })
+    return false
+  }
+
+  return true
 }
 
 onMounted(getUser)
 </script>
-
 
 
 <template>
@@ -129,7 +196,7 @@ onMounted(getUser)
           class="ml-4 h-10 w-10 rounded-full overflow-hidden hover:ring-2 hover:ring-sky-300 transition-all flex items-center justify-center"
         >
           <img
-            :src="user.photos[0].value"
+            :src="user.photo"
             alt="User"
             class="w-full h-full object-cover"
           />
@@ -151,12 +218,12 @@ onMounted(getUser)
     </button>
 
     <template v-if="user">
-      <img :src="user.photos[0].value" class="w-24 h-24 rounded-full mx-auto mb-4" />
-      <h2 class="text-xl font-bold">{{ user.displayName }}</h2>
-      <p class="text-gray-600">{{ user.emails[0].value }}</p>
+      <img :src="user.photo" class="w-24 h-24 rounded-full mx-auto mb-4" />
+      <h2 class="text-xl font-bold">{{ user.username }}</h2>
+      <p class="text-gray-600">{{ user.gmail }}</p>
       <button
         @click="logout"
-        class="mt-4 px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+        class="mt-4 px-4 py-2 bg-red-400 text-white rounded hover:bg-red-500"
       >
         Logout
       </button>
@@ -247,6 +314,7 @@ onMounted(getUser)
       <input  v-model="startDate"
         type="text"
         placeholder="Start Date"
+        :min="today"
         class="w-full border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm  text-gray-500 focus:ring-2 focus:ring-green-200 outline-none font-semibold font-kanit"
         onfocus="this.type='date'"
         onblur="if(!this.value) this.type='text'"
@@ -254,6 +322,7 @@ onMounted(getUser)
       <input v-model="endDate"
         type="text"
         placeholder="End Date"
+        :min="today"
         class="w-full border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm  text-gray-500 focus:ring-2 focus:ring-green-200 outline-none font-semibold font-kanit"
         onfocus="this.type='date'"
         onblur="if(!this.value) this.type='text'"
