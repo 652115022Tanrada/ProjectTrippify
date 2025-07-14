@@ -14,6 +14,7 @@ const getUser = async () => {
       withCredentials: true
     })
     user.value = res.data
+    console.log('User data:', user.value)
   } catch (err) {
     user.value = null
   }
@@ -24,11 +25,31 @@ const loginWithGoogle = () => {
 }
 
 const logout = async () => {
-  await axios.get('http://localhost:5000/auth/logout', {
-    withCredentials: true
-  })
-  user.value = null
-  window.location.reload()
+  try {
+    await axios.get('http://localhost:5000/auth/logout', {
+      withCredentials: true
+    })
+    user.value = null
+    showLoginModal.value = false // ปิด modal ทันที
+
+    await Swal.fire({
+      icon: 'success',
+      title: 'Logged Out',
+      text: 'You have successfully logged out.',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#0ea5e9'
+    })
+
+    router.push('/') // กลับไปหน้า Home
+  } catch (error) {
+    console.error('Logout failed:', error)
+    Swal.fire({
+      icon: 'error',
+      title: 'Logout Failed',
+      text: 'Something went wrong. Please try again.',
+      confirmButtonColor: '#0ea5e9'
+    })
+  }
 }
 
 const handleStartPlanning = () => {
@@ -91,7 +112,7 @@ onMounted(getUser)
           class="ml-4 h-10 w-10 rounded-full overflow-hidden hover:ring-2 hover:ring-sky-300 transition-all flex items-center justify-center"
         >
           <img
-            :src="user.photos[0].value"
+            :src="user.photo"
             alt="User"
             class="w-full h-full object-cover"
           />
@@ -130,12 +151,12 @@ onMounted(getUser)
     </button>
 
     <template v-if="user">
-      <img :src="user.photos[0].value" class="w-24 h-24 rounded-full mx-auto mb-4" />
-      <h2 class="text-xl font-bold">{{ user.displayName }}</h2>
-      <p class="text-gray-600">{{ user.emails[0].value }}</p>
+      <img :src="user.photo" class="w-24 h-24 rounded-full mx-auto mb-4" />
+      <h2 class="text-xl font-bold">{{ user.username }}</h2>
+      <p class="text-gray-600">{{ user.gmail }}</p>
       <button
         @click="logout"
-        class="mt-4 px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+        class="mt-4 px-4 py-2 bg-red-400 text-white rounded hover:bg-red-500"
       >
         Logout
       </button>
