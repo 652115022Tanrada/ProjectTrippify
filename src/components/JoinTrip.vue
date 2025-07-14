@@ -5,10 +5,11 @@ import axios from 'axios'
 import Swal from 'sweetalert2'
 import Tripmap from './Tripmap.vue'
 import draggable from 'vuedraggable'
-
+import ErrorArea from '../error/ErrorArea.vue'
 const route = useRoute()
 const router = useRouter()
 const tripId = route.params.tripId
+const loadError = ref(null)
 
 const tripPlan = ref(null)
 const user = ref(null)
@@ -24,7 +25,6 @@ const getUser = async () => {
     return false
   }
 }
-
 const fetchTrip = async () => {
   try {
     const res = await axios.get(`http://localhost:5000/api/trip/${tripId}`, {
@@ -33,13 +33,26 @@ const fetchTrip = async () => {
     tripPlan.value = res.data
   } catch (err) {
     console.error('Error loading trip:', err)
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: 'Failed to load trip. Please try again later.',
-    })
+
+    if (err.response?.status === 404) {
+      loadError.value = {
+        title: 'Trip Not Found',
+        message: 'The itinerary you are looking for does not exist.',
+      }
+    } else if (err.response?.status === 410) {
+      loadError.value = {
+        title: 'Trip Expired',
+        message: 'This shared trip link has expired.',
+      }
+    } else {
+      loadError.value = {
+        title: 'Failed to Load Trip',
+        message: 'There was a problem loading the trip. Please try again later.',
+      }
+    }
   }
 }
+
 
 onMounted(async () => {
   const loggedIn = await getUser()
@@ -163,6 +176,14 @@ const allLocations = computed(() =>
       <Tripmap :locations="allLocations" />
     </div>
   </div>
+
+  <div v-if="loadError">
+<ErrorArea
+  v-if="loadError"
+  title="Trip Not Found"
+  message="This trip may have expired or does not exist." />
+  </div>
+
 
   <div v-else class="h-screen flex justify-center items-center text-gray-500">
     <p>Loading trip plan...</p>

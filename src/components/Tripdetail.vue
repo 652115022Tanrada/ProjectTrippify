@@ -298,4 +298,10 @@ const allLocations = computed(() => {
   <div v-else class="h-screen flex justify-center items-center text-gray-500">
     <p>Loading trip plan...</p>
   </div>
+    <div v-if="loadError">
+<ErrorArea
+  v-if="loadError"
+  title="Trip Not Found"
+  message="This trip may have expired or does not exist." />
+  </div>
 </template>

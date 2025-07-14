@@ -9,30 +9,7 @@ const store = useStore()
 const router = useRouter()
 const showLoginModal = ref(false)
 const user = ref(null)
-const travelType = ref('') // ตั้งค่าทดสอบ
-// const friendEmails = ref([{ input: '', confirmed: false }]) // เปลี่ยนจาก string เป็น object
-
-// const addFriendEmail = () => {
-//   friendEmails.value.push({ input: '', confirmed: false })
-// }
-
-// const removeFriendEmail = (index) => {
-//   friendEmails.value.splice(index, 1)
-// }
-
-// const confirmAddEmail = (index) => {
-//   const emailObj = friendEmails.value[index]
-//   if (validateEmail(emailObj.input)) {
-//     emailObj.confirmed = true
-//   } else {
-//     alert('กรุณากรอกอีเมลให้ถูกต้อง')
-//   }
-// }
-
-// const validateEmail = (email) => {
-//   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-//   return re.test(email)
-// }
+const travelType = ref('') 
 
 const from = ref('')
 const to = ref('')

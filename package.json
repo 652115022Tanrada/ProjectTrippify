@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-  "dev": "vite --host",
-      "build": "vite build",
+    "dev": "vite --host",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -19,10 +19,14 @@
     "vuex": "^4.1.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^5.2.3",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "@vitest/ui": "^3.2.4",
+    "@vue/test-utils": "^2.4.6",
     "autoprefixer": "^10.4.21",
+    "jsdom": "^26.1.0",
     "postcss": "^8.5.4",
     "tailwindcss": "^4.1.8",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vitest": "^3.2.4"
   }
 }
