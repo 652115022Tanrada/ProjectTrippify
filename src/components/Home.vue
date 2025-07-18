@@ -92,7 +92,7 @@ onMounted(getUser)
 
       <nav class="flex items-center space-x-6 text-gray-800 font-bold font-kanit">
         <button @click="goToPage('/')" class="hover:text-sky-600">Home</button>
-        <button @click="goToPage('/trips')" class="hover:text-sky-600">Planner</button>
+        <button @click="goToPage('/saved-trips')" class="hover:text-sky-600">Planner</button>
         <button @click="goToPage('/expense')" class="hover:text-sky-600">Expense Tracker</button>
         <button @click="goToPage('/review')" class="hover:text-sky-600">Trip Review</button>
 
@@ -179,7 +179,7 @@ onMounted(getUser)
     </div>
     </div>
 
-    <footer class="flex flex-wrap justify-center items-center mt-20 space-x-6">
+    <!-- <footer class="flex flex-wrap justify-center items-center mt-20 space-x-6">
       <div class="text-sm text-gray-600 mt-4">Scratch map</div>
       <div class="text-sm text-gray-600 mt-4">Documents</div>
       <div class="text-sm text-gray-600 mt-4">eSIM</div>
@@ -188,6 +188,6 @@ onMounted(getUser)
       <div class="text-sm text-gray-600 mt-4">Planner</div>
       <div class="text-sm text-gray-600 mt-4">Budget</div>
       <div class="text-sm text-gray-600 mt-4">Journal</div>
-    </footer>
+    </footer> -->
   </div>
 </template>

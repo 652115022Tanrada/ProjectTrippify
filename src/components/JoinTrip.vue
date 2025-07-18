@@ -1,11 +1,13 @@
 <script setup>
 import { onMounted, ref, computed } from 'vue'
+import { useStore } from 'vuex'  // ✅ เพิ่มบรรทัดนี้
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import Swal from 'sweetalert2'
 import Tripmap from './Tripmap.vue'
 import draggable from 'vuedraggable'
-import ErrorArea from '../error/ErrorArea.vue'
+
+const store = useStore() // ✅ และบรรทัดนี้
 const route = useRoute()
 const router = useRouter()
 const tripId = route.params.tripId
@@ -53,6 +55,22 @@ const fetchTrip = async () => {
   }
 }
 
+const fetchTripById = async () => {
+  try {
+    const res = await axios.get(`http://localhost:5000/api/trip/${tripId}`, {
+      withCredentials: true
+    })
+    store.commit('trip/updateTripPlan', res.data)
+  } catch (err) {
+    console.error('Failed to load trip:', err)
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Failed to load trip. Please try again later.'
+    })
+  }
+}
+
 
 onMounted(async () => {
   const loggedIn = await getUser()
@@ -85,6 +103,7 @@ onMounted(async () => {
   }
 
   await fetchTrip() // โหลด trip มาโชว์
+  await fetchTripById()
 })
 
 const transportInfo = computed(() => tripPlan.value?.transport_info || {})
