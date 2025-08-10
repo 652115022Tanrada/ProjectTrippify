@@ -6,6 +6,7 @@ import Tripdetail from './components/Tripdetail.vue'
 import JoinTrip from './components/JoinTrip.vue'
 import SavedTrips from './components/SavedTrips.vue'
 import FullErrorPage from './error/FullErrorPage.vue'
+import Expense from './components/Expense.vue'
 
 const routes = [
   { path: '/', component: Home },
@@ -23,7 +24,9 @@ const routes = [
       title: 'Page Not Found',
       message: 'The page you’re looking for does not exist.'
     }
-  }
+  },
+  { path: '/expense', component: Expense }
+
 ]
 
 const router = createRouter({

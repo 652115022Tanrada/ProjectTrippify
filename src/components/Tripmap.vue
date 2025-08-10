@@ -66,6 +66,45 @@ function addMarkers() {
     });
 }
 
+const isValidCoord = (v) => typeof v === "number" && !isNaN(v);
+
+const buildRouteRequest = (locations) => {
+  if (!Array.isArray(locations) || locations.length < 2) return null;
+
+  // filter and coerce to numbers
+  const sanitized = locations
+    .map((loc) => {
+      const latNum = Number(loc.lat);
+      const lngNum = Number(loc.lng);
+      return {
+        ...loc,
+        lat: isValidCoord(latNum) ? latNum : null,
+        lng: isValidCoord(lngNum) ? lngNum : null,
+      };
+    })
+    .filter((l) => isValidCoord(l.lat) && isValidCoord(l.lng));
+
+  if (sanitized.length < 2) return null;
+
+  const originLoc = sanitized[0];
+  const destLoc = sanitized[sanitized.length - 1];
+
+  const origin = { lat: originLoc.lat, lng: originLoc.lng };
+  const destination = { lat: destLoc.lat, lng: destLoc.lng };
+
+  const waypoints = sanitized.slice(1, -1).map((l) => ({
+    location: { lat: l.lat, lng: l.lng },
+    stopover: true,
+  }));
+
+  return {
+    origin,
+    destination,
+    waypoints,
+    travelMode: google.maps.TravelMode.DRIVING,
+  };
+};
+
 async function calculateDistances() {
   if (!props.locations || props.locations.length < 2) return;
 
@@ -105,6 +144,12 @@ async function calculateDistances() {
 async function drawRoute() {
   if (!props.locations || props.locations.length < 2 || !map.value) return;
 
+  const routeRequest = buildRouteRequest(props.locations);
+  if (!routeRequest) {
+    console.warn("ไม่พอข้อมูลพิกัดที่ถูกต้องสำหรับสร้าง route");
+    return;
+  }
+
   const directionsService = new google.maps.DirectionsService();
   if (!directionsRenderer) {
     directionsRenderer = new google.maps.DirectionsRenderer({
@@ -117,6 +162,8 @@ async function drawRoute() {
     });
     directionsRenderer.setMap(map.value);
   }
+  // Debug payload
+  console.log("Route request payload:", routeRequest);
 
   const origin = props.locations[0];
   const destination = props.locations[props.locations.length - 1];
