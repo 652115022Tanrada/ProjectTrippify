@@ -104,28 +104,41 @@ watch(
 );
 
 const saveTrip = async () => {
-  if (isSavingTrip.value) return; // 🔒 ป้องกันคลิกซ้ำ
+  if (isSavingTrip.value) return;
   isSavingTrip.value = true;
+  
   try {
     if (!tripPlan.value) return;
 
-    console.log("TripPlan:", tripPlan.value);
+    // ตรวจสอบว่าเป็น trip ใหม่หรือมีอยู่แล้ว
+    const isExistingTrip = !!tripPlan.value.tripId;
+    const apiUrl = isExistingTrip 
+      ? `http://localhost:5000/api/trip/${tripPlan.value.tripId}`
+      : 'http://localhost:5000/api/trip/save';
+      
+    const method = isExistingTrip ? 'PUT' : 'POST';
 
-    const response = await axios.post(
-      "http://localhost:5000/api/trip/save",
-      tripPlan.value,
-      { withCredentials: true }
-    );
-
-    store.commit("trip/updateTripPlan", {
-      ...tripPlan.value, // เก็บข้อมูลเดิมไว้
-      tripId: response.data.tripId, // เพิ่ม tripId เข้ามา
+    const response = await axios({
+      method,
+      url: apiUrl,
+      data: tripPlan.value,
+      withCredentials: true
     });
+
+    // ถ้าเป็น trip ใหม่ ให้บันทึก tripId
+    if (!isExistingTrip) {
+      store.commit("trip/updateTripPlan", {
+        ...tripPlan.value,
+        tripId: response.data.tripId
+      });
+    }
 
     Swal.fire({
       icon: "success",
-      title: "Trip saved successfully!",
-      text: "Your travel plan has been saved 😊",
+      title: isExistingTrip ? "Trip updated successfully!" : "Trip saved successfully!",
+      text: isExistingTrip 
+        ? "Your travel plan has been updated 😊" 
+        : "Your travel plan has been saved 😊",
       showCancelButton: true,
       confirmButtonColor: "#0ea5e9",
       cancelButtonColor: "#a0aec0",
@@ -136,8 +149,6 @@ const saveTrip = async () => {
         router.push("/saved-trips");
       }
     });
-
-    console.log("Response:", response.data);
   } catch (error) {
     console.error("Error saving trip:", error);
     Swal.fire({
