@@ -11,31 +11,8 @@ const router = useRouter()
 const showLoginModal = ref(false)
 const user = ref(null)
 const today = new Date().toISOString().split('T')[0]
-const travelType = ref('') // ตั้งค่าทดสอบ
-// const friendEmails = ref([{ input: '', confirmed: false }]) // เปลี่ยนจาก string เป็น object
-
-// const addFriendEmail = () => {
-//   friendEmails.value.push({ input: '', confirmed: false })
-// }
-
-// const removeFriendEmail = (index) => {
-//   friendEmails.value.splice(index, 1)
-// }
-
-// const confirmAddEmail = (index) => {
-//   const emailObj = friendEmails.value[index]
-//   if (validateEmail(emailObj.input)) {
-//     emailObj.confirmed = true
-//   } else {
-//     alert('กรุณากรอกอีเมลให้ถูกต้อง')
-//   }
-// }
-
-// const validateEmail = (email) => {
-//   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-//   return re.test(email)
-// }
-
+const trip_type = ref('')
+const group_size = ref(1)
 const from = ref('')
 const to = ref('')
 const startDate = ref('')
@@ -43,7 +20,6 @@ const endDate = ref('')
 const budget = ref('')
 const currency = ref('THB')
 const tripName = ref('')
-
 const travelPreferences = ref([])
 const travelStyles = [
   'Temple Hopper', 'Cafe', 'Photo Spot Seeker', 'Foodie',
@@ -62,7 +38,8 @@ const submitTrip = async () => {
     budget: budget.value,
     currency: currency.value,
     preferences: travelPreferences.value,
-    travelType: travelType.value
+    trip_type: trip_type.value,
+    group_size: trip_type.value === 'group' ? group_size.value : null
   }
 
   try {
@@ -126,7 +103,7 @@ const logout = async () => {
 }
 
 const validateForm = () => {
-  if (!tripName.value || !from.value || !to.value || !startDate.value || !endDate.value || !budget.value || !travelType.value) {
+  if (!tripName.value || !from.value || !to.value || !startDate.value || !endDate.value || !budget.value || !trip_type.value) {
     Swal.fire({
       icon: 'warning',
       title: 'Incomplete Information',
@@ -168,7 +145,7 @@ onMounted(getUser)
 
 
 <template>
-    <div class="min-h-screen flex flex-col bg-gradient-to-b from-sky-100 via-white to-green-100 text-gray-800">
+  <div class="min-h-screen flex flex-col bg-gradient-to-b from-sky-100 via-white to-green-100 text-gray-800">
     <header class="w-full flex justify-between items-center py-6 px-8">
       <router-link to="/">
         <img src="/logo.png" alt="Logo" class="h-15 w-auto object-contain" />
@@ -181,69 +158,47 @@ onMounted(getUser)
         <router-link to="/review" class="hover:text-sky-600">Trip Review</router-link>
 
         <!-- ปุ่ม Login เฉพาะเมื่อไม่ได้ login -->
-        <button
-          v-if="!user"
-          @click="showLoginModal = true"
-          class="ml-4 bg-sky-400 text-white px-4 py-2 rounded-full hover:bg-sky-600"
-        >
+        <button v-if="!user" @click="showLoginModal = true"
+          class="ml-4 bg-sky-400 text-white px-4 py-2 rounded-full hover:bg-sky-600">
           Login
         </button>
 
         <!-- แสดงโปรไฟล์เล็กๆ เมื่อ login -->
-        <button
-          v-else
-          @click="showLoginModal = true"
-          class="ml-4 h-10 w-10 rounded-full overflow-hidden hover:ring-2 hover:ring-sky-300 transition-all flex items-center justify-center"
-        >
-          <img
-            :src="user.photo"
-            alt="User"
-            class="w-full h-full object-cover"
-          />
+        <button v-else @click="showLoginModal = true"
+          class="ml-4 h-10 w-10 rounded-full overflow-hidden hover:ring-2 hover:ring-sky-300 transition-all flex items-center justify-center">
+          <img :src="user.photo" alt="User" class="w-full h-full object-cover" />
         </button>
       </nav>
     </header>
 
     <!-- Login Modal -->
-    <div
-      v-if="showLoginModal"
-      class="fixed inset-0 flex items-center justify-center z-50 bg-white/20 backdrop-blur-[3px]"
-    >
-    <div class="bg-white p-8 rounded-xl shadow-md text-center space-y-6 w-full max-w-md relative">
-      <button
-        @click="showLoginModal = false"
-        class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-xl"
-      >
-      ✕
-    </button>
+    <div v-if="showLoginModal"
+      class="fixed inset-0 flex items-center justify-center z-50 bg-white/20 backdrop-blur-[3px]">
+      <div class="bg-white p-8 rounded-xl shadow-md text-center space-y-6 w-full max-w-md relative">
+        <button @click="showLoginModal = false"
+          class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-xl">
+          ✕
+        </button>
 
-    <template v-if="user">
-      <img :src="user.photo" class="w-24 h-24 rounded-full mx-auto mb-4" />
-      <h2 class="text-xl font-bold">{{ user.username }}</h2>
-      <p class="text-gray-600">{{ user.gmail }}</p>
-      <button
-        @click="logout"
-        class="mt-4 px-4 py-2 bg-red-400 text-white rounded hover:bg-red-500"
-      >
-        Logout
-      </button>
-    </template>
+        <template v-if="user">
+          <img :src="user.photo" class="w-24 h-24 rounded-full mx-auto mb-4" />
+          <h2 class="text-xl font-bold">{{ user.username }}</h2>
+          <p class="text-gray-600">{{ user.gmail }}</p>
+          <button @click="logout" class="mt-4 px-4 py-2 bg-red-400 text-white rounded hover:bg-red-500">
+            Logout
+          </button>
+        </template>
 
-    <template v-else>
-      <h1 class="text-2xl font-semibold text-gray-800">Welcome to Trippify</h1>
-      <button
-        @click="loginWithGoogle"
-        class="flex items-center justify-center w-full max-w-xs border border-gray-300 rounded-lg px-4 py-2 bg-white hover:bg-gray-50 transition duration-200 shadow-sm mx-auto"
-      >
-        <img
-          src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-          alt="Google icon"
-          class="w-5 h-5 mr-3"
-        />
-        <span class="text-sm font-medium text-gray-700">Continue with Google</span>
-      </button>
-    </template>
-    </div>
+        <template v-else>
+          <h1 class="text-2xl font-semibold text-gray-800">Welcome to Trippify</h1>
+          <button @click="loginWithGoogle"
+            class="flex items-center justify-center w-full max-w-xs border border-gray-300 rounded-lg px-4 py-2 bg-white hover:bg-gray-50 transition duration-200 shadow-sm mx-auto">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google icon"
+              class="w-5 h-5 mr-3" />
+            <span class="text-sm font-medium text-gray-700">Continue with Google</span>
+          </button>
+        </template>
+      </div>
     </div>
 
     <!-- Title -->
@@ -251,242 +206,151 @@ onMounted(getUser)
 
     <!-- Center Wrapper -->
     <div class="flex items-center justify-center">
-    <!-- Form -->
-    <div class="w-full max-w-xl space-y-4">
-      <!-- Trip Name Input -->
-      <div class="flex flex-col gap-4">
-        <input v-model="tripName"
-          type="text"
-          placeholder="Trip Name"
-          class="w-full border border-gray-300 rounded-xl px-5 py-4 text-base text-gray-500 shadow-sm focus:ring-2 focus:ring-green-200 outline-none font-semibold font-kanit"
-        />
-      </div>
+      <!-- Form -->
+      <div class="w-full max-w-xl space-y-4">
+        <!-- Trip Name Input -->
+        <div class="flex flex-col gap-4">
+          <input v-model="tripName" type="text" placeholder="Trip Name"
+            class="w-full border border-gray-300 rounded-xl px-5 py-4 text-base text-gray-500 shadow-sm focus:ring-2 focus:ring-green-200 outline-none font-semibold font-kanit" />
+        </div>
 
-    <!-- Destination Input -->
-    <div class="flex flex-col sm:flex-row gap-4">
-    <!-- From Field with Icon + Dropdown -->
-    <div class="relative w-full">
-      <!-- Icon -->
-      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 ">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-        </svg>
-      </span>
+        <!-- Destination Input -->
+        <div class="flex flex-col sm:flex-row gap-4">
+          <!-- From Field with Icon + Dropdown -->
+          <div class="relative w-full">
+            <!-- Icon -->
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 ">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+              </svg>
+            </span>
 
-      <!-- Select -->
-      <select
-        v-model="from"
-        class="w-full pl-12 border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm text-gray-500 focus:ring-2 focus:ring-green-200 outline-none font-semibold font-kanit"
-      >
-        <option disabled value="">From</option>
-        <option v-for="province in thaiProvinces" :key="province" :value="province">
-          {{ province }}
-        </option>
-      </select>
-    </div>
+            <!-- Select -->
+            <select v-model="from"
+              class="w-full pl-12 border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm text-gray-500 focus:ring-2 focus:ring-green-200 outline-none font-semibold font-kanit">
+              <option disabled value="">From</option>
+              <option v-for="province in thaiProvinces" :key="province" :value="province">
+                {{ province }}
+              </option>
+            </select>
+          </div>
 
-    <!-- To Field with Icon + Dropdown -->
-    <div class="relative w-full">
-      <!-- Icon -->
-      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-        </svg>
-      </span>
+          <!-- To Field with Icon + Dropdown -->
+          <div class="relative w-full">
+            <!-- Icon -->
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+              </svg>
+            </span>
 
-      <!-- Select -->
-      <select
-        v-model="to"
-        class="w-full pl-12 border border-gray-300 rounded-xl px-5 py-4 text-base text-gray-500 shadow-sm focus:ring-2 focus:ring-green-200 outline-none font-semibold font-kanit"
-      >
-        <option disabled value="">To</option>
-        <option v-for="province in thaiProvinces" :key="province" :value="province">
-          {{ province }}
-        </option>
-      </select>
-    </div>
-    </div>
-
-    <!-- Date Inputs -->
-    <div class="flex flex-col sm:flex-row gap-4">
-      <input  v-model="startDate"
-        type="text"
-        placeholder="Start Date"
-        :min="today"
-        class="w-full border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm  text-gray-500 focus:ring-2 focus:ring-green-200 outline-none font-semibold font-kanit"
-        onfocus="this.type='date'"
-        onblur="if(!this.value) this.type='text'"
-      />
-      <input v-model="endDate"
-        type="text"
-        placeholder="End Date"
-        :min="today"
-        class="w-full border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm  text-gray-500 focus:ring-2 focus:ring-green-200 outline-none font-semibold font-kanit"
-        onfocus="this.type='date'"
-        onblur="if(!this.value) this.type='text'"
-      />
-    </div>
-
-    <!-- Budget plan Input with currency dropdown -->
-    <div class="flex flex-col sm:flex-row gap-4">
-      <div class="relative w-full ">
-        <!-- Icon ด้านซ้าย -->
-        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 ">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-            stroke-width="1.5" stroke="currentColor" class="size-6">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-          </svg>
-        </span>
-
-        <!-- Dropdown สกุลเงินด้านขวา -->
-        <select  v-model="currency"
-          class="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent text-sm text-gray-400 outline-none font-semibold font-kanit"
-        >
-          <option value="THB">THB</option>
-          <option value="USD">USD</option>
-        </select>
-
-        <input v-model="budget"
-          type="number"
-          min="0"
-          placeholder="Budget Plan"
-          class="w-full pl-12 pr-28 border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm text-gray-500 focus:ring-2 focus:ring-green-200 outline-none font-semibold font-kanit"
-        />
-      </div>
-    </div>
-
-    <!-- Travel Preferences -->
-      <h3 class="font-semibold mb-5 font-mitr">Choose Your Travel Style:</h3>
-      <div class="w-full max-w-xl grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <label
-          v-for="style in travelStyles"
-          :key="style"
-          class="relative flex items-center justify-center text-base px-4 py-3 rounded-xl border border-gray-300 shadow-sm text-gray-500 cursor-pointer transition-all duration-200 hover:bg-green-50 hover:border-green-300 font-semibold font-kanit"
-          :class="{ 'bg-green-100 border-green-400 text-green-800': travelPreferences.includes(style) }"
-        >
-          <input
-            type="checkbox"
-            :value="style"
-            v-model="travelPreferences"
-            class="appearance-none absolute inset-0 opacity-0 cursor-pointer"
-          />
-          <span class="z-10">{{ style }}</span>
-        </label>
-      </div>
-
-      <div class="flex flex-col md:flex-row gap-4 w-full max-w-xl">
-        <!-- Solo travel -->    
-        <label
-          class="flex items-center w-full md:w-1/2 cursor-pointer  text-base text-gray-500 font-semibold font-kanit"
-          :class="travelType === 'solo' ? '' : ''"
-        >
-        <span class="text-gray-500">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-          </svg>
-        </span>
-          <input
-            type="radio"
-            value="solo"
-            v-model="travelType"
-            class="ml-3 mr-2"
-          />
-          Solo travel
-        </label>
-
-        <!-- Group travel -->
-        <label
-          class="flex items-center w-full md:w-1/2 cursor-pointer text-base text-gray-500 font-semibold font-kanit"
-          :class="travelType === 'group' ? '' : ''"
-        >
-        <span class="text-gray-500">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
-          </svg>
-        </span>
-          <input
-            type="radio"
-            value="group"
-            v-model="travelType"
-            class="ml-3 mr-2"
-          />
-          Group travel
-          <input
-            v-if="travelType === 'group'"
-            type="number"
-            min="1"
-            placeholder="No. of people"
-            class="ml-2 w-30 px-2 text-sm border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-200 outline-none"
-          />
-          </label>
-      </div>
-
-      <!-- <div
-        v-for="(email, index) in friendEmails"
-        :key="index"
-        class="relative w-full"
-      > -->
-        <!-- Input -->
-        <!-- <input
-          v-model="email.input"
-          type="email"
-          :readonly="email.confirmed"
-          placeholder="Enter friend's email"
-          class="w-full pl-4 pr-28 py-2 text-sm border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-200 outline-none"
-        /> -->
-
-        <!-- Div ด้านใน input: ปุ่ม Add และไอคอน -->
-        <!-- <div class="absolute inset-y-0 right-2 flex items-center space-x-2"> -->
-          <!-- Add / Added button -->
-          <!-- <div
-            @click="!email.confirmed && confirmAddEmail(index)"
-            class="text-xs px-2 py-1 rounded-lg cursor-pointer"
-            :class="email.confirmed ? 'text-gray-400 bg-gray-100' : 'text-green-600 hover:bg-green-100'"
-          >
-            {{ email.confirmed ? 'Added' : 'Add' }}
-          </div> -->
-
-          <!-- Trash icon -->
-          <!-- <div
-            v-if="friendEmails.length > 1"
-            @click="removeFriendEmail(index)"
-            class="text-red-500 hover:text-red-700 cursor-pointer text-sm"
-            title="Remove"
-          >
-          <span class="text-gray-500">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-          </svg>
-          </span>
+            <!-- Select -->
+            <select v-model="to"
+              class="w-full pl-12 border border-gray-300 rounded-xl px-5 py-4 text-base text-gray-500 shadow-sm focus:ring-2 focus:ring-green-200 outline-none font-semibold font-kanit">
+              <option disabled value="">To</option>
+              <option v-for="province in thaiProvinces" :key="province" :value="province">
+                {{ province }}
+              </option>
+            </select>
           </div>
         </div>
-      </div> -->
 
-        <!-- Add new email field button -->
-        <!-- <button
-          type="button"
-          @click="addFriendEmail"
-          class="mt-1 w-fit text-sm text-green-600 hover:underline"
-        >
-          + Add Another Friend
-        </button> -->
-      
-        <!-- Start Planning Button -->
-        <div class="text-center pt-4">
-          <!-- <router-link to="/tripdetail">
-            <button class="bg-sky-400 text-white px-8 py-3 rounded-full font-semibold hover:bg-sky-600 transition">Start Planning</button>
-          </router-link> -->
-         
-            <button @click="submitTrip" class="bg-sky-400 text-white px-6 py-3 rounded-full font-semibold hover:bg-sky-600 transition font-kanit">Start Planning</button>
-          
+        <!-- Date Inputs -->
+        <div class="flex flex-col sm:flex-row gap-4">
+          <input v-model="startDate" type="text" placeholder="Start Date" :min="today"
+            class="w-full border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm  text-gray-500 focus:ring-2 focus:ring-green-200 outline-none font-semibold font-kanit"
+            onfocus="this.type='date'" onblur="if(!this.value) this.type='text'" />
+          <input v-model="endDate" type="text" placeholder="End Date" :min="today"
+            class="w-full border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm  text-gray-500 focus:ring-2 focus:ring-green-200 outline-none font-semibold font-kanit"
+            onfocus="this.type='date'" onblur="if(!this.value) this.type='text'" />
         </div>
-    </div>
+
+        <!-- Budget plan Input with currency dropdown -->
+        <div class="flex flex-col sm:flex-row gap-4">
+          <div class="relative w-full ">
+            <!-- Icon ด้านซ้าย -->
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 ">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+            </span>
+
+            <!-- Dropdown สกุลเงินด้านขวา -->
+            <select v-model="currency"
+              class="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent text-sm text-gray-400 outline-none font-semibold font-kanit">
+              <option value="THB">THB</option>
+              <option value="USD">USD</option>
+            </select>
+
+            <input v-model="budget" type="number" min="0" placeholder="Budget Plan"
+              class="w-full pl-12 pr-28 border border-gray-300 rounded-xl px-5 py-4 text-base shadow-sm text-gray-500 focus:ring-2 focus:ring-green-200 outline-none font-semibold font-kanit" />
+          </div>
+        </div>
+
+        <!-- Travel Preferences -->
+        <h3 class="font-semibold mb-5 font-mitr">Choose Your Travel Style:</h3>
+        <div class="w-full max-w-xl grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <label v-for="style in travelStyles" :key="style"
+            class="relative flex items-center justify-center text-base px-4 py-3 rounded-xl border border-gray-300 shadow-sm text-gray-500 cursor-pointer transition-all duration-200 hover:bg-green-50 hover:border-green-300 font-semibold font-kanit"
+            :class="{ 'bg-green-100 border-green-400 text-green-800': travelPreferences.includes(style) }">
+            <input type="checkbox" :value="style" v-model="travelPreferences"
+              class="appearance-none absolute inset-0 opacity-0 cursor-pointer" />
+            <span class="z-10">{{ style }}</span>
+          </label>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-4 w-full max-w-xl">
+          <!-- Solo travel -->
+          <label
+            class="flex items-center w-full md:w-1/2 cursor-pointer  text-base text-gray-500 font-semibold font-kanit"
+            :class="trip_type === 'solo' ? '' : ''">
+            <span class="text-gray-500">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+              </svg>
+            </span>
+            <input type="radio" value="solo" v-model="trip_type" class="ml-3 mr-2" />
+            Solo travel
+          </label>
+
+          <!-- Group travel -->
+          <label
+            class="flex items-center w-full md:w-1/2 cursor-pointer text-base text-gray-500 font-semibold font-kanit"
+            :class="trip_type === 'group' ? '' : ''">
+            <span class="text-gray-500">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+              </svg>
+            </span>
+            <input type="radio" value="group" v-model="trip_type" class="ml-3 mr-2" />
+            Group travel
+            <input v-if="trip_type === 'group'" type="number" v-model="group_size" min="1" placeholder="No. of people"
+              class="ml-2 w-30 px-2 text-sm border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-200 outline-none" />
+
+          </label>
+        </div>
+
+        <div class="text-center pt-4">
+
+
+          <button @click="submitTrip"
+            class="bg-sky-400 text-white px-6 py-3 rounded-full font-semibold hover:bg-sky-600 transition font-kanit">Start
+            Planning</button>
+
+        </div>
+      </div>
     </div>
   </div>
 </template>
-
-
-
