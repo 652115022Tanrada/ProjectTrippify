@@ -29,7 +29,7 @@ const lat = computed(() => firstPlace.value?.lat || firstPlace.value?.latitude);
 const lng = computed(() => firstPlace.value?.lng || firstPlace.value?.longitude);
 const selectedLocationIndex = ref(0); // หรือ null ถ้ายังไม่มีค่า
 const selectedDay = ref(0); // ถ้าคุณกำลังใช้วันที่แรก
-
+const trip = ref(null);
 const isSavingTrip = ref(false);
 const nearbyPlaces = ref([]);
 const loadError = ref('')
@@ -102,11 +102,10 @@ watch(
   },
   { deep: true }
 );
-
 const saveTrip = async () => {
   if (isSavingTrip.value) return;
   isSavingTrip.value = true;
-  
+
   try {
     if (!tripPlan.value) return;
 
@@ -126,54 +125,39 @@ const saveTrip = async () => {
     });
 
     // ถ้าเป็น trip ใหม่ ให้บันทึก tripId
+    let tripId = tripPlan.value.tripId;
     if (!isExistingTrip) {
+      tripId = response.data.tripId;
       store.commit("trip/updateTripPlan", {
         ...tripPlan.value,
-        tripId: response.data.tripId
+        tripId
       });
     }
 
-    Swal.fire({
-      icon: "success",
-      title: isExistingTrip ? "Trip updated successfully!" : "Trip saved successfully!",
-      text: isExistingTrip 
-        ? "Your travel plan has been updated 😊" 
-        : "Your travel plan has been saved 😊",
-      showCancelButton: true,
-      confirmButtonColor: "#0ea5e9",
-      cancelButtonColor: "#a0aec0",
-      confirmButtonText: "Go to Saved Trips",
-      cancelButtonText: "Close",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        router.push("/saved-trips");
-      }
-    });
-  } catch (error) {
-    console.error("Error saving trip:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Oops!",
-      text: "There was a problem saving your trip.",
-    });
+    // redirect ไปหน้า trip detail
+    router.push(`/trip/${tripId}`);
+
+  } catch (err) {
+    console.error('Save trip failed', err);
   } finally {
     isSavingTrip.value = false;
   }
 };
 
-const generateInviteLink = () => {
-  const tripId = tripPlan.value?.tripId;
-  if (!tripId) {
-    Swal.fire({
-      icon: "warning",
-      title: "Trip not saved yet!",
-      text: "Please save your trip before sharing.",
-    });
-    return;
-  }
-  inviteLink.value = `${window.location.origin}/trip/${tripId}/join`;
-  console.log("Generated invite link:", inviteLink.value);
-};
+
+// const generateInviteLink = () => {
+//   const tripId = tripPlan.value?.tripId;
+//   if (!tripId) {
+//     Swal.fire({
+//       icon: "warning",
+//       title: "Trip not saved yet!",
+//       text: "Please save your trip before sharing.",
+//     });
+//     return;
+//   }
+//   inviteLink.value = `${window.location.origin}/trip/${tripId}/join`;
+//   console.log("Generated invite link:", inviteLink.value);
+// };
 
 const copyToClipboard = () => {
   navigator.clipboard.writeText(inviteLink.value);
@@ -396,12 +380,19 @@ const addToPlan = (place) => {
 // });
 
 // โหลด user และ nearby places ตอน mount
-onMounted(() => {
-  getUser();
-  if (currentTab.value === "nearby") {
-    fetchNearby();
+onMounted(async () => {
+  if (route.params.tripId) {
+    // fetch จาก DB
+    const { data } = await axios.get(`http://localhost:5000/api/trip/${route.params.tripId}`, { withCredentials: true });
+    store.commit("trip/updateTripPlan", data);
+    trip.value = data;
+  } else {
+    // ถ้ายัง generate ใหม่ ๆ ใช้ local state หรือ store
+    trip.value = store.state.trip.tripPlan; // หรือ leave empty
   }
 });
+
+
 </script>
 
 <template>
@@ -710,12 +701,12 @@ onMounted(() => {
             >
               <i class="fa-solid fa-floppy-disk mr-2"></i> Save Trip
             </button>
-            <button
+            <!-- <button
               @click="generateInviteLink"
               class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-6 rounded-full shadow-md transition"
             >
               Share
-            </button>
+            </button> -->
           </div>
 
           <div v-if="inviteLink" class="text-right text-sm mt-6">
