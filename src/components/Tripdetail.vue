@@ -104,45 +104,53 @@ watch(
 );
 const saveTrip = async () => {
   if (isSavingTrip.value) return;
+  if (!tripPlan.value) return;
+
   isSavingTrip.value = true;
 
   try {
-    if (!tripPlan.value) return;
+    const payload = { ...tripPlan.value }; // copy object
+    // ถ้ามี tripId อยู่แล้ว → อัปเดต
+    // ถ้าไม่มี → backend จะสร้างใหม่
+    console.log("Saving trip with ID:", payload.tripId || "(new trip)");
 
-    // ตรวจสอบว่าเป็น trip ใหม่หรือมีอยู่แล้ว
-    const isExistingTrip = !!tripPlan.value.tripId;
-    const apiUrl = isExistingTrip 
-      ? `http://localhost:5000/api/trip/${tripPlan.value.tripId}`
-      : 'http://localhost:5000/api/trip/save';
-      
-    const method = isExistingTrip ? 'PUT' : 'POST';
+    const response = await axios.post(
+      "http://localhost:5000/api/trip/saveOrUpdate",
+      payload,
+      { withCredentials: true }
+    );
 
-    const response = await axios({
-      method,
-      url: apiUrl,
-      data: tripPlan.value,
-      withCredentials: true
+    // response ต้อง return object ที่มี tripId
+    const savedTrip = response.data;
+    console.log("Saved trip:", savedTrip);
+
+    // อัปเดต Vuex ให้ตรงกับ backend response
+    store.commit("trip/updateTripPlan", savedTrip);
+
+    // อัปเดต local tripId
+    trip.value = savedTrip;
+
+    router.push(`/trip/${savedTrip.tripId}`);
+    Swal.fire({
+      icon: "success",
+      title: "Trip saved!",
+      text: "Your trip plan has been saved successfully.",
+      timer: 1500,
+      showConfirmButton: false,
     });
-
-    // ถ้าเป็น trip ใหม่ ให้บันทึก tripId
-    let tripId = tripPlan.value.tripId;
-    if (!isExistingTrip) {
-      tripId = response.data.tripId;
-      store.commit("trip/updateTripPlan", {
-        ...tripPlan.value,
-        tripId
-      });
-    }
-
-    // redirect ไปหน้า trip detail
-    router.push(`/trip/${tripId}`);
-
   } catch (err) {
-    console.error('Save trip failed', err);
+    console.error("Save trip failed", err);
+    Swal.fire({
+      icon: "error",
+      title: "Save Failed",
+      text: "Something went wrong. Please try again.",
+      confirmButtonColor: "#0ea5e9",
+    });
   } finally {
     isSavingTrip.value = false;
   }
 };
+
 
 
 // const generateInviteLink = () => {
@@ -382,17 +390,17 @@ const addToPlan = (place) => {
 // โหลด user และ nearby places ตอน mount
 onMounted(async () => {
   if (route.params.tripId) {
-    // fetch จาก DB
-    const { data } = await axios.get(`http://localhost:5000/api/trip/${route.params.tripId}`, { withCredentials: true });
+    const { data } = await axios.get(
+      `http://localhost:5000/api/trip/${route.params.tripId}`, 
+      { withCredentials: true }
+    );
+    // อัปเดต Vuex tripPlan ให้ครบทุก field รวม tripId
     store.commit("trip/updateTripPlan", data);
     trip.value = data;
-  } else {
-    // ถ้ายัง generate ใหม่ ๆ ใช้ local state หรือ store
-    trip.value = store.state.trip.tripPlan; // หรือ leave empty
+
+    console.log("Loaded trip plan:", data);  // <<< ตรวจสอบ tripId
   }
 });
-
-
 </script>
 
 <template>
