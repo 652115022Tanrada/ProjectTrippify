@@ -13,7 +13,8 @@ const router = useRouter();
 const user = ref(null);
 const today = new Date().toISOString().split("T")[0];
 const travelType = ref("");
-
+const trip_type = ref('')
+const group_size = ref(1)
 const from = ref("");
 const to = ref("");
 const startDate = ref("");
@@ -50,6 +51,8 @@ const submitTrip = async () => {
     budget: budget.value,
     currency: currency.value,
     preferences: travelPreferences.value,
+     trip_type: trip_type.value,
+    group_size: trip_type.value === 'group' ? group_size.value : null
   };
 
   try {
@@ -95,7 +98,8 @@ const validateForm = () => {
     !to.value ||
     !startDate.value ||
     !endDate.value ||
-    !budget.value
+    !budget.value ||
+    !trip_type.value
   ) {
     Swal.fire({
       icon: "warning",
@@ -400,6 +404,7 @@ onMounted(() => {
             Start Planning
           </button>
         </div>
+      </div>
       </div>
     </div>
     <!-- Loading Overlay with Logo -->

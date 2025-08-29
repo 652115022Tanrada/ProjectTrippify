@@ -25,11 +25,18 @@ const getUser = async () => {
 const fetchSavedTrips = async () => {
   try {
     const res = await axios.get('http://localhost:5000/api/trip/mine', { withCredentials: true })
-    savedTrips.value = res.data
+    console.log('Fetched trips:', res.data) // 🔍 debug
+    savedTrips.value = Array.isArray(res.data) ? res.data : []
   } catch (err) {
     console.error('Failed to fetch saved trips:', err)
+    savedTrips.value = []
   }
 }
+
+onMounted(async () => {
+  await getUser()
+  await fetchSavedTrips()
+})
 
 const loginWithGoogle = () => {
   window.location.href = 'http://localhost:5000/auth/google'

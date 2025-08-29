@@ -55,12 +55,14 @@ const getUser = async () => {
 
 const saveTrip = async () => {
   if (isSavingTrip.value) return;
+  if (!tripPlan.value) return;
+
   isSavingTrip.value = true;
   try {
     if (!tripPlan.value) return;
     const response = await axios.post(
-      "http://localhost:5000/api/trip/save",
-      tripPlan.value,
+      "http://localhost:5000/api/trip/saveOrUpdate",
+      payload,
       { withCredentials: true }
     );
 
@@ -69,6 +71,17 @@ const saveTrip = async () => {
       tripId: response.data.tripId,
     });
 
+    // response ต้อง return object ที่มี tripId
+    const savedTrip = response.data;
+    console.log("Saved trip:", savedTrip);
+
+    // อัปเดต Vuex ให้ตรงกับ backend response
+    store.commit("trip/updateTripPlan", savedTrip);
+
+    // อัปเดต local tripId
+    trip.value = savedTrip;
+const tripId = savedTrip.tripId || savedTrip.id; 
+    router.push(`/trip/${savedTrip.tripId}`);
     Swal.fire({
       icon: "success",
       title: "Trip saved successfully!",
@@ -87,8 +100,9 @@ const saveTrip = async () => {
     console.error("Error saving trip:", error);
     Swal.fire({
       icon: "error",
-      title: "Oops!",
-      text: "There was a problem saving your trip.",
+      title: "Save Failed",
+      text: "Something went wrong. Please try again.",
+      confirmButtonColor: "#0ea5e9",
     });
   } finally {
     isSavingTrip.value = false;
@@ -280,18 +294,39 @@ watch(
   { deep: true }
 );
 
-// --- On mounted ---
 onMounted(async () => {
-  await getUser();
-  await fetchTripDetail();
-  if (
-    tripPlan.value?.days?.length > 0 &&
-    tripPlan.value.days[0].locations?.length > 0
-  ) {
-    const { lat, lng } = tripPlan.value.days[0].locations[0];
-    await fetchNearby(lat, lng, selectedCategory.value);
+  try {
+    // 1. ดึง user ก่อน
+    await getUser();
+
+    // 2. โหลด trip plan ถ้ามี tripId
+    if (route.params.tripId) {
+      const { data } = await axios.get(
+        `http://localhost:5000/api/trip/${route.params.tripId}`,
+        { withCredentials: true }
+      );
+      // อัปเดต Vuex tripPlan และ local trip
+      store.commit("trip/updateTripPlan", data);
+      trip.value = data;
+      console.log("Loaded trip plan:", data);
+    }
+
+    // 3. ดึงรายละเอียด trip เพิ่มเติม
+    await fetchTripDetail();
+
+    // 4. ถ้ามี location แรก ให้ดึง nearby places
+    if (
+      tripPlan.value?.days?.length > 0 &&
+      tripPlan.value.days[0].locations?.length > 0
+    ) {
+      const { lat, lng } = tripPlan.value.days[0].locations[0];
+      await fetchNearby(lat, lng, selectedCategory.value);
+    }
+  } catch (err) {
+    console.error("Error in onMounted:", err);
   }
 });
+
 </script>
 
 <template>
