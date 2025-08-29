@@ -129,7 +129,7 @@ const saveTrip = async () => {
 
     // อัปเดต local tripId
     trip.value = savedTrip;
-
+const tripId = savedTrip.tripId || savedTrip.id; 
     router.push(`/trip/${savedTrip.tripId}`);
     Swal.fire({
       icon: "success",
@@ -387,18 +387,25 @@ const addToPlan = (place) => {
 //   }
 // });
 
-// โหลด user และ nearby places ตอน mount
+// โหลด trip plan ถ้ามี tripId ใน route
 onMounted(async () => {
-  if (route.params.tripId) {
-    const { data } = await axios.get(
-      `http://localhost:5000/api/trip/${route.params.tripId}`, 
-      { withCredentials: true }
-    );
-    // อัปเดต Vuex tripPlan ให้ครบทุก field รวม tripId
-    store.commit("trip/updateTripPlan", data);
-    trip.value = data;
+  await getUser(); // ดึง user ก่อน
 
-    console.log("Loaded trip plan:", data);  // <<< ตรวจสอบ tripId
+  if (route.params.tripId) {
+    try {
+      const { data } = await axios.get(
+        `http://localhost:5000/api/trip/${route.params.tripId}`,
+        { withCredentials: true }
+      );
+
+      // อัปเดต Vuex tripPlan ให้ครบทุก field รวม tripId
+      store.commit("trip/updateTripPlan", data);
+      trip.value = data;
+
+      console.log("Loaded trip plan:", data); // ตรวจสอบ tripId
+    } catch (err) {
+      console.error("Failed to load trip plan", err);
+    }
   }
 });
 </script>

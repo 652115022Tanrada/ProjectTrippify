@@ -21,7 +21,7 @@ function loadGoogleMapsScript() {
     }
 
     const script = document.createElement('script');
-    script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyAlVzD6P1wGxozJWLhwXhYGwd1E9xLNshk';
+    script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyB7rywYWQGBxKypuwi-7-R1mdotjmhZQWA';
     script.async = true;
     script.defer = true;
     script.onload = resolve;
