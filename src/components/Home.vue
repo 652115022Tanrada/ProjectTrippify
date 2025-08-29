@@ -7,6 +7,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const showLoginModal = ref(false)
 const user = ref(null)
+const isLoading = ref(false) 
 
 const getUser = async () => {
   try {
@@ -52,23 +53,9 @@ const logout = async () => {
   }
 }
 
-const handleStartPlanning = () => {
-  if (user.value) {
-    router.push('/planner')
-  } else {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Please log in first',
-      text: 'You need to log in to start planning your trip.',
-      confirmButtonText: 'OK',
-      confirmButtonColor: '#0ea5e9'
-    })
-  }
-}
-const goToPage = (path) => {
-  if (user.value) {
-    router.push(path)
-  } else {
+// ฟังก์ชันสำหรับเปิด overlay ก่อนไปหน้าอื่น
+const navigateWithLoading = async (path) => {
+  if (!user.value) {
     Swal.fire({
       icon: 'warning',
       title: 'Please log in first',
@@ -76,40 +63,47 @@ const goToPage = (path) => {
       confirmButtonText: 'OK',
       confirmButtonColor: '#0ea5e9'
     })
+    return
   }
+
+  isLoading.value = true
+  setTimeout(() => {
+    router.push(path)
+    isLoading.value = false
+  }, 1000)
 }
 
+// ใช้ navigateWithLoading ทั้งคู่
+const handleStartPlanning = () => {
+  navigateWithLoading('/planner')
+}
+
+const goToPage = (path) => {
+  navigateWithLoading(path)
+}
 
 onMounted(getUser)
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-gradient-to-b from-sky-100 via-white to-green-100 text-gray-800">
-    <header class="w-full flex justify-between items-center py-6 px-8">
+  <div class="min-h-screen flex flex-col bg-[#F0DE36]">
+    <header class="w-full flex justify-between items-center py-4 px-8 fixed top-0 left-0 bg-[#F0DE36] z-50">
       <router-link to="/">
-        <img src="/logo.png" alt="Logo" class="h-15 w-auto object-contain" />
+        <img src="/1.png" alt="Logo" class="h-25 w-auto object-contain" />
       </router-link>
 
-      <nav class="flex items-center space-x-6 text-gray-800 font-bold font-kanit">
-        <button @click="goToPage('/')" class="hover:text-sky-600">Home</button>
-        <button @click="goToPage('/saved-trips')" class="hover:text-sky-600">Planner</button>
-        <button @click="goToPage('/expense')" class="hover:text-sky-600">Expense Tracker</button>
-        <button @click="goToPage('/review')" class="hover:text-sky-600">Trip Review</button>
-
-        <!-- ปุ่ม Login เฉพาะเมื่อไม่ได้ login -->
+      <nav class="flex items-center space-x-6 text-[#0D1282] font-bold font-kanit">
         <button
           v-if="!user"
           @click="showLoginModal = true"
-          class="ml-4 bg-sky-400 text-white px-4 py-2 rounded-full hover:bg-sky-600"
+          class="ml-4 bg-[#0D1282] text-[#EEEDED] px-4 py-2 rounded-full hover:bg-[#D71313] transition"
         >
           Login
         </button>
-
-        <!-- แสดงโปรไฟล์เล็กๆ เมื่อ login -->
         <button
           v-else
           @click="showLoginModal = true"
-          class="ml-4 h-10 w-10 rounded-full overflow-hidden hover:ring-2 hover:ring-sky-300 transition-all flex items-center justify-center"
+          class="ml-4 h-10 w-10 rounded-full overflow-hidden hover:ring-2 hover:bg-[#D71313] transition-all flex items-center justify-center"
         >
           <img
             :src="user.photo"
@@ -120,22 +114,49 @@ onMounted(getUser)
       </nav>
     </header>
 
-    <main class="flex flex-col items-center text-center mt-10">
-      <h1 class="text-4xl md:text-5xl font-bold text-sky-400 mb-3 font-mitr">
-        One platform for all your<br />
-        <span class="text-gray-900">travel planning needs</span>
+    <main class="flex flex-col md:flex-row items-center justify-center h-full flex-grow p-4 md:p-8 pt-28 m-4 md:m-8">
+    <div class="md:w-1/2 text-center md:text-left md:pr-10">
+      <h1 class="text-4xl md:text-5xl font-bold text-[#000000] mb-3 font-kanit">
+        One platform for all your<br />travel planning needs
       </h1>
-      <p class="text-gray-700 max-w-xl mt-4 mb-6 font-kanit">
-        Plan trips effortlessly with Trippify, your all-in-one travel assistant.
-        From smart itineraries to shared expense tracking, everything your group needs in one place.
+      <p class="text-[#000000] max-w-xl mt-4 mb-6 font-kanit">
+        Plan trips effortlessly with Trippify, your all-in-one travel assistant.<br> 
+        From smart itineraries to shared expense tracking, everything <br>
+        your group needs in one place.
       </p>
-      <button
-        @click="handleStartPlanning"
-        class="bg-sky-400 text-white px-6 py-3 rounded-full font-semibold hover:bg-sky-600 transition font-kanit"
-      >
-        Start Planning
-      </button>
-    </main>
+
+      <!-- container ปุ่มแบบ flex -->
+      <div class="flex flex-wrap gap-4 justify-center md:justify-start">
+        <button 
+          @click="handleStartPlanning" 
+          class="group flex items-center gap-2 bg-[#0D1282] text-white px-6 py-3 rounded-full font-semibold hover:bg-[#D71313] transition font-kanit"
+        >
+          Start Trip Planning 
+          <svg xmlns="http://www.w3.org/2000/svg" 
+              fill="none" viewBox="0 0 24 24" stroke-width="1.5" 
+              stroke="currentColor" 
+              class="size-6 transform transition-transform duration-300 group-hover:translate-x-1">
+            <path stroke-linecap="round" stroke-linejoin="round" 
+                  d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+          </svg>
+        </button>
+
+        <button 
+          @click="goToPage('/saved-trips')"
+          class="group flex items-center gap-2 bg-[#EEEDED] text-[#0D1282] px-6 py-3 rounded-full font-semibold hover:bg-gray-300 transition font-kanit"
+        >
+        Your Trips
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="md:w-1/2 mt-10 md:mt-0 flex justify-center items-center">
+      <img src="/car.png" alt="Travel illustration" class="w-full max-w-md animate-drive"/>
+    </div>
+  </main>
 
     <!-- Login Modal -->
     <div
@@ -178,16 +199,39 @@ onMounted(getUser)
     </template>
     </div>
     </div>
-
-    <!-- <footer class="flex flex-wrap justify-center items-center mt-20 space-x-6">
-      <div class="text-sm text-gray-600 mt-4">Scratch map</div>
-      <div class="text-sm text-gray-600 mt-4">Documents</div>
-      <div class="text-sm text-gray-600 mt-4">eSIM</div>
-      <div class="text-sm text-gray-600 mt-4">Profile</div>
-      <div class="text-sm text-gray-600 mt-4">Checklist</div>
-      <div class="text-sm text-gray-600 mt-4">Planner</div>
-      <div class="text-sm text-gray-600 mt-4">Budget</div>
-      <div class="text-sm text-gray-600 mt-4">Journal</div>
-    </footer> -->
+    <!-- Loading Overlay -->
+    <div
+      v-if="isLoading"
+      class="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md pointer-events-none"
+    >
+      <div class="flex flex-col items-center gap-4">
+        <img src="/1.png" alt="Logo" class="w-24 h-24 bounce" />
+        <p class="text-[#000000] font-bold text-lg animate-pulse">
+          Loading...
+        </p>
+      </div>
+    </div>
   </div>
 </template>
+<style>
+@keyframes drive {
+  0%   { transform: translateY(0) rotate(0deg); }
+  25%  { transform: translateY(-2px) rotate(-1deg); }
+  50%  { transform: translateY(0) rotate(0deg); }
+  75%  { transform: translateY(2px) rotate(1deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+
+.animate-drive {
+  animation: drive 0.7s infinite linear;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+.bounce {
+  animation: bounce 1s ease-in-out infinite;
+}
+
+</style>

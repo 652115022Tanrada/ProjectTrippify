@@ -1,11 +1,10 @@
 <script setup>
-import { onMounted, watch, ref } from 'vue';
+import { toRefs,onMounted, watch, ref } from 'vue';
 
 const props = defineProps({
-  locations: {
-    type: Array,
-    default: () => [],
-  },
+  locations: { type: Array, default: () => [] },
+  nearby: { type: Array, default: () => [] },
+  highlighted: { type: Object, default: null }
 });
 
 const map = ref(null);
@@ -21,7 +20,7 @@ function loadGoogleMapsScript() {
     }
 
     const script = document.createElement('script');
-    script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyAlVzD6P1wGxozJWLhwXhYGwd1E9xLNshk';
+    script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyAPXZbbrz75ECNK3VD77E9CZULbebHbe9I';
     script.async = true;
     script.defer = true;
     script.onload = resolve;
@@ -210,6 +209,17 @@ watch(() => props.locations, async (newLocs) => {
   addMarkers();
   await calculateDistances();
   await drawRoute(); 
+});
+
+// ตัวอย่าง: เมื่อ nearby/highlighted เปลี่ยน ให้รีเรนเดอร์ marker ชุดพิเศษ
+watch(() => props.nearby, () => {
+  // add/remove nearby markers (ใช้สี/ไอคอนต่างจากของแผน)
+});
+
+watch(() => props.highlighted, (p) => {
+  if (p) {
+    // flyTo(p.lat, p.lng) หรือเปิด popup ที่ marker ของ p
+  }
 });
 </script>
 

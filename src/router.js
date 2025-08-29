@@ -7,14 +7,19 @@ import JoinTrip from './components/JoinTrip.vue'
 import SavedTrips from './components/SavedTrips.vue'
 import FullErrorPage from './error/FullErrorPage.vue'
 import Expense from './components/Expense.vue'
+import Review from './components/Review.vue'
+import SavedTripReview from './components/SavedTripReview.vue'
 
 const routes = [
   { path: '/', component: Home },
   { path: '/planner', component: Planner },
   { path: '/tripdetail', component: Tripdetail },
-  { path: '/trip/:tripId', component: Tripdetail }, // ✅ เพิ่มเส้นทางนี้
+  { path: '/trip/:tripId', component: Tripdetail }, 
   { path: '/saved-trips', component: SavedTrips },
+  { path: '/saved-trip-review', component: SavedTripReview },
   { path: '/trip/:tripId/join', component: JoinTrip },
+  { path: '/expense', component: Expense },
+  { path: '/trip/:tripId/review', component: Review},
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',

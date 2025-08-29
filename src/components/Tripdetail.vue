@@ -8,34 +8,39 @@ import draggable from "vuedraggable";
 import Swal from "sweetalert2";
 import { useRoute } from "vue-router";
 import { ref } from "vue";
+import Header from "./Header.vue";
 
 const route = useRoute();
 const router = useRouter();
 const store = useStore();
 
-const showLoginModal = ref(false);
+// const showLoginModal = ref(false);
 const user = ref(null);
 const tripId = route.params.tripId;
-// ดึงแผนทริปจาก Vuex store
-const tripPlan = computed(() => store.state.trip.tripPlan);
+
+const tripPlan = computed(() => store.state.trip.tripPlan || { days: [] });
 const transportInfo = computed(() => tripPlan.value?.transport_info || null);
 const tripName = computed(() => tripPlan.value?.tripName || "My Trip");
 
-// Tab ปัจจุบัน ระหว่าง destinations กับ nearby
-const currentTab = ref("destinations"); // หรือ 'nearby'
-// กำหนดตำแหน่งแรกของวันแรกสำหรับดึงพิกัดสถานที่ใกล้เคียง
-const firstPlace = computed(() => tripPlan.value?.days?.[0]?.locations?.[0] || null);
-const lat = computed(() => firstPlace.value?.lat || firstPlace.value?.latitude);
-const lng = computed(() => firstPlace.value?.lng || firstPlace.value?.longitude);
-const selectedLocationIndex = ref(0); // หรือ null ถ้ายังไม่มีค่า
-const selectedDay = ref(0); // ถ้าคุณกำลังใช้วันที่แรก
-
-const isSavingTrip = ref(false);
-const nearbyPlaces = ref([]);
-const loadError = ref('')
+const loadError = ref("");
 const inviteLink = ref("");
-const isEditing = ref(false); 
+const showEditControls = ref(false);
+const isSavingTrip = ref(false);
 
+// Nearby state
+const nearbyPlaces = ref([]);
+const allLocations = computed(() => {
+  return tripPlan.value?.days?.flatMap((day) => day.locations || []) || [];
+});
+const selectedDayIndex = ref(0); // วันที่กำลังดู
+const loadingNearby = ref(false);
+const selectedCategory = ref("cafe"); // เพิ่มตัวแปรสำหรับ category ที่เลือก
+
+// --- Computed ---
+const selectedDay = computed(
+  () => tripPlan.value?.days[selectedDayIndex.value] || null
+);
+const activeTab = ref("plan");
 
 const getUser = async () => {
   try {
@@ -43,74 +48,16 @@ const getUser = async () => {
       withCredentials: true,
     });
     user.value = res.data;
-    console.log("User data:", user.value);
   } catch (err) {
     user.value = null;
   }
 };
 
-const loginWithGoogle = () => {
-  window.location.href = "http://localhost:5000/auth/google";
-};
-
-const logout = async () => {
-  try {
-    await axios.get("http://localhost:5000/auth/logout", {
-      withCredentials: true,
-    });
-    user.value = null;
-    showLoginModal.value = false; // ปิด modal ทันที
-
-    await Swal.fire({
-      icon: "success",
-      title: "Logged Out",
-      text: "You have successfully logged out.",
-      confirmButtonText: "OK",
-      confirmButtonColor: "#0ea5e9",
-    });
-
-    router.push("/"); // กลับไปหน้า Home
-  } catch (error) {
-    console.error("Logout failed:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Logout Failed",
-      text: "Something went wrong. Please try again.",
-      confirmButtonColor: "#0ea5e9",
-    });
-  }
-};
-
-const goToPage = (path) => {
-  if (user.value) {
-    router.push(path);
-  } else {
-    Swal.fire({
-      icon: "warning",
-      title: "Please log in first",
-      text: "You need to log in to access this page.",
-      confirmButtonText: "OK",
-      confirmButtonColor: "#0ea5e9",
-    });
-  }
-};
-
-watch(
-  () => tripPlan.value,
-  (newVal) => {
-    store.commit("trip/updateTripPlan", newVal);
-  },
-  { deep: true }
-);
-
 const saveTrip = async () => {
-  if (isSavingTrip.value) return; // 🔒 ป้องกันคลิกซ้ำ
+  if (isSavingTrip.value) return;
   isSavingTrip.value = true;
   try {
     if (!tripPlan.value) return;
-
-    console.log("TripPlan:", tripPlan.value);
-
     const response = await axios.post(
       "http://localhost:5000/api/trip/save",
       tripPlan.value,
@@ -118,8 +65,8 @@ const saveTrip = async () => {
     );
 
     store.commit("trip/updateTripPlan", {
-      ...tripPlan.value, // เก็บข้อมูลเดิมไว้
-      tripId: response.data.tripId, // เพิ่ม tripId เข้ามา
+      ...tripPlan.value,
+      tripId: response.data.tripId,
     });
 
     Swal.fire({
@@ -136,8 +83,6 @@ const saveTrip = async () => {
         router.push("/saved-trips");
       }
     });
-
-    console.log("Response:", response.data);
   } catch (error) {
     console.error("Error saving trip:", error);
     Swal.fire({
@@ -161,7 +106,6 @@ const generateInviteLink = () => {
     return;
   }
   inviteLink.value = `${window.location.origin}/trip/${tripId}/join`;
-  console.log("Generated invite link:", inviteLink.value);
 };
 
 const copyToClipboard = () => {
@@ -176,9 +120,8 @@ const copyToClipboard = () => {
 };
 
 const modifyTrip = () => {
-  isEditing.value = !isEditing.value;
+  showEditControls.value = true; // กดปุ่มแล้วเปิด editable
 };
-
 
 const cancelTrip = () => {
   Swal.fire({
@@ -194,7 +137,6 @@ const cancelTrip = () => {
     if (result.isConfirmed) {
       store.commit("trip/clearTripPlan");
       router.push("/");
-
       Swal.fire({
         icon: "info",
         title: "Trip cancelled",
@@ -206,7 +148,6 @@ const cancelTrip = () => {
   });
 };
 
-// ฟังก์ชันลบสถานที่จากวันนั้น ๆ
 const removeLocation = (dayIndex, locIndex) => {
   Swal.fire({
     title: "Are you sure?",
@@ -220,10 +161,8 @@ const removeLocation = (dayIndex, locIndex) => {
   }).then((result) => {
     if (result.isConfirmed) {
       tripPlan.value.days[dayIndex].locations.splice(locIndex, 1);
-      //คำนวณค่าใช้จ่ายหลังลบ
       recalculateCosts();
       store.commit("trip/updateTripPlan", tripPlan.value);
-
       Swal.fire({
         title: "Removed!",
         text: "The location has been removed from your trip plan.",
@@ -237,561 +176,573 @@ const removeLocation = (dayIndex, locIndex) => {
 
 const recalculateCosts = () => {
   let totalTripCost = 0;
-
   tripPlan.value.days.forEach((day) => {
     let dayCost = 0;
-
     if (day.locations && day.locations.length > 0) {
       day.locations.forEach((loc) => {
         const cost = parseFloat(loc.estimated_cost) || 0;
         dayCost += cost;
       });
     }
-
     day.total_day_cost = dayCost;
     totalTripCost += dayCost;
   });
-
   tripPlan.value.total_trip_cost = totalTripCost;
 };
 
-const allLocations = computed(() => {
-  return (
-    tripPlan.value?.days
-      ?.flatMap((day) =>
-        (day.locations || []).map((loc) => {
-          const latNum = Number(loc.lat ?? loc.latitude);
-          const lngNum = Number(loc.lng ?? loc.longitude);
-          return {
-            ...loc,
-            name: typeof loc.name === "string" ? loc.name : "Unknown Place",
-            lat: !isNaN(latNum) ? latNum : null,
-            lng: !isNaN(lngNum) ? lngNum : null,
-          };
-        })
-      )
-      .filter((l) => l.lat !== null && l.lng !== null) || []
-  );
-});
-
-// ฟังก์ชันช่วยโหลด nearby โดยใช้พิกัดปัจจุบัน (จาก firstPlace หรือ selected location)
-const fetchNearby = async () => {
-  let useLat = null;
-  let useLng = null;
-
-  // ถ้ามี selected location ของวันนั้น ให้ใช้
-  const dayData = tripPlan.value?.days?.[selectedDay.value];
-  if (
-    dayData &&
-    Array.isArray(dayData.locations) &&
-    dayData.locations.length > selectedLocationIndex.value
-  ) {
-    const currentLocation = dayData.locations[selectedLocationIndex.value];
-    if (currentLocation?.lat && currentLocation?.lng) {
-      useLat = currentLocation.lat;
-      useLng = currentLocation.lng;
-    }
-  }
-
-  // ถ้าไม่มีก็ fallback ไปที่ firstPlace
-  if (!useLat || !useLng) {
-    if (lat.value && lng.value) {
-      useLat = lat.value;
-      useLng = lng.value;
-    }
-  }
-
-  if (useLat && useLng) {
-    await fetchNearbyPlaces(useLat, useLng);
-  } else {
-    nearbyPlaces.value = [];
-    console.warn("No valid coordinates to fetch nearby places.");
-  }
-};
-
-const fetchNearbyPlaces = async (latParam, lngParam) => {
+// Fetch trip detail
+const fetchTripDetail = async () => {
   try {
-    const response = await axios.get(`/api/nearby?lat=${latParam}&lng=${lngParam}`);
-    nearbyPlaces.value = response.data || [];
-  } catch (error) {
-    console.error("Error fetching nearby places:", error);
-    nearbyPlaces.value = [];
+    const res = await axios.get(`http://localhost:5000/api/trips/${tripId}`, {
+      withCredentials: true,
+    });
+    tripPlan.value = res.data;
+  } catch (err) {
+    console.error("Failed to fetch trip:", err.message);
   }
 };
 
-// เมื่อเปลี่ยน selectedLocationIndex ให้โหลด nearby จาก location นั้น
+// คำนวณจุดศูนย์กลางการค้นหา
+const getSearchCenter = () => {
+  const locationsInSelectedDay = selectedDay.value?.locations;
+  if (locationsInSelectedDay && locationsInSelectedDay.length > 0) {
+    // ใช้พิกัดของสถานที่แรกในวันที่เลือก
+    return {
+      lat: locationsInSelectedDay[0].lat,
+      lng: locationsInSelectedDay[0].lng,
+    };
+  }
+  return { lat: 18.7883, lng: 98.9853 }; // ค่าเริ่มต้น: เชียงใหม่
+};
+
+// Fetch nearby places
+const fetchNearby = async (lat, lng, type = "cafe") => {
+  if (!lat || !lng) return;
+  loadingNearby.value = true;
+  try {
+    const res = await axios.get("http://localhost:5000/api/places/nearby", {
+      params: { lat, lng, type, radius: 1000 },
+    });
+    nearbyPlaces.value = res.data || [];
+    console.log("Nearby places:", nearbyPlaces.value);
+  } catch (err) {
+    console.error("Failed to fetch nearby places:", err.message);
+    nearbyPlaces.value = [];
+  } finally {
+    loadingNearby.value = false;
+  }
+};
+
+// Watch day and category change
 watch(
-  () => selectedLocationIndex.value,
-  async (newIndex) => {
-    const dayData = tripPlan.value?.days?.[selectedDay.value];
-    if (
-      dayData &&
-      Array.isArray(dayData.locations) &&
-      dayData.locations.length > newIndex
-    ) {
-      const currentLocation = dayData.locations[newIndex];
-      if (currentLocation?.lat && currentLocation?.lng) {
-        await fetchNearbyPlaces(currentLocation.lat, currentLocation.lng);
-      }
+  () => [selectedDayIndex.value, selectedCategory.value],
+  async ([newIndex, newCategory]) => {
+    const day = tripPlan.value?.days[newIndex];
+    if (day?.locations?.length > 0) {
+      const { lat, lng } = day.locations[0];
+      await fetchNearby(lat, lng, newCategory);
+    } else {
+      nearbyPlaces.value = [];
     }
   },
   { immediate: true }
 );
 
-// เมื่อเปลี่ยน tab เป็น nearby ให้โหลดสถานที่ใกล้เคียง
-watch(currentTab, (newTab) => {
-  if (newTab === 'nearby') {
-    fetchNearby();
-  }
-});
-
-// เพิ่มสถานที่ใกล้เคียงในแผนทริป
-const addToPlan = (place) => {
-  if (!tripPlan.value || !tripPlan.value.days.length) return;
-  const newLocation = {
-    name: place.name || "Unknown",
-    category: place.category || "Nearby",
-    transport: "",
+// Add nearby to trip
+const addNearbyPlace = (place) => {
+  const day = tripPlan.value.days[selectedDayIndex.value];
+  day.locations.push({
+    name: place.name,
+    lat: place.lat,
+    lng: place.lng,
+    category: selectedCategory.value,
     estimated_cost: 0,
     currency: tripPlan.value.currency || "THB",
-    distance_to_next: "N/A",
-    lat: Number(place.lat) || null,
-    lng: Number(place.lng) || null,
-    time: "", // เติมตามต้องการ
-  };
-  tripPlan.value.days[0].locations.push(newLocation);
-  recalculateCosts();
-  store.commit("trip/updateTripPlan", tripPlan.value);
+  });
+
+  console.log("Added nearby place:", place.name);
+
+  // ✅ แจ้งเตือนเมื่อ add สำเร็จ
   Swal.fire({
     icon: "success",
     title: "Added!",
-    text: `${newLocation.name} added to your trip plan.`,
-    timer: 1500,
+    text: `${place.name} has been added to Day ${selectedDayIndex.value + 1}`,
     showConfirmButton: false,
+    timer: 1500,
   });
 };
 
-// onMounted(async () => {
-//   try {
-//     const tripId = route.params.tripId
-//     const response = await axios.get(`http://localhost:5000/api/nearby/${tripId}`, {
-//       withCredentials: true
-//     })
-//     nearbyData.value = response.data
-//   } catch (err) {
-//     console.error(err)
-//     loadError.value = 'ไม่สามารถโหลดสถานที่ใกล้เคียงได้'
-//   }
-// });
+watch(
+  () => tripPlan.value,
+  (newVal) => {
+    store.commit("trip/updateTripPlan", newVal);
+  },
+  { deep: true }
+);
 
-// โหลด user และ nearby places ตอน mount
-onMounted(() => {
-  getUser();
-  if (currentTab.value === "nearby") {
-    fetchNearby();
+// --- On mounted ---
+onMounted(async () => {
+  await getUser();
+  await fetchTripDetail();
+  if (
+    tripPlan.value?.days?.length > 0 &&
+    tripPlan.value.days[0].locations?.length > 0
+  ) {
+    const { lat, lng } = tripPlan.value.days[0].locations[0];
+    await fetchNearby(lat, lng, selectedCategory.value);
   }
 });
 </script>
 
 <template>
-  <div
-    class="min-h-screen flex flex-col bg-gray-50 text-gray-800 font-kanit"
-  >
-    <header class="w-full flex justify-between items-center py-4 px-8 bg-white shadow-sm sticky top-0 z-10">
-      <router-link to="/">
-        <img src="/logo.png" alt="Logo" class="h-10 w-auto" />
-      </router-link>
+  <div class="flex bg-[#0D1282]">
+    <Header :user="user" @update:user="user = $event" />
 
-      <nav
-        class="flex items-center space-x-6 text-gray-700 font-medium text-sm"
-      >
-        <router-link to="/" class="hover:text-sky-600 transition">Home</router-link>
-        <router-link to="/saved-trips" class="hover:text-sky-600 transition">Planner</router-link>
-        <router-link to="/expense" class="hover:text-sky-600 transition">Expense Tracker</router-link>
-        <router-link to="/review" class="hover:text-sky-600 transition">Trip Review</router-link>
-
-        <button
-          v-if="!user"
-          @click="showLoginModal = true"
-          class="ml-4 bg-sky-500 text-white px-4 py-2 rounded-full hover:bg-sky-600 transition shadow"
-        >
-          Login
-        </button>
-        <button
-          v-else
-          @click="showLoginModal = true"
-          class="ml-4 h-10 w-10 rounded-full overflow-hidden hover:ring-2 hover:ring-sky-300 transition-all flex items-center justify-center"
-        >
-          <img
-            :src="user.photo"
-            alt="User"
-            class="w-full h-full object-cover"
-          />
-        </button>
-      </nav>
-    </header>
-
-    <div
-      v-if="showLoginModal"
-      class="fixed inset-0 flex items-center justify-center z-50 bg-gray-900 bg-opacity-40 backdrop-blur-sm"
+    <main
+      class="flex-1 flex overflow-hidden rounded-l-[32px] bg-[#0D1282] ml-36"
     >
-      <div
-        class="bg-white p-8 rounded-2xl shadow-xl text-center space-y-6 w-full max-w-sm relative"
-      >
-        <button
-          @click="showLoginModal = false"
-          class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl transition"
-        >
-          ✕
-        </button>
-
-        <template v-if="user">
-          <img :src="user.photo" class="w-24 h-24 rounded-full mx-auto ring-4 ring-sky-200 mb-4" />
-          <h2 class="text-xl font-bold text-gray-800">{{ user.username }}</h2>
-          <p class="text-gray-500 text-sm">{{ user.gmail }}</p>
-          <button
-            @click="logout"
-            class="mt-4 px-6 py-2 bg-red-500 text-white font-semibold rounded-full hover:bg-red-600 transition shadow"
-          >
-            Logout
-          </button>
-        </template>
-
-        <template v-else>
-          <h1 class="text-2xl font-bold text-gray-800">
-            Welcome to Trippify
-          </h1>
-          <p class="text-gray-500">Plan your perfect trip with ease.</p>
-          <button
-            @click="loginWithGoogle"
-            class="flex items-center justify-center w-full max-w-xs border border-gray-300 rounded-full px-4 py-3 bg-white hover:bg-gray-100 transition duration-200 shadow-md mx-auto"
-          >
-            <img
-              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-              alt="Google icon"
-              class="w-5 h-5 mr-3"
-            />
-            <span class="text-sm font-medium text-gray-700"
-              >Continue with Google</span
-            >
-          </button>
-        </template>
-      </div>
-    </div>
-
-    <div v-if="tripPlan" class="flex flex-1 overflow-hidden">
-      <div
-        class="w-[50%] p-8 overflow-y-auto bg-white shadow-2xl"
-      >
-        <h1 class="text-3xl font-extrabold text-gray-800 mb-2">
-          {{ tripName }}
-        </h1>
-        <p class="text-gray-500 text-sm mb-6">Your personalized travel itinerary.</p>
-
-        <div class="flex items-center justify-between mb-6">
-          <!-- Tabs -->
-          <div class="flex gap-2">
-            <button
-              @click="currentTab = 'destinations'"
-              :class="[
-                'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors',
-                currentTab === 'destinations'
-                  ? 'bg-sky-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              ]"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-              </svg>
-              Destinations
-            </button>
-
-            <button
-              @click="currentTab = 'nearby'"
-              :class="[
-                'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors',
-                currentTab === 'nearby'
-                  ? 'bg-emerald-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              ]"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
-              </svg>
-              Nearby Places
-            </button>
-          </div>
-
-          <!-- Expense Button -->
-          <button
-            @click="goToPage(`/expense?tripId=${tripPlan?.tripId || ''}`)"
-            class="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 text-white text-sm font-medium px-4 py-2 rounded-full transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
-            </svg>
-            Expense
-          </button>
-        </div>
-
-
-        <div v-if="currentTab === 'destinations'">
-          <div class="mb-8 bg-sky-50 p-6 rounded-2xl shadow-inner">
-            <h2 class="text-xl font-bold text-sky-700 mb-4">
-              <i class="fa-solid fa-plane-departure mr-2"></i> Transportation
-            </h2>
-
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse">
-                <thead>
-                  <tr class="bg-sky-100 text-sky-900 font-semibold text-sm">
-                    <th class="p-3 rounded-tl-xl"></th>
-                    <th class="p-3 text-center">🚗 Car</th>
-                    <th class="p-3 text-center">🚌 Bus</th>
-                    <th class="p-3 text-center">🚆 Train</th>
-                    <th class="p-3 text-center rounded-tr-xl">✈️ Flight</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr class="border-b border-sky-200">
-                    <td class="p-3 text-gray-700 font-medium">Distance</td>
-                    <td class="p-3 text-center">{{ transportInfo.car?.distance || "-" }}</td>
-                    <td class="p-3 text-center">{{ transportInfo.bus?.distance || "-" }}</td>
-                    <td class="p-3 text-center">{{ transportInfo.train?.distance || "-" }}</td>
-                    <td class="p-3 text-center">{{ transportInfo.flight?.distance || "-" }}</td>
-                  </tr>
-                  <tr class="bg-white">
-                    <td class="p-3 text-gray-700 font-medium">Duration</td>
-                    <td class="p-3 text-center">{{ transportInfo.car?.duration || "-" }}</td>
-                    <td class="p-3 text-center">{{ transportInfo.bus?.duration || "-" }}</td>
-                    <td class="p-3 text-center">{{ transportInfo.train?.duration || "-" }}</td>
-                    <td class="p-3 text-center">{{ transportInfo.flight?.duration || "-" }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div
-            v-for="(day, index) in tripPlan.days"
-            :key="index"
-            class="mb-8 bg-sky-50 p-6 rounded-2xl shadow-inner"
-          >
-            <h2 class="text-xl font-bold text-sky-700 mb-2 flex items-center">
-              <span class="bg-sky-500 text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full mr-2">{{ index + 1 }}</span>
-              Day {{ index + 1 }}: {{ day.title }}
-            </h2>
-            <p class="text-gray-500 mb-4 text-sm">{{ day.date }}</p>
-            <p class="text-gray-700 mb-6 text-sm">
-              {{ day.description || day.narrative || "No description." }}
+      <div v-if="tripPlan" class="flex w-full">
+        <div class="w-[50%] p-8 overflow-y-auto">
+          <div class="bg-[#EEEDED] rounded-3xl shadow-lg p-8">
+            <h1 class="text-3xl font-extrabold text-[#000000] mb-2">
+              {{ tripName }}
+            </h1>
+            <p class="text-[#000000] text-sm mb-6">
+              Your personalized travel itinerary.
             </p>
 
-            <div
-              class="grid grid-cols-7 gap-2 px-4 py-3 bg-sky-100 text-sky-900 font-semibold text-sm rounded-t-lg"
-            >
-              <div class="col-span-2">Destination</div>
-              <div class="text-center">Category</div>
-              <div class="text-center">Transport</div>
-              <div class="text-center">Expense</div>
-              <div class="text-center">Distance</div>
-              <div class="text-center"></div>
-            </div>
-
-            <draggable
-              v-model="day.locations"
-              :group="'locations'"
-              item-key="name"
-              :disabled="!isEditing" 
-              class="space-y-2"
-              @change="recalculateCosts"
-            >
-              <template #item="{ element: loc, index: i }">
-                <div
-                  class="grid grid-cols-7 gap-2 px-4 py-3 bg-white border-b border-gray-200 text-sm items-center hover:bg-sky-50 transition rounded-md shadow-sm cursor-grab"
+            <div class="flex items-center justify-between mb-6">
+              <div class="flex border-b border-gray-500 mb-6">
+                <button
+                  @click="activeTab = 'plan'"
+                  :class="[
+                    'px-6 py-2 text-lg font-bold',
+                    activeTab === 'plan'
+                      ? 'text-[#0D1282] border-b-3 border-[#0D1282]'
+                      : 'text-[#000000] hover:text-[#D71313] transition',
+                  ]"
                 >
-                  <div class="col-span-2 font-medium text-gray-800">
-                    <i class="fa-solid fa-map-pin text-sky-400 mr-2"></i>{{ loc.name }}
-                  </div>
-                  <div class="text-center text-gray-600">
-                    {{ loc.category || "N/A" }}
-                  </div>
-                  <div class="text-center text-gray-600">
-                    {{ loc.transport || "N/A" }}
-                  </div>
-                  <div class="text-center text-green-700 font-medium">
-                    {{ loc.estimated_cost || 0 }} {{ loc.currency || tripPlan.currency || "THB" }}
-                  </div>
-                  <div class="text-center text-gray-600">
-                    {{ loc.distance_to_next || "N/A" }}
-                  </div>
-                  <div class="text-center" v-if="isEditing">
-                    <button
-                      @click="removeLocation(index, i)"
-                      class="text-red-500 hover:text-red-700 transition"
-                      title="Delete location"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                        stroke-width="1.5" stroke="currentColor" class="size-6">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                          d="m14.74 9-.346 9m-4.788 0L9.26 9
-                            m9.968-3.21c.342.052.682.107 1.022.166
-                            m-1.022-.165L18.16 19.673a2.25 2.25 0 0
-                            1-2.244 2.077H8.084a2.25 2.25 0 0
-                            1-2.244-2.077L4.772 5.79
-                            m14.456 0a48.108 48.108 0 0
-                            0-3.478-.397
-                            m-12 .562c.34-.059.68-.114 1.022-.165
-                            m0 0a48.11 48.11 0 0 1 3.478-.397
-                            m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201
-                            a51.964 51.964 0 0 0-3.32 0
-                            c-1.18.037-2.09 1.022-2.09 2.201v.916
-                            m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </template>
-            </draggable>
-
-            <div class="mt-4 text-sm text-gray-700">
-              <p
-                v-if="day.daily_tips && day.daily_tips.length > 0"
-                class="mb-1"
-              >
-                💡 <span class="font-medium">Tips:</span>
-                {{ day.daily_tips.join(", ") }}
-              </p>
-              <p class="font-semibold text-right text-sky-700 text-lg">
-                💰 Day Total: {{ day.total_day_cost || 0 }}
-                {{ tripPlan.currency || "THB" }}
-              </p>
-            </div>
-          </div>
-
-          <div
-            class="text-right mt-8 text-xl font-bold text-green-700 border-t border-gray-200 pt-6"
-          >
-            🧾 Total Trip Cost: {{ tripPlan.total_trip_cost || 0 }}
-            {{ tripPlan.currency || "THB" }}
-          </div>
-
-          <div class="mt-6 flex justify-end gap-4">
-            <button
-              @click="cancelTrip"
-              class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold py-2 px-6 rounded-full shadow transition"
-            >
-              Cancel
-            </button>
-            <button
-              @click="modifyTrip"
-              :class="[
-                'font-semibold py-2 px-6 rounded-full shadow transition text-white',
-                isEditing ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-yellow-500 hover:bg-yellow-600'
-              ]"
-            >
-              {{ isEditing ? 'Done Modify Trip' : 'Modify Trip' }}
-            </button>
-            <button
-              @click="saveTrip"
-              :disabled="isSavingTrip"
-              class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-6 rounded-full shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <i class="fa-solid fa-floppy-disk mr-2"></i> Save Trip
-            </button>
-            <button
-              @click="generateInviteLink"
-              class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-6 rounded-full shadow-md transition"
-            >
-              Share
-            </button>
-          </div>
-
-          <div v-if="inviteLink" class="text-right text-sm mt-6">
-            <p class="text-gray-600 font-semibold mb-1">Share this link with your friends:</p>
-            <div class="relative flex items-center">
-              <input
-                class="w-full border border-gray-300 rounded-full pl-4 pr-12 py-3 text-sm text-gray-500 shadow-sm focus:ring-2 focus:ring-emerald-200 outline-none cursor-pointer"
-                :value="inviteLink"
-                readonly
-                @click="copyToClipboard"
-              />
-              <button
-                @click="copyToClipboard"
-                class="absolute right-2 top-1/2 -translate-y-1/2 bg-emerald-100 text-emerald-600 p-2 rounded-full hover:bg-emerald-200 transition"
-                title="Copy to clipboard"
-              >
-                <i class="fa-solid fa-copy"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div v-if="currentTab === 'nearby'" class="bg-gray-100 p-6 rounded-2xl shadow-inner">
-          <h2 class="text-xl font-bold text-emerald-700 mb-4 flex items-center">
-            <i class="fa-solid fa-magnifying-glass-location mr-2"></i> Nearby Suggestions
-          </h2>
-          <p class="text-gray-600 text-sm mb-4">
-            {{ tripPlan.days[0]?.locations[selectedLocationIndex]?.name || "จุดเริ่มต้นของทริป" }}
-          </p>
-           <!-- เลือกวัน -->
-          <select v-model="selectedDay">
-            <option v-for="(day, i) in tripPlan.days" :key="i" :value="i">
-              Day {{ i + 1 }} - {{ day.title }}
-            </option>
-          </select>
-
-          <!-- เลือกสถานที่ในวันนั้น -->
-          <select v-model="selectedLocationIndex">
-            <option
-              v-for="(loc, j) in tripPlan.days[selectedDay]?.locations"
-              :key="j"
-              :value="j"
-            >
-              {{ loc.name }}
-            </option>
-          </select>
-
-          <ul v-if="nearbyPlaces.length > 0" class="mt-4 space-y-3">
-            <li
-              v-for="place in nearbyPlaces"
-              :key="place.name"
-              class="p-4 bg-white rounded-xl shadow border border-gray-200 flex justify-between items-center hover:bg-gray-50 transition"
-            >
-              <div>
-                <span class="font-medium text-gray-800 flex items-center">
-                    <i class="fa-solid fa-location-dot text-emerald-400 mr-2"></i> {{ place.name }}
-                </span>
-                <span class="text-sm text-gray-500">⭐ {{ place.rating || 'N/A' }}</span>
+                  Trip Plan
+                </button>
+                <button
+                  @click="activeTab = 'nearby'"
+                  :class="[
+                    'px-6 py-2 text-lg font-bold',
+                    activeTab === 'nearby'
+                      ? 'text-[#0D1282] border-b-3 border-[#0D1282]'
+                      : 'text-[#000000] hover:text-[#D71313] transition',
+                  ]"
+                >
+                  Nearby Places
+                </button>
               </div>
-              <button
-                class="text-sm bg-emerald-100 text-emerald-600 font-semibold px-3 py-1 rounded-full hover:bg-emerald-200 transition"
-                @click="addToPlan(place)"
-              >
-                ➕ Add
-              </button>
-            </li>
-          </ul>
 
-          <p v-else class="text-gray-500 mt-4 text-center p-6">
-            <i class="fa-solid fa-binoculars mr-2"></i> ไม่พบสถานที่ใกล้เคียงในบริเวณนี้
-          </p>
+              <button
+                @click="goToPage(`/expense?tripId=${tripPlan?.tripId || ''}`)"
+                class="flex items-center gap-2 bg-[#D71313] hover:bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-full transition-colors"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z"
+                  />
+                </svg>
+                Expense
+              </button>
+            </div>
+
+            <div v-show="activeTab === 'plan'">
+              <div class="mb-6 flex justify-end gap-4">
+                <!-- Cancel Trip (เทา) -->
+                <button
+                  @click="cancelTrip"
+                  class="flex items-center justify-center w-12 h-12 bg-gray-400 hover:bg-gray-500 text-white font-semibold rounded-full shadow transition"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-6 h-6"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                    />
+                  </svg>
+                </button>
+
+                <!-- Modify Trip (เหลือง) -->
+                <button
+                  @click="modifyTrip"
+                  class="flex items-center justify-center w-12 h-12 bg-[#F0DE36] hover:bg-yellow-400 text-[#0D1282] font-semibold rounded-full shadow transition"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-6 h-6"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                    />
+                  </svg>
+                </button>
+
+                <!-- Save Trip (น้ำเงินเข้ม) -->
+                <button
+                  @click="saveTrip"
+                  :disabled="isSavingTrip"
+                  class="flex items-center justify-center w-12 h-12 bg-[#0D1282] hover:bg-blue-800 text-white font-semibold rounded-full shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-6 h-6"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M9 3.75H6.912a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H15M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859M12 3v8.25m0 0-3-3m3 3 3-3"
+                    />
+                  </svg>
+                </button>
+
+                <!-- Generate Invite Link (แดง) -->
+                <button
+                  @click="generateInviteLink"
+                  class="flex items-center justify-center w-12 h-12 bg-[#D71313] hover:bg-red-600 text-white font-semibold rounded-full shadow transition"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-6 h-6"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div v-if="inviteLink" class="text-right text-sm mt-6 p-4">
+                <p class="text-gray-600 font-semibold mb-1">
+                  Share this link with your friends:
+                </p>
+                <div class="relative flex items-center">
+                  <input
+                    class="w-full border border-gray-300 rounded-full pl-4 pr-12 py-3 text-sm text-gray-500 shadow-sm focus:ring-2 focus:ring-emerald-200 outline-none cursor-pointer bg-white"
+                    :value="inviteLink"
+                    readonly
+                    @click="copyToClipboard"
+                  />
+                  <button
+                    @click="copyToClipboard"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 bg-emerald-100 text-emerald-600 p-2 rounded-full hover:bg-emerald-200 transition"
+                    title="Copy to clipboard"
+                  >
+                    <i class="fa-solid fa-copy"></i>
+                  </button>
+                </div>
+              </div>
+              <div
+                class="mb-8 bg-white border-b border-gray-200 p-6 rounded-md shadow-sm"
+              >
+                <h2 class="text-xl font-bold text-[#0D1282] mb-4">
+                  <i class="fa-solid fa-plane-departure mr-2"></i>
+                  Transportation
+                </h2>
+
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left border-collapse">
+                    <thead>
+                      <tr
+                        class="bg-[#F0DE36] text-[#0D1282] font-bold text-sm uppercase tracking-wide"
+                      >
+                        <th class="p-3 rounded-tl-xl"></th>
+                        <th class="p-3 text-center">🚗 Car</th>
+                        <th class="p-3 text-center">🚌 Bus</th>
+                        <th class="p-3 text-center">🚆 Train</th>
+                        <th class="p-3 text-center rounded-tr-xl">✈️ Flight</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr class="border-b border-gray-200 bg-white">
+                        <td class="p-3 text-gray-700 font-medium">Distance</td>
+                        <td class="p-3 text-center">
+                          {{ transportInfo.car?.distance || "-" }}
+                        </td>
+                        <td class="p-3 text-center">
+                          {{ transportInfo.bus?.distance || "-" }}
+                        </td>
+                        <td class="p-3 text-center">
+                          {{ transportInfo.train?.distance || "-" }}
+                        </td>
+                        <td class="p-3 text-center">
+                          {{ transportInfo.flight?.distance || "-" }}
+                        </td>
+                      </tr>
+                      <tr class="bg-[#EEEDED]">
+                        <td class="p-3 text-gray-700 font-medium">Duration</td>
+                        <td class="p-3 text-center">
+                          {{ transportInfo.car?.duration || "-" }}
+                        </td>
+                        <td class="p-3 text-center">
+                          {{ transportInfo.bus?.duration || "-" }}
+                        </td>
+                        <td class="p-3 text-center">
+                          {{ transportInfo.train?.duration || "-" }}
+                        </td>
+                        <td class="p-3 text-center">
+                          {{ transportInfo.flight?.duration || "-" }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div
+                v-for="(day, index) in tripPlan.days"
+                :key="index"
+                class="mb-8 bg-white/95 p-6 rounded-2xl shadow-lg border border-[#EEEDED]"
+              >
+                <h2
+                  class="text-xl font-bold text-[#0D1282] mb-2 flex items-center"
+                >
+                  <span
+                    class="bg-[#D71313] text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full mr-2"
+                    >{{ index + 1 }}</span
+                  >
+                  Day {{ index + 1 }}: {{ day.title }}
+                </h2>
+                <p class="text-gray-500 mb-4 text-sm">{{ day.date }}</p>
+                <p class="text-gray-700 mb-6 text-sm">
+                  {{ day.description || day.narrative || "No description." }}
+                </p>
+
+                <div
+                  class="grid grid-cols-7 gap-2 px-4 py-3 bg-[#F0DE36] text-[#0D1282] font-semibold text-sm rounded-t-lg"
+                >
+                  <div class="col-span-2">Destination</div>
+                  <div class="text-center">Category</div>
+                  <div class="text-center">Transport</div>
+                  <div class="text-center">Expense</div>
+                  <div class="text-center">Distance</div>
+                  <div class="text-center"></div>
+                </div>
+
+                <draggable
+                  v-model="day.locations"
+                  :group="'locations'"
+                  item-key="name"
+                  :disabled="!showEditControls"
+                  class="space-y-2"
+                  @change="recalculateCosts"
+                >
+                  <template #item="{ element: loc, index: i }">
+                    <div
+                      class="grid grid-cols-7 gap-2 px-4 py-3 bg-white border-b border-gray-200 text-sm items-center hover:bg-[#EEEDED] transition rounded-md shadow-sm cursor-grab"
+                    >
+                      <div class="col-span-2 font-medium text-gray-800">
+                        <i class="fa-solid fa-map-pin text-[#0D1282] mr-2"></i
+                        >{{ loc.name }}
+                      </div>
+                      <div class="text-center text-gray-600">
+                        {{ loc.category || "N/A" }}
+                      </div>
+                      <div class="text-center text-gray-600">
+                        {{ loc.transport || "N/A" }}
+                      </div>
+                      <div class="text-center text-[#D71313] font-medium">
+                        {{ loc.estimated_cost || 0 }}
+                        {{ loc.currency || tripPlan.currency || "THB" }}
+                      </div>
+                      <div class="text-center text-gray-600">
+                        {{ loc.distance_to_next || "N/A" }}
+                      </div>
+                      <div class="text-center" v-if="showEditControls">
+                        <button
+                          @click="removeLocation(index, i)"
+                          class="text-red-500 hover:text-red-700 transition"
+                          title="Delete location"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="1.5"
+                            stroke="currentColor"
+                            class="size-6"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </template>
+                </draggable>
+
+                <div class="mt-4 text-sm text-gray-700">
+                  <p
+                    v-if="day.daily_tips && day.daily_tips.length > 0"
+                    class="mb-1"
+                  >
+                    💡 <span class="font-medium">Tips:</span>
+                    {{ day.daily_tips.join(", ") }}
+                  </p>
+                  <p class="font-semibold text-right text-[#0D1282] text-lg">
+                    💰 Day Total: {{ day.total_day_cost || 0 }}
+                    {{ tripPlan.currency || "THB" }}
+                  </p>
+                </div>
+              </div>
+
+              <div
+                class="text-right mt-8 text-xl font-bold text-[#000000] border-t border-[#0D1282] pt-6"
+              >
+                🧾 Total Trip Cost: {{ tripPlan.total_trip_cost || 0 }}
+                {{ tripPlan.currency || "THB" }}
+              </div>
+            </div>
+
+            <div v-show="activeTab === 'nearby'">
+              <div class="flex flex-wrap gap-2 mb-6">
+                <button
+                  v-for="(day, index) in tripPlan.days"
+                  :key="index"
+                  @click="selectedDayIndex = index"
+                  :class="[
+                    'px-4 py-2 rounded-full font-medium text-sm transition-all',
+                    selectedDayIndex === index
+                      ? 'bg-[#F0DE36] text-[#0D1282] shadow-md'
+                      : 'bg-[#0D1282] text-[#EEEDED] hover:bg-[#F0DE36]',
+                  ]"
+                >
+                  Day {{ index + 1 }}
+                </button>
+              </div>
+
+              <div class="mb-4 flex items-center gap-4">
+                <label for="nearbyCategory" class="font-medium text-[#000000]"
+                  >Category:</label
+                >
+                <select
+                  id="nearbyCategory"
+                  v-model="selectedCategory"
+                  class="flex-1 py-2 px-4 border border-gray-300 rounded-full bg-white shadow-sm focus:ring-2 focus:ring-sky-200 outline-none"
+                >
+                  <option value="restaurant">Restaurant</option>
+                  <option value="cafe">Cafe</option>
+                  <option value="hotel">Hotel</option>
+                  <option value="attraction">Attraction</option>
+                  <option value="park">Park</option>
+                  <option value="shopping_mall">Shopping Mall</option>
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <h3 class="text-xl font-bold text-[#000000]">
+                  Nearby Places for Day {{ selectedDayIndex + 1 }}
+                </h3>
+                <p class="text-sm text-[#000000]">
+                  {{ tripPlan.days[selectedDayIndex].title }}
+                </p>
+              </div>
+
+              <div v-if="loadingNearby" class="text-center text-gray-500 p-8">
+                <div
+                  class="animate-spin rounded-full h-8 w-8 border-4 border-t-[#0D1282] border-blue-200 mb-4 mx-auto"
+                ></div>
+                Searching for nearby places...
+              </div>
+              <ul v-else-if="nearbyPlaces.length" class="space-y-4">
+                <li
+                  v-for="place in nearbyPlaces"
+                  :key="place.place_id"
+                  class="bg-white/95 p-4 rounded-xl flex items-center justify-between shadow-sm"
+                >
+                  <div>
+                    <p class="font-semibold text-gray-800">{{ place.name }}</p>
+                    <p class="text-sm text-gray-500">{{ place.address }}</p>
+                  </div>
+                  <button
+                    @click="addNearbyPlace(place)"
+                    class="flex items-center gap-1 bg-[#D71313] hover:bg-red-600 text-white p-2 rounded-full shadow transition-all duration-200 text-sm"
+                  >
+                    <span>Add</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="w-5 h-5"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                      />
+                    </svg>
+                  </button>
+                </li>
+              </ul>
+              <div v-else class="text-center text-gray-500 p-8">
+                ไม่พบสถานที่ใกล้เคียงสำหรับวันนี้
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Map คงที่ แต่ไม่เต็มจอ -->
+        <div
+          class="fixed top-10 right-10 h-[90vh] w-[600px] rounded-xl shadow-lg overflow-hidden"
+        >
+          <Tripmap :locations="allLocations" />
         </div>
       </div>
-
-      <div class="flex-1 w-full h-screen">
-        <Tripmap :locations="allLocations" />
+      <div
+        v-else
+        class="flex-1 flex justify-center items-center text-gray-500 bg-white"
+      >
+        <div class="text-center">
+          <div
+            class="animate-spin rounded-full h-12 w-12 border-4 border-t-sky-500 border-sky-200 mb-4 mx-auto"
+          ></div>
+          <p class="text-lg">กำลังโหลดแผนการเดินทาง...</p>
+        </div>
       </div>
-    </div>
+    </main>
 
-    <div v-else class="flex-1 flex justify-center items-center text-gray-500 bg-white">
-      <div class="text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-4 border-t-sky-500 border-sky-200 mb-4 mx-auto"></div>
-        <p class="text-lg">กำลังโหลดแผนการเดินทาง...</p>
-      </div>
-    </div>
-    
-    <div v-if="loadError" class="fixed inset-0 flex items-center justify-center z-50 bg-gray-900 bg-opacity-50">
+    <div
+      v-if="loadError"
+      class="fixed inset-0 flex items-center justify-center z-50 bg-gray-900 bg-opacity-50"
+    >
       <div class="bg-white p-8 rounded-lg shadow-xl text-center">
         <h2 class="text-2xl font-bold text-red-600 mb-4">
           <i class="fa-solid fa-triangle-exclamation mr-2"></i> {{ title }}
@@ -803,15 +754,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/*
-  Font from CDN, add this to your main HTML file if not already included
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  You may also need to add fontawesome if you use the icons:
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-*/
 .font-kanit {
-  font-family: 'Kanit', sans-serif;
+  font-family: "Kanit", sans-serif;
 }
 </style>
