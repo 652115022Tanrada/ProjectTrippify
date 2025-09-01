@@ -21,11 +21,10 @@ export default {
       commit('clearUser')
     },
 
-    // ✅ เพิ่ม action ดึง user จาก backend
     async fetchUser({ commit }) {
       try {
         const res = await axios.get(
-          'http://localhost:5000/api/user',
+          'http://localhost:5000/auth/user',
           { withCredentials: true }
         )
         commit('setUser', res.data)

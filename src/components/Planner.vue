@@ -12,9 +12,7 @@ const router = useRouter();
 // const showLoginModal = ref(false);
 const user = ref(null);
 const today = new Date().toISOString().split("T")[0];
-const travelType = ref("");
-const trip_type = ref('')
-const group_size = ref(1)
+const trip_type = ref('solo')
 const from = ref("");
 const to = ref("");
 const startDate = ref("");
@@ -22,7 +20,6 @@ const endDate = ref("");
 const budget = ref("");
 const currency = ref("THB");
 const tripName = ref("");
-const groupSize = ref(1);
 const isLoading = ref(false);
 
 const travelPreferences = ref([]);
@@ -51,8 +48,7 @@ const submitTrip = async () => {
     budget: budget.value,
     currency: currency.value,
     preferences: travelPreferences.value,
-     trip_type: trip_type.value,
-    group_size: trip_type.value === 'group' ? group_size.value : null
+    trip_type: trip_type.value,
   };
 
   try {
@@ -98,8 +94,8 @@ const validateForm = () => {
     !to.value ||
     !startDate.value ||
     !endDate.value ||
-    !budget.value ||
-    !trip_type.value
+    !budget.value 
+    // !trip_type.value
   ) {
     Swal.fire({
       icon: "warning",
@@ -190,7 +186,7 @@ onMounted(() => {
           />
         </div>
 
-        <div
+        <!-- <div
           v-if="travelType === 'group'"
           class="w-full relative bg-white p-4 rounded-xl shadow-sm mt-4"
         >
@@ -202,7 +198,7 @@ onMounted(() => {
             placeholder="Number of people"
             class="w-full border-0 bg-white text-xl shadow-none outline-none font-bold font-kanit mt-1 text-[#0D1282]"
           />
-        </div>
+        </div> -->
 
         <div class="flex flex-col sm:flex-row gap-2 relative items-center">
           <div class="w-full relative bg-white p-4 rounded-xl shadow-sm">
@@ -420,10 +416,9 @@ onMounted(() => {
         </p>
       </div>
     </div>
-  </div>
+
 </template>
 <style scoped>
-/* โลโก้กระดึ๊บขึ้นลง */
 @keyframes bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-15px); }

@@ -101,7 +101,7 @@ const submitJoinLink = () => {
   if (tripId) {
     joinTripLinkModal.value = false
     joinLinkInput.value = ''
-    router.push(`/trip/${tripId}/join`)
+    router.push(`/trip/${tripId}`)
   } else {
     Swal.fire({
       icon: 'error',
@@ -179,7 +179,7 @@ onMounted(() => {
             v-for="trip in savedTrips"
             :key="trip._id"
             class="p-5 rounded-xl bg-white shadow hover:bg-sky-50 transition cursor-pointer"
-            @click="viewTripDetail(trip._id)"
+            @click="viewTripDetail(trip.tripId)"
           >
             <h2 class="text-xl font-semibold text-sky-600">{{ trip.tripName || 'Unnamed Trip' }}</h2>
             <p class="text-gray-500 text-sm">Saved on: {{ new Date(trip.createdAt).toLocaleDateString() }}</p>

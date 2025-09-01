@@ -16,7 +16,6 @@ const routes = [
   { path: '/trip/:tripId', component: Tripdetail }, 
   { path: '/saved-trips', component: SavedTrips },
   { path: '/saved-trip-review', component: SavedTripReview },
-  { path: '/trip/:tripId/join', component: JoinTrip },
   { path: '/expense', component: Expense },
   { path: '/trip/:tripId/review', component: Review},
   {
