@@ -19,7 +19,6 @@ const trip = ref(null);
 const user = ref(null);
 const tripId = computed(() => route.params.tripId);
 
-
 const tripPlan = computed(() => store.getters["trip/getTripPlan"]);
 const transportInfo = computed(() => tripPlan.value?.transport_info || {});
 const tripName = computed(() => tripPlan.value?.tripName || "My Trip");
@@ -143,6 +142,10 @@ const copyToClipboard = () => {
     timer: 1500,
     showConfirmButton: false,
   });
+};
+
+const goToPage = (url) => {
+  router.push(url);
 };
 
 const modifyTrip = () => {
@@ -292,15 +295,15 @@ const addNearbyPlace = (place) => {
   });
 };
 
-watch(
-  () => tripPlan.value,
-  (newVal) => {
-    console.log("Watcher triggered:", newVal)  // <== ดูว่ามี days.title ไหม
+// watch(
+//   () => tripPlan.value,
+//   (newVal) => {
+//     console.log("Watcher triggered:", newVal)  // <== ดูว่ามี days.title ไหม
 
-    store.commit("trip/updateTripPlan", newVal);
-  },
-  { deep: true }
-);
+//     store.commit("trip/updateTripPlan", newVal);
+//   },
+//   { deep: true }
+// );
 
 onMounted(async () => {
   try {
