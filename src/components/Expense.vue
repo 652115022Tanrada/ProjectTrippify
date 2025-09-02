@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 import Swal from "sweetalert2";
+import Header from "./Header.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -20,7 +21,7 @@ const amount = ref("");
 const selectedCurrency = ref("THB");
 const currencies = ["THB", "USD"];
 const isPaid = ref(false);
-const editingIndex = ref(null); 
+const editingIndex = ref(null);
 
 const getUser = async () => {
   try {
@@ -111,14 +112,26 @@ const saveExpense = () => {
     note: note.value,
     isPaid: isPaid.value,
     currency: selectedCurrency.value,
+    splitWith: splitWith.value.length
+      ? [...splitWith.value]
+      : participants.value.map((p) => p.email),
   };
 
   if (editingIndex.value !== null) {
-    expenses.value[editingIndex.value] = newExpense; // แก้ไขแทนที่เดิม
+    expenses.value[editingIndex.value] = newExpense;
     editingIndex.value = null;
   } else {
-    expenses.value.push(newExpense); // เพิ่มใหม่
+    expenses.value.push(newExpense);
   }
+
+  // ✅ แจ้งเตือนหลังจากแอดสำเร็จ
+  Swal.fire({
+    icon: "success",
+    title: "Expense Added",
+    text: "Your expense has been saved successfully!",
+    confirmButtonText: "OK",
+    confirmButtonColor: "#0ea5e9",
+  });
 
   // เคลียร์ฟอร์ม
   amount.value = "";
@@ -126,7 +139,14 @@ const saveExpense = () => {
   note.value = "";
   isPaid.value = false;
   selectedCurrency.value = "THB";
+  splitWith.value = [];
 };
+
+const pendingCost = computed(() => {
+  return expenses.value
+    .filter((e) => !e.isPaid)
+    .reduce((sum, e) => sum + (e.amount || 0), 0);
+});
 
 // ผลรวมทั้งหมด
 const totalCost = computed(() => {
@@ -150,6 +170,26 @@ const categoryTotals = computed(() => {
   return totals;
 });
 
+const paidPercentage = computed(() => {
+  if (totalCost.value === 0) return 0;
+  return ((totalCost.value - pendingCost.value) / totalCost.value) * 100;
+});
+
+const pendingPercentage = computed(() => {
+  if (totalCost.value === 0) return 0;
+  return 100; // Pending ครอบที่เหลือของ donut
+});
+
+
+const categoryPercentages = computed(() => {
+  const total = totalCost.value || 1; // ป้องกันหารด้วย 0
+  const percentages = {};
+  categories.forEach((cat) => {
+    percentages[cat] = ((categoryTotals.value[cat] || 0) / total) * 100;
+  });
+  return percentages;
+});
+
 const editExpense = (index) => {
   const expense = expenses.value[index];
   selectedCategory.value = expense.category;
@@ -158,6 +198,7 @@ const editExpense = (index) => {
   note.value = expense.note;
   isPaid.value = expense.isPaid;
   paidBy.value = expense.paidBy;
+  splitWith.value = expense.splitWith || []; // ✅ ใส่ splitWith กลับ
   editingIndex.value = index;
   showExpenseModal.value = true;
 };
@@ -177,6 +218,39 @@ const deleteExpense = (index) => {
     }
   });
 };
+const tripLeader = ref("tanrada@example.com"); // ตัวอย่าง email ของ leader
+//เพิ่ม reactive สำหรับ split และ balance
+const splitWith = ref([]); // เก็บรายชื่อคนที่จะแบ่งค่าใช้จ่ายด้วย
+const balances = computed(() => {
+  const result = {};
+  participants.value.forEach((p) => {
+    result[p.email] = { paid: 0, share: 0 }; // owes → share
+  });
+
+  expenses.value.forEach((exp) => {
+    const peopleToSplit =
+      exp.splitWith && exp.splitWith.length
+        ? exp.splitWith
+        : participants.value.map((p) => p.email);
+
+    const share = exp.amount / peopleToSplit.length;
+
+    // คนที่จ่าย
+    if (result[exp.paidBy]) {
+      result[exp.paidBy].paid += exp.amount;
+    }
+
+    // คนที่ร่วมจ่าย
+    peopleToSplit.forEach((email) => {
+      if (result[email]) {
+        result[email].share += share;
+      }
+    });
+  });
+
+  return result;
+});
+
 
 const loadTripData = async () => {
   const res = await axios.get(`http://localhost:5000/api/trip/${tripId}`, {
@@ -229,112 +303,24 @@ const getParticipantName = (email) => {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-gray-50 text-gray-800 font-kanit">
-    <header
-      class="w-full flex justify-between items-center py-4 px-8 bg-white shadow-sm sticky top-0 z-10"
-    >
-      <router-link to="/">
-        <img src="/logo.png" alt="Logo" class="h-10 w-auto" />
-      </router-link>
+  <div class="min-h-screen flex flex-col bg-[#EEEDED] text-gray-800 font-kanit">
+    <Header :user="user" @update:user="user = $event" />
 
-      <nav
-        class="flex items-center space-x-6 text-gray-700 font-medium text-sm"
-      >
-        <router-link to="/" class="hover:text-sky-600 transition"
-          >Home</router-link
-        >
-        <router-link to="/saved-trips" class="hover:text-sky-600 transition"
-          >Planner</router-link
-        >
-        <router-link to="/expense" class="hover:text-sky-600 transition"
-          >Expense Tracker</router-link
-        >
-        <router-link to="/review" class="hover:text-sky-600 transition"
-          >Trip Review</router-link
-        >
-
-        <button
-          v-if="!user"
-          @click="showLoginModal = true"
-          class="ml-4 bg-sky-500 text-white px-4 py-2 rounded-full hover:bg-sky-600 transition shadow"
-        >
-          Login
-        </button>
-        <button
-          v-else
-          @click="showLoginModal = true"
-          class="ml-4 h-10 w-10 rounded-full overflow-hidden hover:ring-2 hover:ring-sky-300 transition-all flex items-center justify-center"
-        >
-          <img
-            :src="user.photo"
-            alt="User"
-            class="w-full h-full object-cover"
-          />
-        </button>
-      </nav>
-    </header>
-
-    <!-- Login Modal -->
-    <div
-      v-if="showLoginModal"
-      class="fixed inset-0 flex items-center justify-center z-50 bg-gray-900 bg-opacity-40 backdrop-blur-sm"
-    >
-      <div
-        class="bg-white p-8 rounded-2xl shadow-xl text-center space-y-6 w-full max-w-sm relative"
-      >
-        <button
-          @click="showLoginModal = false"
-          class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl transition"
-        >
-          ✕
-        </button>
-
-        <template v-if="user">
-          <img
-            :src="user.photo"
-            class="w-24 h-24 rounded-full mx-auto ring-4 ring-sky-200 mb-4"
-          />
-          <h2 class="text-xl font-bold text-gray-800">{{ user.username }}</h2>
-          <p class="text-gray-500 text-sm">{{ user.gmail }}</p>
-          <button
-            @click="logout"
-            class="mt-4 px-6 py-2 bg-red-500 text-white font-semibold rounded-full hover:bg-red-600 transition shadow"
-          >
-            Logout
-          </button>
-        </template>
-
-        <template v-else>
-          <h1 class="text-2xl font-bold text-gray-800">Welcome to Trippify</h1>
-          <p class="text-gray-500">Plan your perfect trip with ease.</p>
-          <button
-            @click="loginWithGoogle"
-            class="flex items-center justify-center w-full max-w-xs border border-gray-300 rounded-full px-4 py-3 bg-white hover:bg-gray-100 transition duration-200 shadow-md mx-auto"
-          >
-            <img
-              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-              alt="Google icon"
-              class="w-5 h-5 mr-3"
-            />
-            <span class="text-sm font-medium text-gray-700"
-              >Continue with Google</span
-            >
-          </button>
-        </template>
-      </div>
-    </div>
-
-    <div class="flex flex-1 min-h-screen bg-gray-50">
+    <div class="flex flex-1 min-h-screen bg-[#EEEDED] ml-24">
       <!-- Sidebar -->
-      <aside class="w-64 bg-white p-6 shadow-xl flex flex-col justify-between">
+      <aside
+        class="w-64 bg-[#0D1282] p-6 shadow-xl flex flex-col justify-between text-white relative z-20"
+      >
         <div>
-          <h2 class="text-2xl font-extrabold text-sky-700 mb-4">Budget</h2>
+          <h2 class="text-2xl font-extrabold text-[#F0DE36] mb-4">Budget</h2>
           <div class="space-y-2">
             <button
               class="w-full text-left rounded-xl p-3 flex items-center gap-3 transition-colors"
               :class="{
-                'bg-sky-100 text-sky-700 font-bold': activeTab === 'expenses',
-                'text-gray-700 hover:bg-gray-100': activeTab !== 'expenses',
+                'bg-[#F0DE36] text-[#0D1282] font-bold':
+                  activeTab === 'expenses',
+                'text-white  hover:text-[#F0DE36]/90 transition font-bold':
+                  activeTab !== 'expenses',
               }"
               @click="activeTab = 'expenses'"
             >
@@ -343,41 +329,32 @@ const getParticipantName = (email) => {
             <button
               class="w-full text-left rounded-xl p-3 flex items-center gap-3 transition-colors"
               :class="{
-                'bg-sky-100 text-sky-700 font-bold': activeTab === 'balance',
-                'text-gray-700 hover:bg-gray-100': activeTab !== 'balance',
+                'bg-[#F0DE36] text-[#0D1282] font-bold hover:bg-[#F0DE36]':
+                  activeTab === 'balance',
+                'text-white  hover:text-[#F0DE36]/90 transition font-bold':
+                  activeTab !== 'balance',
               }"
               @click="activeTab = 'balance'"
             >
               <span>⚖️</span><span class="text-sm">Balance</span>
             </button>
-            <button
-              class="w-full text-left rounded-xl p-3 flex items-center gap-3 transition-colors"
-              :class="{
-                'bg-sky-100 text-sky-700 font-bold':
-                  activeTab === 'settlements',
-                'text-gray-700 hover:bg-gray-100': activeTab !== 'settlements',
-              }"
-              @click="activeTab = 'settlements'"
-            >
-              <span>🤝</span><span class="text-sm">Settlements</span>
-            </button>
           </div>
 
           <button
             @click="openExpenseModal"
-            class="mt-8 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-full shadow-md transition"
+            class="mt-8 w-full bg-[#F0DE36] hover:bg-yellow-400 text-[#0D1282] font-bold py-3 px-4 rounded-full shadow-md transition"
           >
             <i class="fa-solid fa-plus-circle mr-2"></i> Add expense
           </button>
 
-          <div class="mt-8 p-4 bg-gray-100 rounded-xl text-sm text-gray-700">
+          <div class="mt-8 p-4 bg-[#EEEDED] rounded-xl text-sm text-[#0D1282]">
             <p class="font-semibold mb-2">Manage your budget together</p>
-            <p class="text-gray-500 text-xs">
+            <p class="text-gray-600 text-xs">
               Invite your friends to budget your trip together!
             </p>
             <a
               href="#"
-              class="text-emerald-600 font-semibold mt-2 inline-block hover:underline"
+              class="text-[#D71313] hover:text-[#0D1282] transition font-semibold mt-2 inline-block hover:underline"
             >
               <i class="fa-solid fa-user-plus mr-1"></i> Invite friends
             </a>
@@ -385,99 +362,33 @@ const getParticipantName = (email) => {
         </div>
       </aside>
 
-      <!-- Main content -->
-      <main class="flex-1 p-8 overflow-y-auto">
-        <template v-if="activeTab === 'expenses'">
-          <h3 class="text-2xl font-bold text-gray-800 mb-6">
-            📝 Saved Expenses
-          </h3>
-
-          <div
-            v-for="(expense, index) in expenses"
-            :key="index"
-            class="bg-white rounded-2xl shadow-md p-6 flex justify-between items-center mb-4 transition-transform hover:scale-[1.01]"
-          >
-            <div class="flex items-center space-x-4">
-              <div
-                class="w-12 h-12 bg-sky-100 rounded-full flex items-center justify-center font-bold text-sky-700"
-              >
-                <i :class="['fa-solid', getCategoryIcon(expense.category)]"></i>
-              </div>
-              <div>
-                <p class="font-bold text-gray-800">{{ expense.note }}</p>
-                <p class="text-sm text-gray-500">
-                  <span class="font-medium text-sky-600">{{
-                    expense.category
-                  }}</span>
-                  by {{ getParticipantName(expense.paidBy) }} on
-                  {{ expense.date }}
-                </p>
-              </div>
-            </div>
-            <div class="text-right">
-              <p class="text-xl font-bold text-green-600">
-                {{ expense.amount.toFixed(2) }} {{ expense.currency }}
-              </p>
-              <p
-                class="text-sm"
-                :class="expense.isPaid ? 'text-green-500' : 'text-red-500'"
-              >
-                {{ expense.isPaid ? "Paid" : "Unpaid" }}
-              </p>
-              <div class="flex gap-2 justify-end mt-2">
-                <button
-                  @click="editExpense(index)"
-                  class="px-3 py-1 text-xs rounded-full bg-yellow-400 hover:bg-yellow-500 text-white"
-                >
-                  Edit
-                </button>
-                <button
-                  @click="deleteExpense(index)"
-                  class="px-3 py-1 text-xs rounded-full bg-red-500 hover:bg-red-600 text-white"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </template>
-
-        <template v-else-if="activeTab === 'balance'">
-          <h2 class="text-2xl font-bold text-gray-800 mb-4">⚖️ Balance</h2>
-          <p>Check everyone's balance here.</p>
-        </template>
-
-        <template v-else-if="activeTab === 'settlements'">
-          <h2 class="text-2xl font-bold text-gray-800 mb-4">🤝 Settlements</h2>
-          <p>Time to settle the bill!</p>
-        </template>
-      </main>
-
       <!-- Modal -->
       <div
         v-if="showExpenseModal"
         class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
       >
+      <div class="flex flex-row gap-6"> <!-- ✅ flex-row -->
         <div
-          class="bg-white rounded-3xl w-full max-w-md p-8 shadow-xl relative"
+          class="bg-[#EEEDED] rounded-3xl w-[420px] p-6 shadow-2xl relative flex flex-col max-h-[500px] overflow-y-auto"
         >
-          <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">
+          <h2 class="text-2xl font-bold text-center mb-6 text-[#0D1282]">
             New Expense
           </h2>
 
-          <!-- Category / Date / Destination -->
+          <!-- Category / Date -->
           <div class="flex gap-2 mb-6">
-            <!-- <button class="flex-1 border rounded-full py-2">📂 Category</button> -->
+            <!-- Category -->
             <button
-              class="flex-1 border border-gray-300 rounded-full py-3 text-sm text-gray-700 font-semibold transition hover:bg-gray-100"
+              class="flex-1 border border-[#0D1282]/30 rounded-full py-3 text-sm text-[#0D1282] font-semibold transition hover:bg-[#0D1282]/10"
               @click="showCategoryModal = true"
             >
               📂 {{ selectedCategory || "Category" }}
             </button>
-            <!-- Date Button (opens native date picker) -->
+
+            <!-- Date -->
             <button
               @click="openDatePicker"
-              class="flex-1 border border-gray-300 rounded-full py-3 text-sm text-gray-700 font-semibold transition hover:bg-gray-100"
+              class="flex-1 border border-[#0D1282]/30 rounded-full py-3 text-sm text-[#0D1282] font-semibold transition hover:bg-[#0D1282]/10"
             >
               📅
               {{
@@ -495,11 +406,6 @@ const getParticipantName = (email) => {
               :min="new Date().toISOString().split('T')[0]"
               class="hidden"
             />
-            <button
-              class="flex-1 border border-gray-300 rounded-full py-3 text-sm text-gray-700 font-semibold transition hover:bg-gray-100"
-            >
-              📍 Destination
-            </button>
           </div>
 
           <!-- Category Modal -->
@@ -507,11 +413,13 @@ const getParticipantName = (email) => {
             v-if="showCategoryModal"
             class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
           >
-            <div class="bg-white p-6 rounded-2xl w-80 shadow-lg relative">
-              <h3 class="text-xl font-bold mb-4">Select Category</h3>
+            <div class="bg-[#EEEDED] p-6 rounded-2xl w-80 shadow-xl relative">
+              <h3 class="text-xl font-bold mb-4 text-[#0D1282]">
+                Select Category
+              </h3>
               <button
                 @click="showCategoryModal = false"
-                class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+                class="absolute top-4 right-4 text-gray-400 hover:text-[#0D1282] transition"
               >
                 ✕
               </button>
@@ -523,18 +431,18 @@ const getParticipantName = (email) => {
                     selectedCategory = cat;
                     showCategoryModal = false;
                   "
-                  class="cursor-pointer p-3 hover:bg-gray-100 rounded-xl flex items-center gap-3 transition"
+                  class="cursor-pointer p-3 hover:bg-[#F0DE36]/40 rounded-xl flex items-center gap-3 transition"
                 >
                   <i
                     :class="['fa-solid', getCategoryIcon(cat)]"
-                    class="w-5 text-center"
+                    class="w-5 text-center text-[#0D1282]"
                   ></i>
                   {{ cat }}
                 </li>
               </ul>
               <div class="mt-4 border-t pt-4">
                 <button
-                  class="w-full bg-red-100 text-red-600 py-2 rounded-full hover:bg-red-200 transition font-semibold"
+                  class="w-full bg-[#D71313]/10 text-[#D71313] py-2 rounded-full hover:bg-[#D71313]/20 transition font-semibold"
                   @click="
                     selectedCategory = '';
                     showCategoryModal = false;
@@ -546,22 +454,22 @@ const getParticipantName = (email) => {
             </div>
           </div>
 
-          <!-- Amount Input with Currency in One Border -->
+          <!-- Amount Input -->
           <div
-            class="flex items-center justify-center mb-4 border border-gray-300 rounded-full overflow-hidden focus-within:ring-2 focus-within:ring-sky-200 transition"
+            class="flex items-center justify-center mb-4 border border-[#0D1282]/30 rounded-full overflow-hidden focus-within:ring-2 focus-within:ring-[#F0DE36] transition"
           >
             <input
               v-model="amount"
               type="number"
               min="0"
               step="0.01"
-              class="w-32 px-4 py-3 text-2xl font-bold text-gray-700 text-right focus:outline-none"
+              class="w-32 px-4 py-3 text-2xl font-bold text-[#0D1282] text-right focus:outline-none bg-transparent"
               placeholder="0.00"
             />
-            <div class="w-px h-8 bg-gray-200"></div>
+            <div class="w-px h-8 bg-[#0D1282]/20"></div>
             <select
               v-model="selectedCurrency"
-              class="px-4 py-3 text-base text-gray-700 bg-transparent focus:outline-none cursor-pointer"
+              class="px-4 py-3 text-base text-[#0D1282] bg-transparent focus:outline-none cursor-pointer"
             >
               <option v-for="cur in currencies" :key="cur" :value="cur">
                 {{ cur }}
@@ -571,20 +479,20 @@ const getParticipantName = (email) => {
 
           <!-- Expense name -->
           <div
-            class="flex items-center bg-white p-3 rounded-xl border border-gray-300 mb-4 focus-within:ring-2 focus-within:ring-sky-200 transition"
+            class="flex items-center bg-white p-3 rounded-xl border border-[#0D1282]/30 mb-4 focus-within:ring-2 focus-within:ring-[#F0DE36] transition"
           >
-            <i class="fa-solid fa-note-sticky text-gray-400 mr-3"></i>
+            <i class="fa-solid fa-note-sticky text-[#0D1282]/60 mr-3"></i>
             <input
               type="text"
               placeholder="Enter expense name..."
-              class="w-full outline-none bg-transparent"
+              class="w-full outline-none bg-transparent text-[#0D1282]"
               v-model="note"
             />
           </div>
 
           <!-- Status toggle -->
           <div class="flex justify-between items-center mb-6">
-            <span class="text-gray-600 font-medium">Status</span>
+            <span class="text-[#0D1282] font-medium">Status</span>
             <label class="flex items-center cursor-pointer">
               <input type="checkbox" v-model="isPaid" class="sr-only" />
               <div
@@ -607,12 +515,12 @@ const getParticipantName = (email) => {
 
           <!-- Paid By -->
           <div class="mb-6">
-            <label class="block font-semibold text-gray-700 mb-2"
+            <label class="block font-semibold text-[#0D1282] mb-2"
               >Paid by</label
             >
             <select
               v-model="paidBy"
-              class="w-full border border-gray-300 rounded-full px-4 py-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-200 transition"
+              class="w-full border border-[#0D1282]/30 rounded-full px-4 py-3 text-[#0D1282] focus:outline-none focus:ring-2 focus:ring-[#F0DE36] transition"
             >
               <option v-for="p in participants" :key="p.email" :value="p.email">
                 {{ p.name }}
@@ -620,10 +528,11 @@ const getParticipantName = (email) => {
             </select>
           </div>
 
+          <!-- Buttons -->
           <div class="flex justify-end gap-4">
             <button
               @click="closeExpenseModal"
-              class="px-6 py-3 rounded-full bg-gray-200 text-gray-600 font-semibold hover:bg-gray-300 transition"
+              class="px-6 py-3 rounded-full bg-[#EEEDED] text-[#0D1282] font-semibold border border-[#0D1282]/30 hover:bg-[#D71313] transition"
             >
               Cancel
             </button>
@@ -632,73 +541,274 @@ const getParticipantName = (email) => {
                 saveExpense();
                 closeExpenseModal();
               "
-              class="px-8 py-3 rounded-full bg-emerald-500 text-white font-bold hover:bg-emerald-600 shadow-md transition"
+              class="px-8 py-3 rounded-full bg-[#0D1282] text-white font-bold hover:bg-[#0D1282]/90 shadow-md transition"
             >
               Save expense
             </button>
           </div>
 
+          <!-- Close Icon -->
           <button
             @click="closeExpenseModal"
-            class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl font-bold transition"
+            class="absolute top-4 right-4 text-gray-400 hover:text-[#D71313] text-2xl font-bold transition"
           >
             ✕
           </button>
         </div>
+        <div
+          class="bg-[#EEEDED] rounded-3xl w-[420px] p-6 shadow-2xl relative flex flex-col max-h-[500px] overflow-y-auto"
+        >
+          <h2 class="text-2xl font-bold text-center mb-6 text-[#0D1282]">
+            Participants
+          </h2>
+          <div class="space-y-3">
+    <label class="block font-semibold text-[#0D1282]">Split with</label>
+
+    <div class="space-y-2 max-h-48 overflow-y-auto pr-2">
+      <label
+        v-for="p in participants"
+        :key="p.email"
+        class="flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ease-in-out"
+        :class="{
+          'bg-white border-slate-300 shadow-sm hover:bg-slate-50': !splitWith.includes(p.email),
+          'bg-[#E5F3FF] border-[#0D1282] shadow-md': splitWith.includes(p.email),
+        }"
+      >
+        <div
+          class="w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 ease-in-out"
+          :class="{
+            'bg-slate-200': !splitWith.includes(p.email),
+            'bg-[#0D1282] scale-100': splitWith.includes(p.email),
+            'scale-0': !splitWith.includes(p.email),
+          }"
+        >
+          <svg
+            v-if="splitWith.includes(p.email)"
+            class="w-4 h-4 text-white"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M5 13l4 4L19 7"
+            ></path>
+          </svg>
+        </div>
+
+        <span class="text-slate-800">{{ p.name }}</span>
+
+        <input type="checkbox" :value="p.email" v-model="splitWith" class="hidden" />
+      </label>
+    </div>
+  </div>
+        </div>
+        </div>
       </div>
 
-      <!-- Summary -->
-      <aside class="w-1/4 bg-white border-l border-gray-200 p-6 shadow-md">
-        <div class="text-center mb-6 bg-gray-50 rounded-2xl p-6">
-          <div class="relative inline-block w-40 h-40">
-            <svg
-              class="absolute top-0 left-0 w-full h-full text-emerald-300"
-              viewBox="0 0 36 36"
-            >
-              <path
-                class="text-gray-200"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="3.8"
-                stroke-dasharray="100, 100"
-                d="M18 2.0845
-                a 15.9155 15.9155 0 0 1 0 31.831
-                a 15.9155 15.9155 0 0 1 0 -31.831"
-              />
-            </svg>
-            <div class="absolute inset-0 flex items-center justify-center">
-              <p class="text-2xl font-extrabold text-gray-700">
-                {{ totalCost.toFixed(2) }}
-              </p>
+      <main class="flex-1 p-8 overflow-y-auto bg-white">
+        <template v-if="activeTab === 'expenses'">
+          <h3
+            class="text-3xl font-extrabold text-[#0D1282] mb-6 border-b-2 border-[#D71313] pb-2"
+          >
+            📝 Saved Expenses
+          </h3>
+
+          <div
+            v-if="expenses.length === 0"
+            class="flex flex-col items-center justify-center text-center text-gray-500 min-h-[60vh]"
+          >
+            <!-- รูปภาพ -->
+            <img
+              src="/expense.png"
+              alt="No expenses"
+              class="w-32 h-32 mb-4 opacity-40"
+            />
+
+            <!-- ข้อความ -->
+            <p class="font-bold text-lg">No expenses yet</p>
+            <p class="text-sm text-gray-400">
+              Add custom expenses or start planning your trip.
+            </p>
+          </div>
+
+          <div
+            v-else
+            v-for="(expense, index) in expenses"
+            :key="index"
+            class="bg-[#EEEDED] rounded-xl shadow-lg p-6 flex justify-between items-center mb-4 transition-all duration-300 transform hover:scale-[1.01] hover:shadow-xl border-l-4"
+            :class="expense.isPaid ? 'border-[#0D1282]' : 'border-[#D71313]'"
+          >
+            <!-- เนื้อหาของ expense เดิม -->
+            <div class="flex items-center space-x-4">
+              <div
+                class="w-14 h-14 bg-[#0D1282] rounded-full flex items-center justify-center text-white text-xl shadow-md"
+              >
+                <i :class="['fa-solid', getCategoryIcon(expense.category)]"></i>
+              </div>
+              <div>
+                <p class="font-bold text-lg text-gray-800">
+                  {{ expense.note }}
+                </p>
+                <p class="text-sm text-gray-600">
+                  <span class="font-medium text-[#0D1282]">{{
+                    expense.category
+                  }}</span>
+                  by
+                  <span class="text-gray-800 font-semibold">{{
+                    getParticipantName(expense.paidBy)
+                  }}</span>
+                  on {{ expense.date }}
+                </p>
+              </div>
             </div>
-          </div> 
-          <p class="text-lg font-semibold mt-4 text-gray-700">
-            Total trip cost
-          </p>
-          <div class="flex justify-center space-x-4 mt-2 text-sm">
-            <span class="text-green-500"
-              >🟢 Paid {{ totalCost.toFixed(2) }}</span
+
+            <div class="text-right">
+              <p class="text-2xl font-extrabold text-[#0D1282]">
+                {{ expense.amount.toFixed(2) }} {{ expense.currency }}
+              </p>
+              <p
+                class="text-sm font-semibold"
+                :class="expense.isPaid ? 'text-green-600' : 'text-[#D71313]'"
+              >
+                {{ expense.isPaid ? "Paid" : "Unpaid" }}
+              </p>
+
+              <div class="flex gap-2 justify-end mt-2">
+                <button
+                  @click="editExpense(index)"
+                  class="px-4 py-1 text-sm rounded-full bg-[#F0DE36] hover:bg-yellow-400 text-[#0D1282] font-semibold shadow-md transition-all duration-200"
+                >
+                  Edit
+                </button>
+                <button
+                  @click="deleteExpense(index)"
+                  class="px-4 py-1 text-sm rounded-full bg-[#D71313] hover:bg-red-700 text-white font-semibold shadow-md transition-all duration-200"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <template v-if="activeTab === 'balance'">
+          <h2 class="text-3xl font-extrabold text-[#0D1282] mb-4">
+            Total Expense:
+            <span class="font-extrabold text-[#D71313]">
+              {{ totalCost.toFixed(2) }} {{ selectedCurrency }}
+            </span>
+          </h2>
+
+          <div class="bg-[#EEEDED] rounded-xl shadow-lg p-6 mb-6">
+            <h3
+              class="text-xl font-bold text-[#0D1282] mb-2 border-b-2 border-[#F0DE36] pb-1"
             >
-            <span class="text-gray-400">⚪ Pending 0.00</span>
+              👥 Trip Members ({{ participants.length }})
+            </h3>
+            <ul class="list-none text-gray-700 space-y-2">
+              <li
+                v-for="p in participants"
+                :key="p.email"
+                class="mb-2 bg-white p-3 rounded-lg shadow-sm flex justify-between items-center"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-[#0D1282]">{{ p.name }}</span>
+                  <span class="text-sm text-gray-500">({{ p.email }})</span>
+                  <span
+                    v-if="p.email === tripLeader"
+                    class="ml-2 text-xs bg-[#F0DE36] text-[#0D1282] font-bold px-2 py-0.5 rounded-full"
+                  >
+                    Leader
+                  </span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="bg-[#EEEDED] rounded-xl shadow-lg p-6 mb-6">
+            <h3
+              class="text-xl font-bold text-[#0D1282] mb-2 border-b-2 border-[#F0DE36] pb-1"
+            >
+              ⚖️ Balance per person
+            </h3>
+            <ul class="text-gray-700 space-y-3">
+              <li
+                v-for="p in participants"
+                :key="p.email"
+                class="mb-2 bg-white p-3 rounded-lg shadow-sm"
+              >
+                <span class="font-bold text-[#0D1282]">{{ p.name }}</span>:
+                Paid
+                <span class="font-semibold text-green-600">
+                  {{ balances[p.email].paid.toFixed(2) }} {{ selectedCurrency }}
+                </span>,
+                Should Pay
+                <span
+                  class="font-extrabold"
+                  :class="balances[p.email].share > 0 ? 'text-[#D71313]' : 'text-green-600'"
+                >
+                  {{ balances[p.email].share.toFixed(2) }}
+                </span>
+                {{ selectedCurrency }}
+              </li>
+            </ul>
+          </div>
+        </template>
+      </main>
+
+      <aside
+        class="w-1/4 bg-[#0D1282] border-l border-gray-200 p-6 shadow-xl sticky top-0 h-screen overflow-y-auto"
+      >
+        <div class="text-center mb-6 bg-[#EEEDED] rounded-2xl p-6 shadow-inner">
+          <div class="relative w-40 h-40 mx-auto">
+            <div
+              class="absolute top-1/2 left-1/2 w-full h-full rounded-full -translate-x-1/2 -translate-y-1/2"
+              :style="{
+                background: totalCost === 0
+                  ? '#e5e7eb'
+                  : `conic-gradient(
+                      #F0DE36 0% ${paidPercentage}%,
+                      #D71313 ${paidPercentage}% 100%
+                    )`
+              }"
+            ></div>
+            <div class="absolute inset-10 bg-white rounded-full flex items-center justify-center">
+              <p class="text-xl font-bold">{{ totalCost.toFixed(2) }}</p>
+            </div>
+          </div>
+          <p class="text-xl font-bold mt-4 text-[#0D1282]">Total trip cost</p>
+          <div class="flex justify-center space-x-4 mt-2 text-sm font-semibold">
+            <span class="text-yellow-600">
+              🟡 Paid {{
+                (totalCost - pendingCost).toFixed(2)
+              }} 
+            </span>
+            <span class="text-[#D71313]">
+              🔴 Pending {{ pendingCost.toFixed(2) }} 
+            </span>
           </div>
         </div>
 
-        <ul class="space-y-3 mt-8">
+        <ul class="bg-[#EEEDED] rounded-xl shadow-lg p-6 space-y-4 mt-8">
           <li
             v-for="cat in categories"
             :key="cat"
-            class="flex justify-between items-center text-gray-700"
+            class="flex justify-between items-center text-[#0D1282] py-2"
           >
             <div class="flex items-center gap-3">
               <i
                 :class="['fa-solid', getCategoryIcon(cat)]"
-                class="w-4 text-center text-sky-500"
+                class="w-6 text-center text-[#D71313] text-lg"
               ></i>
               <span class="font-medium">{{ cat }}</span>
             </div>
-            <span class="font-semibold text-right"
-              >{{ categoryTotals[cat].toFixed(2) }} {{ selectedCurrency }}</span
-            >
+            <span class="font-bold text-right">
+              {{ categoryTotals[cat].toFixed(2) }} {{ selectedCurrency }}
+            </span>
           </li>
         </ul>
       </aside>
