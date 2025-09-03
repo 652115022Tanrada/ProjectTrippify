@@ -35,52 +35,6 @@ const getUser = async () => {
   }
 };
 
-const loginWithGoogle = () => {
-  window.location.href = "http://localhost:5000/auth/google";
-};
-
-const logout = async () => {
-  try {
-    await axios.get("http://localhost:5000/auth/logout", {
-      withCredentials: true,
-    });
-    user.value = null;
-    showLoginModal.value = false; // ปิด modal ทันที
-
-    await Swal.fire({
-      icon: "success",
-      title: "Logged Out",
-      text: "You have successfully logged out.",
-      confirmButtonText: "OK",
-      confirmButtonColor: "#0ea5e9",
-    });
-
-    router.push("/"); // กลับไปหน้า Home
-  } catch (error) {
-    console.error("Logout failed:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Logout Failed",
-      text: "Something went wrong. Please try again.",
-      confirmButtonColor: "#0ea5e9",
-    });
-  }
-};
-
-const goToPage = (path) => {
-  if (user.value) {
-    router.push(path);
-  } else {
-    Swal.fire({
-      icon: "warning",
-      title: "Please log in first",
-      text: "You need to log in to access this page.",
-      confirmButtonText: "OK",
-      confirmButtonColor: "#0ea5e9",
-    });
-  }
-};
-
 // จำลองข้อมูลผู้ใช้งาน (อีเมลตัวเอง) และเพื่อนร่วมทริป
 const currentUserEmail = ref("youremail@example.com"); // เปลี่ยนเป็น email จริงจากระบบ auth
 const participants = ref([
@@ -352,12 +306,6 @@ const getParticipantName = (email) => {
             <p class="text-gray-600 text-xs">
               Invite your friends to budget your trip together!
             </p>
-            <a
-              href="#"
-              class="text-[#D71313] hover:text-[#0D1282] transition font-semibold mt-2 inline-block hover:underline"
-            >
-              <i class="fa-solid fa-user-plus mr-1"></i> Invite friends
-            </a>
           </div>
         </div>
       </aside>

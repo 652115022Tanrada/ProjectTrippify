@@ -73,113 +73,97 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-gradient-to-b from-sky-100 via-white to-green-100 text-gray-800 font-kanit">
+  <div class="min-h-screen flex flex-col bg-[#0D1282] text-gray-800 font-kanit">
     <!-- Header -->
     <Header :user="user" @update:user="user = $event" />
 
     <!-- Main Content -->
     <!-- Center Wrapper: Trip List -->
     <div class="flex items-center justify-center px-4 py-8">
-      <div class="w-full max-w-5xl space-y-6">
+      <div class="w-full max-w-6xl space-y-8">
         <!-- Header with New Trip Button -->
-        <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-extrabold">Your Saved Trips</h2>
-        <div class="flex space-x-2">
+        <div class="flex justify-between items-center mb-8">
+        <h2 class="text-2xl font-extrabold text-[#F0DE36] mb-4">Your Saved Trips</h2>
+        <div class="flex space-x-4">
           <button
             @click="router.push('/planner')"
-            class="bg-sky-400 text-white px-6 py-3 rounded-full font-semibold hover:bg-sky-600 transition"
+            class="bg-[#F0DE36] text-[#0D1282] px-8 py-4 rounded-full font-bold text-lg hover:bg-[#FFD700] hover:text-[#0D1282] transition-all duration-300 transform hover:scale-105 shadow-lg"
         >
-          + New Trip
+          <span class="flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                <span>New Trip</span>
+              </span>
         </button>
         <button
-          @click="joinTripLinkModal = true"
-          class="bg-green-400 text-white px-6 py-3 rounded-full font-semibold hover:bg-green-600 transition"
-        >
-          🔗 Join Trip via Link
-        </button>
+              @click="joinTripLinkModal = true"
+              class="bg-white text-[#D71313] px-8 py-4 rounded-full font-bold text-lg border-2 border-[#D71313] hover:bg-red-50 transition-all duration-300 transform hover:scale-105 shadow-md"
+            >
+              <span class="flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
+                </svg>
+                <span>Join Trip</span>
+              </span>
+            </button>
         </div>
         </div>
 
-        <div v-if="savedTrips.length > 0" class="grid gap-6 w-full">
+        <div v-if="savedTrips.length > 0" class="grid grid-cols-1 gap-6 w-full">
           <div
             v-for="trip in savedTrips"
             :key="trip._id"
-            class="p-5 rounded-xl bg-white shadow hover:bg-sky-50 transition cursor-pointer"
+            class="p-6 rounded-2xl bg-white shadow-xl hover:shadow-2xl hover:bg-sky-50 transition-all duration-300 transform hover:scale-105 cursor-pointer"
             @click="viewTripReview (trip._id)"
           >
-            <h2 class="text-xl font-semibold text-sky-600">{{ trip.tripName || 'Unnamed Trip' }}</h2>
-            <p class="text-gray-500 text-sm">Saved on: {{ new Date(trip.createdAt).toLocaleDateString() }}</p>
-            <p class="text-gray-700 mt-2">Total Cost: {{ trip.total_trip_cost }} {{ trip.currency || 'THB' }}</p>
+          <div class="flex items-center space-x-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-[#0D1282]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <div>
+                <h3 class="text-xl font-bold text-[#0D1282]">{{ trip.tripName || 'Unnamed Trip' }}</h3>
+                <p class="text-gray-500 text-sm mt-1">
+                  <span class="font-semibold">Saved on:</span> {{ new Date(trip.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}
+                </p>
+              </div>
+            </div>
+            <div class="mt-4 border-t pt-4 border-gray-100">
+              <p class="text-gray-700 font-semibold">Total Cost: <span class="text-green-600">{{ trip.total_trip_cost }} {{ trip.currency || 'THB' }}</span></p>
+            </div>
           </div>
         </div>
 
-        <div v-else class="text-gray-500">No trips saved yet.</div>
+        <div v-else class="text-center py-20 text-gray-500 text-xl font-semibold">
+          <p>You haven't planned any trips yet.</p>
+          <p>Let's start your first adventure!</p>
+        </div>
       </div>
     </div>
     
-    <!-- Login Modal -->
-    <div
-      v-if="showLoginModal"
-      class="fixed inset-0 flex items-center justify-center z-50 bg-white/20 backdrop-blur-[3px]"
-    >
-      <div class="bg-white p-8 rounded-xl shadow-md text-center space-y-6 w-full max-w-md relative">
-        <button
-          @click="showLoginModal = false"
-          class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-xl"
-        >
-          ✕
-        </button>
-
-        <template v-if="user">
-          <img :src="user.photo" class="w-24 h-24 rounded-full mx-auto mb-4" />
-          <h2 class="text-xl font-bold">{{ user.username }}</h2>
-          <p class="text-gray-600">{{ user.gmail }}</p>
-          <button
-            @click="logout"
-            class="mt-4 px-4 py-2 bg-red-400 text-white rounded hover:bg-red-500"
-          >
-            Logout
-          </button>
-        </template>
-
-        <template v-else>
-          <h1 class="text-2xl font-semibold text-gray-800">Welcome to Trippify</h1>
-          <button
-            @click="loginWithGoogle"
-            class="flex items-center justify-center w-full max-w-xs border border-gray-300 rounded-lg px-4 py-2 bg-white hover:bg-gray-50 transition duration-200 shadow-sm mx-auto"
-          >
-            <img
-              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-              alt="Google icon"
-              class="w-5 h-5 mr-3"
-            />
-            <span class="text-sm font-medium text-gray-700">Continue with Google</span>
-          </button>
-        </template>
-      </div>
-    </div>
     <!-- Join Link Modal -->
     <div
       v-if="joinTripLinkModal"
-      class="fixed inset-0 flex items-center justify-center z-50 bg-black/30 backdrop-blur-sm"
+      class="fixed inset-0 flex items-center justify-center z-50 bg-black/40 backdrop-blur-sm p-4"
     >
-      <div class="bg-white p-8 rounded-xl shadow-lg space-y-6 w-full max-w-md relative">
+      <div class="bg-white p-8 rounded-2xl shadow-2xl space-y-6 w-full max-w-sm relative transform scale-100 transition-transform duration-300">
         <button
           @click="joinTripLinkModal = false"
-          class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-xl"
+          class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl font-bold transition"
         >
           ✕
         </button>
-        <h2 class="text-xl font-bold text-sky-700">Join Trip via Link</h2>
+        <h2 class="text-2xl font-bold text-sky-700 text-center">Join Trip via Link</h2>
         <input
           v-model="joinLinkInput"
           type="text"
           placeholder="Paste the invite link here..."
-          class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-sky-200 outline-none"
+          class="w-full border border-gray-300 rounded-lg px-4 py-3 text-base focus:ring-4 focus:ring-sky-200 focus:border-sky-500 outline-none transition"
         />
         <button
           @click="submitJoinLink"
-          class="w-full bg-sky-500 text-white px-4 py-2 rounded-lg hover:bg-sky-600 transition"
+          class="w-full bg-[#0D1282] text-white px-4 py-3 rounded-lg font-semibold hover:bg-sky-900 transition transform hover:scale-95"
         >
           Join Trip
         </button>
