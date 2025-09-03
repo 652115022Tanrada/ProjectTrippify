@@ -30,9 +30,7 @@ const routes = [
       title: 'Page Not Found',
       message: 'The page you’re looking for does not exist.'
     }
-  },
-  { path: '/expense', component: Expense }
-
+  }
 ]
 
 const router = createRouter({

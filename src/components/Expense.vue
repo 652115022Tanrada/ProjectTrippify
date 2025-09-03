@@ -7,22 +7,38 @@ import Header from "./Header.vue";
 
 const route = useRoute();
 const router = useRouter();
-const showLoginModal = ref(false);
+
 const user = ref(null);
-const activeTab = ref("expenses");
-const tripId = route.query.tripId;
 const showExpenseModal = ref(false);
+const showCategoryModal = ref(false);
+const activeTab = ref("expenses");
+
+const tripId = route.query.tripId;
 const selectedDate = ref(new Date().toISOString().split("T")[0]);
 const dateInput = ref(null);
 const selectedCategory = ref("");
 const categories = ["Sleep", "Transport", "See & Do", "Eat & Drink", "Other"];
-const showCategoryModal = ref(false);
 const amount = ref("");
 const selectedCurrency = ref("THB");
 const currencies = ["THB", "USD"];
 const isPaid = ref(false);
+const note = ref("");
+const paidBy = ref("");
+const splitWith = ref([]);
 const editingIndex = ref(null);
 
+const participants = ref([
+  { name: "Tanrada", email: "tanrada@example.com" },
+  { name: "Trippify", email: "trippify@example.com" },
+]);
+
+const currentUserEmail = ref("youremail@example.com"); // เปลี่ยนเป็น email จริงจากระบบ auth
+paidBy.value = currentUserEmail.value;
+
+const tripLeader = ref("tanrada@example.com"); // ตัวอย่าง email ของ leader
+const expenses = ref([]);
+
+// ---------------- User ----------------
 const getUser = async () => {
   try {
     const res = await axios.get("http://localhost:5000/auth/user", {
@@ -35,226 +51,171 @@ const getUser = async () => {
   }
 };
 
-// จำลองข้อมูลผู้ใช้งาน (อีเมลตัวเอง) และเพื่อนร่วมทริป
-const currentUserEmail = ref("youremail@example.com"); // เปลี่ยนเป็น email จริงจากระบบ auth
-const participants = ref([
-  "youremail@example.com",
-  "friend1@example.com",
-  "friend2@example.com",
-]);
+// ---------------- Load Expenses ----------------
+const loadExpenses = async () => {
+  if (!tripId) return;
+  try {
+    const res = await axios.get(`http://localhost:5000/api/expense/${tripId}`, {
+      withCredentials: true,
+    });
+    expenses.value = res.data.map(e => ({
+      ...e,
+      amount: parseFloat(e.amount) || 0,
+      isPaid: e.isPaid === 1 || e.isPaid === true,
+      splitWith: Array.isArray(e.splitWith) ? e.splitWith : JSON.parse(e.splitWith || "[]")
+    }));
+  } catch (err) {
+    console.error("Error loading expenses:", err);
+  }
+};
 
-participants.value = [
-  { name: "Tanrada", email: "tanrada@example.com" },
-  { name: "Trippify", email: "trippify@example.com" },
-];
-
-const paidBy = ref(""); // ใช้สำหรับเก็บคนจ่าย
-const expenses = ref([]); // เก็บรายการที่บันทึกไว้
-const note = ref("");
-
-// อัปเดต saveExpense ให้รองรับการแก้ไข
-const saveExpense = () => {
+// ---------------- Save Expense ----------------
+const saveExpense = async () => {
   const newExpense = {
-    date: new Date().toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    }),
+    date: selectedDate.value,
     category: selectedCategory.value,
     amount: parseFloat(amount.value),
     paidBy: paidBy.value,
     note: note.value,
     isPaid: isPaid.value,
     currency: selectedCurrency.value,
-    splitWith: splitWith.value.length
-      ? [...splitWith.value]
-      : participants.value.map((p) => p.email),
+    splitWith: splitWith.value,
   };
 
-  if (editingIndex.value !== null) {
-    expenses.value[editingIndex.value] = newExpense;
-    editingIndex.value = null;
-  } else {
-    expenses.value.push(newExpense);
-  }
-
-  // ✅ แจ้งเตือนหลังจากแอดสำเร็จ
-  Swal.fire({
-    icon: "success",
-    title: "Expense Added",
-    text: "Your expense has been saved successfully!",
-    confirmButtonText: "OK",
-    confirmButtonColor: "#0ea5e9",
-  });
-
-  // เคลียร์ฟอร์ม
-  amount.value = "";
-  selectedCategory.value = "";
-  note.value = "";
-  isPaid.value = false;
-  selectedCurrency.value = "THB";
-  splitWith.value = [];
-};
-
-const pendingCost = computed(() => {
-  return expenses.value
-    .filter((e) => !e.isPaid)
-    .reduce((sum, e) => sum + (e.amount || 0), 0);
-});
-
-// ผลรวมทั้งหมด
-const totalCost = computed(() => {
-  return expenses.value.reduce((sum, e) => sum + (e.amount || 0), 0);
-});
-
-// ผลรวมแยกตามประเภท
-const categoryTotals = computed(() => {
-  const totals = {
-    Sleep: 0,
-    Transport: 0,
-    "See & Do": 0,
-    "Eat & Drink": 0,
-    Other: 0,
-  };
-  expenses.value.forEach((e) => {
-    if (totals[e.category] !== undefined) {
-      totals[e.category] += e.amount || 0;
+  try {
+    if (editingIndex.value !== null) {
+      // แก้ไข
+      const expenseId = expenses.value[editingIndex.value].expense_id;
+      await axios.put(`http://localhost:5000/api/expense/${expenseId}`, newExpense, {
+        withCredentials: true,
+      });
+    } else {
+      // เพิ่มใหม่
+      await axios.post(`http://localhost:5000/api/expense/${tripId}`, newExpense, {
+        withCredentials: true,
+      });
     }
-  });
-  return totals;
-});
 
-const paidPercentage = computed(() => {
-  if (totalCost.value === 0) return 0;
-  return ((totalCost.value - pendingCost.value) / totalCost.value) * 100;
-});
+    await loadExpenses();
+    resetForm();
 
-const pendingPercentage = computed(() => {
-  if (totalCost.value === 0) return 0;
-  return 100; // Pending ครอบที่เหลือของ donut
-});
-
-
-const categoryPercentages = computed(() => {
-  const total = totalCost.value || 1; // ป้องกันหารด้วย 0
-  const percentages = {};
-  categories.forEach((cat) => {
-    percentages[cat] = ((categoryTotals.value[cat] || 0) / total) * 100;
-  });
-  return percentages;
-});
-
-const editExpense = (index) => {
-  const expense = expenses.value[index];
-  selectedCategory.value = expense.category;
-  amount.value = expense.amount;
-  selectedCurrency.value = expense.currency;
-  note.value = expense.note;
-  isPaid.value = expense.isPaid;
-  paidBy.value = expense.paidBy;
-  splitWith.value = expense.splitWith || []; // ✅ ใส่ splitWith กลับ
-  editingIndex.value = index;
-  showExpenseModal.value = true;
+    Swal.fire({
+      icon: "success",
+      title: "Saved",
+      text: "Expense saved successfully!",
+      confirmButtonText: "OK",
+      confirmButtonColor: "#0ea5e9",
+    });
+  } catch (err) {
+    console.error("saveExpense error:", err);
+    Swal.fire("Error", "Failed to save expense", "error");
+  }
 };
 
-const deleteExpense = (index) => {
-  Swal.fire({
+// ---------------- Delete Expense ----------------
+const deleteExpense = async (index) => {
+  const expenseId = expenses.value[index].expense_id;
+  const confirm = await Swal.fire({
     icon: "warning",
     title: "Are you sure?",
     text: "This expense will be deleted.",
     showCancelButton: true,
     confirmButtonText: "Yes, delete it",
     confirmButtonColor: "#ef4444",
-  }).then((result) => {
-    if (result.isConfirmed) {
-      expenses.value.splice(index, 1);
-      Swal.fire("Deleted!", "Your expense has been removed.", "success");
-    }
   });
+
+  if (confirm.isConfirmed) {
+    try {
+      await axios.delete(`http://localhost:5000/api/expense/${expenseId}`, {
+        withCredentials: true,
+      });
+      await loadExpenses();
+      Swal.fire("Deleted!", "Your expense has been removed.", "success");
+    } catch (err) {
+      console.error("deleteExpense error:", err);
+      Swal.fire("Error", "Failed to delete expense", "error");
+    }
+  }
 };
-const tripLeader = ref("tanrada@example.com"); // ตัวอย่าง email ของ leader
-//เพิ่ม reactive สำหรับ split และ balance
-const splitWith = ref([]); // เก็บรายชื่อคนที่จะแบ่งค่าใช้จ่ายด้วย
+
+// ---------------- Edit Expense ----------------
+const editExpense = (index) => {
+  const expense = expenses.value[index];
+  selectedCategory.value = expense.category;
+  amount.value = expense.amount;
+  selectedCurrency.value = expense.currency;
+  note.value = expense.note;
+  isPaid.value = !!expense.isPaid; // แปลงเป็น boolean
+  paidBy.value = participants.value.find(p => p.email === expense.paidBy)?.email || currentUserEmail.value;
+  splitWith.value = Array.isArray(expense.splitWith) ? expense.splitWith : JSON.parse(expense.splitWith || "[]");
+  editingIndex.value = index;
+  showExpenseModal.value = true;
+};
+
+// ---------------- Reset Form ----------------
+const resetForm = () => {
+  amount.value = "";
+  selectedCategory.value = "";
+  note.value = "";
+  isPaid.value = false;
+  selectedCurrency.value = "THB";
+  paidBy.value = currentUserEmail.value;
+  splitWith.value = [];
+  editingIndex.value = null;
+};
+
+// ---------------- Computed ----------------
+const totalCost = computed(() => expenses.value.reduce((sum, e) => sum + (e.amount || 0), 0));
+const pendingCost = computed(() => expenses.value.filter(e => !e.isPaid).reduce((sum, e) => sum + (e.amount || 0), 0));
+const paidPercentage = computed(() => (totalCost.value ? ((totalCost.value - pendingCost.value) / totalCost.value) * 100 : 0));
+const pendingPercentage = computed(() => (totalCost.value ? (pendingCost.value / totalCost.value) * 100 : 0));
+
+const categoryTotals = computed(() => {
+  const totals = {};
+  categories.forEach(cat => totals[cat] = 0);
+  expenses.value.forEach(e => {
+    if (totals[e.category] !== undefined) totals[e.category] += e.amount || 0;
+  });
+  return totals;
+});
+
 const balances = computed(() => {
   const result = {};
-  participants.value.forEach((p) => {
-    result[p.email] = { paid: 0, share: 0 }; // owes → share
-  });
-
-  expenses.value.forEach((exp) => {
-    const peopleToSplit =
-      exp.splitWith && exp.splitWith.length
-        ? exp.splitWith
-        : participants.value.map((p) => p.email);
-
+  participants.value.forEach(p => result[p.email] = { paid: 0, share: 0 });
+  expenses.value.forEach(exp => {
+    const peopleToSplit = exp.splitWith && exp.splitWith.length ? exp.splitWith : participants.value.map(p => p.email);
     const share = exp.amount / peopleToSplit.length;
-
-    // คนที่จ่าย
-    if (result[exp.paidBy]) {
-      result[exp.paidBy].paid += exp.amount;
-    }
-
-    // คนที่ร่วมจ่าย
-    peopleToSplit.forEach((email) => {
-      if (result[email]) {
-        result[email].share += share;
-      }
-    });
+    if (result[exp.paidBy]) result[exp.paidBy].paid += exp.amount;
+    peopleToSplit.forEach(email => { if (result[email]) result[email].share += share; });
   });
-
   return result;
 });
 
-
-const loadTripData = async () => {
-  const res = await axios.get(`http://localhost:5000/api/trip/${tripId}`, {
-    withCredentials: true,
-  });
-  store.commit("trip/updateTripPlan", res.data);
-};
-
-onMounted(() => {
-  getUser();
-  paidBy.value = currentUserEmail.value;
-});
-onMounted(() => {
-  if (tripId) {
-    loadTripData();
-  }
-});
-
-const openExpenseModal = () => {
+// ---------------- Modal & Helpers ----------------
+const openExpenseModalForAdd = () => {
+  resetForm();
   showExpenseModal.value = true;
 };
-const closeExpenseModal = () => {
-  showExpenseModal.value = false;
-};
-const openDatePicker = () => {
-  if (dateInput.value) {
-    dateInput.value.showPicker?.() || dateInput.value.click();
-  }
-};
-
+const closeExpenseModal = () => showExpenseModal.value = false;
+const openDatePicker = () => dateInput.value?.showPicker?.() || dateInput.value?.click();
 const getCategoryIcon = (category) => {
   switch (category) {
-    case "Sleep":
-      return "fa-bed";
-    case "Transport":
-      return "fa-car";
-    case "See & Do":
-      return "fa-camera";
-    case "Eat & Drink":
-      return "fa-utensils";
-    default:
-      return "fa-ellipsis";
+    case "Sleep": return "fa-bed";
+    case "Transport": return "fa-car";
+    case "See & Do": return "fa-camera";
+    case "Eat & Drink": return "fa-utensils";
+    default: return "fa-ellipsis";
   }
 };
+const getParticipantName = (email) => participants.value.find(p => p.email === email)?.name || email;
 
-const getParticipantName = (email) => {
-  const participant = participants.value.find((p) => p.email === email);
-  return participant ? participant.name : email;
-};
+// ---------------- Lifecycle ----------------
+onMounted(() => {
+  getUser();
+  if (tripId) loadExpenses();
+});
 </script>
+
 
 <template>
   <div class="min-h-screen flex flex-col bg-[#EEEDED] text-gray-800 font-kanit">
@@ -262,42 +223,30 @@ const getParticipantName = (email) => {
 
     <div class="flex flex-1 min-h-screen bg-[#EEEDED] ml-24">
       <!-- Sidebar -->
-      <aside
-        class="w-64 bg-[#0D1282] p-6 shadow-xl flex flex-col justify-between text-white relative z-20"
-      >
+      <aside class="w-64 bg-[#0D1282] p-6 shadow-xl flex flex-col justify-between text-white relative z-20">
         <div>
           <h2 class="text-2xl font-extrabold text-[#F0DE36] mb-4">Budget</h2>
           <div class="space-y-2">
-            <button
-              class="w-full text-left rounded-xl p-3 flex items-center gap-3 transition-colors"
-              :class="{
-                'bg-[#F0DE36] text-[#0D1282] font-bold':
-                  activeTab === 'expenses',
-                'text-white  hover:text-[#F0DE36]/90 transition font-bold':
-                  activeTab !== 'expenses',
-              }"
-              @click="activeTab = 'expenses'"
-            >
+            <button class="w-full text-left rounded-xl p-3 flex items-center gap-3 transition-colors" :class="{
+              'bg-[#F0DE36] text-[#0D1282] font-bold':
+                activeTab === 'expenses',
+              'text-white  hover:text-[#F0DE36]/90 transition font-bold':
+                activeTab !== 'expenses',
+            }" @click="activeTab = 'expenses'">
               <span>🧾</span><span class="text-sm">Expenses</span>
             </button>
-            <button
-              class="w-full text-left rounded-xl p-3 flex items-center gap-3 transition-colors"
-              :class="{
-                'bg-[#F0DE36] text-[#0D1282] font-bold hover:bg-[#F0DE36]':
-                  activeTab === 'balance',
-                'text-white  hover:text-[#F0DE36]/90 transition font-bold':
-                  activeTab !== 'balance',
-              }"
-              @click="activeTab = 'balance'"
-            >
+            <button class="w-full text-left rounded-xl p-3 flex items-center gap-3 transition-colors" :class="{
+              'bg-[#F0DE36] text-[#0D1282] font-bold hover:bg-[#F0DE36]':
+                activeTab === 'balance',
+              'text-white  hover:text-[#F0DE36]/90 transition font-bold':
+                activeTab !== 'balance',
+            }" @click="activeTab = 'balance'">
               <span>⚖️</span><span class="text-sm">Balance</span>
             </button>
           </div>
 
-          <button
-            @click="openExpenseModal"
-            class="mt-8 w-full bg-[#F0DE36] hover:bg-yellow-400 text-[#0D1282] font-bold py-3 px-4 rounded-full shadow-md transition"
-          >
+          <button @click="openExpenseModalForAdd"
+            class="mt-8 w-full bg-[#F0DE36] hover:bg-yellow-400 text-[#0D1282] font-bold py-3 px-4 rounded-full shadow-md transition">
             <i class="fa-solid fa-plus-circle mr-2"></i> Add expense
           </button>
 
@@ -311,270 +260,195 @@ const getParticipantName = (email) => {
       </aside>
 
       <!-- Modal -->
-      <div
-        v-if="showExpenseModal"
-        class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
-      >
-      <div class="flex flex-row gap-6"> <!-- ✅ flex-row -->
-        <div
-          class="bg-[#EEEDED] rounded-3xl w-[420px] p-6 shadow-2xl relative flex flex-col max-h-[500px] overflow-y-auto"
-        >
-          <h2 class="text-2xl font-bold text-center mb-6 text-[#0D1282]">
-            New Expense
-          </h2>
-
-          <!-- Category / Date -->
-          <div class="flex gap-2 mb-6">
-            <!-- Category -->
-            <button
-              class="flex-1 border border-[#0D1282]/30 rounded-full py-3 text-sm text-[#0D1282] font-semibold transition hover:bg-[#0D1282]/10"
-              @click="showCategoryModal = true"
-            >
-              📂 {{ selectedCategory || "Category" }}
-            </button>
-
-            <!-- Date -->
-            <button
-              @click="openDatePicker"
-              class="flex-1 border border-[#0D1282]/30 rounded-full py-3 text-sm text-[#0D1282] font-semibold transition hover:bg-[#0D1282]/10"
-            >
-              📅
-              {{
-                new Date(selectedDate).toLocaleDateString("en-GB", {
-                  day: "2-digit",
-                  month: "short",
-                })
-              }}
-            </button>
-            <!-- Hidden date input -->
-            <input
-              ref="dateInput"
-              v-model="selectedDate"
-              type="date"
-              :min="new Date().toISOString().split('T')[0]"
-              class="hidden"
-            />
-          </div>
-
-          <!-- Category Modal -->
+      <div v-if="showExpenseModal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="flex flex-row gap-6"> <!-- ✅ flex-row -->
           <div
-            v-if="showCategoryModal"
-            class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          >
-            <div class="bg-[#EEEDED] p-6 rounded-2xl w-80 shadow-xl relative">
-              <h3 class="text-xl font-bold mb-4 text-[#0D1282]">
-                Select Category
-              </h3>
+            class="bg-[#EEEDED] rounded-3xl w-[420px] p-6 shadow-2xl relative flex flex-col max-h-[500px] overflow-y-auto">
+            <h2 class="text-2xl font-bold text-center mb-6 text-[#0D1282]">
+              New Expense
+            </h2>
+
+            <!-- Category / Date -->
+            <div class="flex gap-2 mb-6">
+              <!-- Category -->
               <button
-                @click="showCategoryModal = false"
-                class="absolute top-4 right-4 text-gray-400 hover:text-[#0D1282] transition"
-              >
-                ✕
+                class="flex-1 border border-[#0D1282]/30 rounded-full py-3 text-sm text-[#0D1282] font-semibold transition hover:bg-[#0D1282]/10"
+                @click="showCategoryModal = true">
+                📂 {{ selectedCategory || "Category" }}
               </button>
-              <ul>
-                <li
-                  v-for="cat in categories"
-                  :key="cat"
-                  @click="
-                    selectedCategory = cat;
-                    showCategoryModal = false;
-                  "
-                  class="cursor-pointer p-3 hover:bg-[#F0DE36]/40 rounded-xl flex items-center gap-3 transition"
-                >
-                  <i
-                    :class="['fa-solid', getCategoryIcon(cat)]"
-                    class="w-5 text-center text-[#0D1282]"
-                  ></i>
-                  {{ cat }}
-                </li>
-              </ul>
-              <div class="mt-4 border-t pt-4">
-                <button
-                  class="w-full bg-[#D71313]/10 text-[#D71313] py-2 rounded-full hover:bg-[#D71313]/20 transition font-semibold"
-                  @click="
-                    selectedCategory = '';
-                    showCategoryModal = false;
-                  "
-                >
-                  Clear
+
+              <!-- Date -->
+              <button @click="openDatePicker"
+                class="flex-1 border border-[#0D1282]/30 rounded-full py-3 text-sm text-[#0D1282] font-semibold transition hover:bg-[#0D1282]/10">
+                📅
+                {{
+                  new Date(selectedDate).toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                  })
+                }}
+              </button>
+              <!-- Hidden date input -->
+              <input ref="dateInput" v-model="selectedDate" type="date" :min="new Date().toISOString().split('T')[0]"
+                class="hidden" />
+            </div>
+
+            <!-- Category Modal -->
+            <div v-if="showCategoryModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div class="bg-[#EEEDED] p-6 rounded-2xl w-80 shadow-xl relative">
+                <h3 class="text-xl font-bold mb-4 text-[#0D1282]">
+                  Select Category
+                </h3>
+                <button @click="showCategoryModal = false"
+                  class="absolute top-4 right-4 text-gray-400 hover:text-[#0D1282] transition">
+                  ✕
                 </button>
+                <ul>
+                  <li v-for="cat in categories" :key="cat" @click="
+                    selectedCategory = cat;
+                  showCategoryModal = false;
+                  " class="cursor-pointer p-3 hover:bg-[#F0DE36]/40 rounded-xl flex items-center gap-3 transition">
+                    <i :class="['fa-solid', getCategoryIcon(cat)]" class="w-5 text-center text-[#0D1282]"></i>
+                    {{ cat }}
+                  </li>
+                </ul>
+                <div class="mt-4 border-t pt-4">
+                  <button
+                    class="w-full bg-[#D71313]/10 text-[#D71313] py-2 rounded-full hover:bg-[#D71313]/20 transition font-semibold"
+                    @click="
+                      selectedCategory = '';
+                    showCategoryModal = false;
+                    ">
+                    Clear
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Amount Input -->
+            <div
+              class="flex items-center justify-center mb-4 border border-[#0D1282]/30 rounded-full overflow-hidden focus-within:ring-2 focus-within:ring-[#F0DE36] transition">
+              <input v-model="amount" type="number" min="0" step="0.01"
+                class="w-32 px-4 py-3 text-2xl font-bold text-[#0D1282] text-right focus:outline-none bg-transparent"
+                placeholder="0.00" />
+              <div class="w-px h-8 bg-[#0D1282]/20"></div>
+              <select v-model="selectedCurrency"
+                class="px-4 py-3 text-base text-[#0D1282] bg-transparent focus:outline-none cursor-pointer">
+                <option v-for="cur in currencies" :key="cur" :value="cur">
+                  {{ cur }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Expense name -->
+            <div
+              class="flex items-center bg-white p-3 rounded-xl border border-[#0D1282]/30 mb-4 focus-within:ring-2 focus-within:ring-[#F0DE36] transition">
+              <i class="fa-solid fa-note-sticky text-[#0D1282]/60 mr-3"></i>
+              <input type="text" placeholder="Enter expense name..."
+                class="w-full outline-none bg-transparent text-[#0D1282]" v-model="note" />
+            </div>
+
+            <!-- Status toggle -->
+            <div class="flex justify-between items-center mb-6">
+              <span class="text-[#0D1282] font-medium">Status</span>
+              <label class="flex items-center cursor-pointer">
+                <!-- v-model ผูกกับ isPaid ซึ่งต้องเป็น boolean -->
+                <input type="checkbox" v-model="isPaid" class="sr-only" />
+                <div class="w-12 h-6 rounded-full shadow-inner relative transition-colors duration-300"
+                  :class="isPaid ? 'bg-emerald-500' : 'bg-gray-300'">
+                  <div
+                    class="dot absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300"
+                    :class="isPaid ? 'translate-x-full' : 'translate-x-0.5'"></div>
+                </div>
+                <span class="ml-3 font-semibold" :class="isPaid ? 'text-emerald-600' : 'text-gray-500'">
+                  {{ isPaid ? "Paid" : "Unpaid" }}
+                </span>
+              </label>
+            </div>
+
+
+            <!-- Paid By -->
+            <div class="mb-6">
+              <label class="block font-semibold text-[#0D1282] mb-2">Paid by</label>
+              <select v-model="paidBy"
+                class="w-full border border-[#0D1282]/30 rounded-full px-4 py-3 text-[#0D1282] focus:outline-none focus:ring-2 focus:ring-[#F0DE36] transition">
+                <option v-for="p in participants" :key="p.email" :value="p.email">
+                  {{ p.name }}
+                </option>
+              </select>
+            </div>
+
+
+            <!-- Buttons -->
+            <div class="flex justify-end gap-4">
+              <button @click="closeExpenseModal"
+                class="px-6 py-3 rounded-full bg-[#EEEDED] text-[#0D1282] font-semibold border border-[#0D1282]/30 hover:bg-[#D71313] transition">
+                Cancel
+              </button>
+              <button @click="
+                saveExpense();
+              closeExpenseModal();
+              "
+                class="px-8 py-3 rounded-full bg-[#0D1282] text-white font-bold hover:bg-[#0D1282]/90 shadow-md transition">
+                Save expense
+              </button>
+            </div>
+
+            <!-- Close Icon -->
+            <button @click="closeExpenseModal"
+              class="absolute top-4 right-4 text-gray-400 hover:text-[#D71313] text-2xl font-bold transition">
+              ✕
+            </button>
+          </div>
+          <div
+            class="bg-[#EEEDED] rounded-3xl w-[420px] p-6 shadow-2xl relative flex flex-col max-h-[500px] overflow-y-auto">
+            <h2 class="text-2xl font-bold text-center mb-6 text-[#0D1282]">
+              Participants
+            </h2>
+            <div class="space-y-3">
+              <label class="block font-semibold text-[#0D1282]">Split with</label>
+
+              <div class="space-y-2 max-h-48 overflow-y-auto pr-2">
+                <label v-for="p in participants" :key="p.email"
+                  class="flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ease-in-out"
+                  :class="{
+                    'bg-white border-slate-300 shadow-sm hover:bg-slate-50': !splitWith.includes(p.email),
+                    'bg-[#E5F3FF] border-[#0D1282] shadow-md': splitWith.includes(p.email),
+                  }">
+                  <div
+                    class="w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 ease-in-out"
+                    :class="{
+                      'bg-slate-200': !splitWith.includes(p.email),
+                      'bg-[#0D1282] scale-100': splitWith.includes(p.email),
+                      'scale-0': !splitWith.includes(p.email),
+                    }">
+                    <svg v-if="splitWith.includes(p.email)" class="w-4 h-4 text-white" fill="none" stroke="currentColor"
+                      viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </div>
+
+                  <span class="text-slate-800">{{ p.name }}</span>
+
+                  <input type="checkbox" :value="p.email" v-model="splitWith" class="hidden" />
+                </label>
               </div>
             </div>
           </div>
-
-          <!-- Amount Input -->
-          <div
-            class="flex items-center justify-center mb-4 border border-[#0D1282]/30 rounded-full overflow-hidden focus-within:ring-2 focus-within:ring-[#F0DE36] transition"
-          >
-            <input
-              v-model="amount"
-              type="number"
-              min="0"
-              step="0.01"
-              class="w-32 px-4 py-3 text-2xl font-bold text-[#0D1282] text-right focus:outline-none bg-transparent"
-              placeholder="0.00"
-            />
-            <div class="w-px h-8 bg-[#0D1282]/20"></div>
-            <select
-              v-model="selectedCurrency"
-              class="px-4 py-3 text-base text-[#0D1282] bg-transparent focus:outline-none cursor-pointer"
-            >
-              <option v-for="cur in currencies" :key="cur" :value="cur">
-                {{ cur }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Expense name -->
-          <div
-            class="flex items-center bg-white p-3 rounded-xl border border-[#0D1282]/30 mb-4 focus-within:ring-2 focus-within:ring-[#F0DE36] transition"
-          >
-            <i class="fa-solid fa-note-sticky text-[#0D1282]/60 mr-3"></i>
-            <input
-              type="text"
-              placeholder="Enter expense name..."
-              class="w-full outline-none bg-transparent text-[#0D1282]"
-              v-model="note"
-            />
-          </div>
-
-          <!-- Status toggle -->
-          <div class="flex justify-between items-center mb-6">
-            <span class="text-[#0D1282] font-medium">Status</span>
-            <label class="flex items-center cursor-pointer">
-              <input type="checkbox" v-model="isPaid" class="sr-only" />
-              <div
-                class="w-12 h-6 rounded-full shadow-inner relative transition-colors duration-300"
-                :class="isPaid ? 'bg-emerald-500' : 'bg-gray-300'"
-              >
-                <div
-                  class="dot absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300"
-                  :class="isPaid ? 'translate-x-full' : 'translate-x-0.5'"
-                ></div>
-              </div>
-              <span
-                class="ml-3 font-semibold"
-                :class="isPaid ? 'text-emerald-600' : 'text-gray-500'"
-              >
-                {{ isPaid ? "Paid" : "Unpaid" }}
-              </span>
-            </label>
-          </div>
-
-          <!-- Paid By -->
-          <div class="mb-6">
-            <label class="block font-semibold text-[#0D1282] mb-2"
-              >Paid by</label
-            >
-            <select
-              v-model="paidBy"
-              class="w-full border border-[#0D1282]/30 rounded-full px-4 py-3 text-[#0D1282] focus:outline-none focus:ring-2 focus:ring-[#F0DE36] transition"
-            >
-              <option v-for="p in participants" :key="p.email" :value="p.email">
-                {{ p.name }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Buttons -->
-          <div class="flex justify-end gap-4">
-            <button
-              @click="closeExpenseModal"
-              class="px-6 py-3 rounded-full bg-[#EEEDED] text-[#0D1282] font-semibold border border-[#0D1282]/30 hover:bg-[#D71313] transition"
-            >
-              Cancel
-            </button>
-            <button
-              @click="
-                saveExpense();
-                closeExpenseModal();
-              "
-              class="px-8 py-3 rounded-full bg-[#0D1282] text-white font-bold hover:bg-[#0D1282]/90 shadow-md transition"
-            >
-              Save expense
-            </button>
-          </div>
-
-          <!-- Close Icon -->
-          <button
-            @click="closeExpenseModal"
-            class="absolute top-4 right-4 text-gray-400 hover:text-[#D71313] text-2xl font-bold transition"
-          >
-            ✕
-          </button>
-        </div>
-        <div
-          class="bg-[#EEEDED] rounded-3xl w-[420px] p-6 shadow-2xl relative flex flex-col max-h-[500px] overflow-y-auto"
-        >
-          <h2 class="text-2xl font-bold text-center mb-6 text-[#0D1282]">
-            Participants
-          </h2>
-          <div class="space-y-3">
-    <label class="block font-semibold text-[#0D1282]">Split with</label>
-
-    <div class="space-y-2 max-h-48 overflow-y-auto pr-2">
-      <label
-        v-for="p in participants"
-        :key="p.email"
-        class="flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ease-in-out"
-        :class="{
-          'bg-white border-slate-300 shadow-sm hover:bg-slate-50': !splitWith.includes(p.email),
-          'bg-[#E5F3FF] border-[#0D1282] shadow-md': splitWith.includes(p.email),
-        }"
-      >
-        <div
-          class="w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 ease-in-out"
-          :class="{
-            'bg-slate-200': !splitWith.includes(p.email),
-            'bg-[#0D1282] scale-100': splitWith.includes(p.email),
-            'scale-0': !splitWith.includes(p.email),
-          }"
-        >
-          <svg
-            v-if="splitWith.includes(p.email)"
-            class="w-4 h-4 text-white"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M5 13l4 4L19 7"
-            ></path>
-          </svg>
-        </div>
-
-        <span class="text-slate-800">{{ p.name }}</span>
-
-        <input type="checkbox" :value="p.email" v-model="splitWith" class="hidden" />
-      </label>
-    </div>
-  </div>
-        </div>
         </div>
       </div>
 
       <main class="flex-1 p-8 overflow-y-auto bg-white">
         <template v-if="activeTab === 'expenses'">
-          <h3
-            class="text-3xl font-extrabold text-[#0D1282] mb-6 border-b-2 border-[#D71313] pb-2"
-          >
+          <h3 class="text-3xl font-extrabold text-[#0D1282] mb-6 border-b-2 border-[#D71313] pb-2">
             📝 Saved Expenses
           </h3>
 
-          <div
-            v-if="expenses.length === 0"
-            class="flex flex-col items-center justify-center text-center text-gray-500 min-h-[60vh]"
-          >
+          <div v-if="expenses.length === 0"
+            class="flex flex-col items-center justify-center text-center text-gray-500 min-h-[60vh]">
             <!-- รูปภาพ -->
-            <img
-              src="/expense.png"
-              alt="No expenses"
-              class="w-32 h-32 mb-4 opacity-40"
-            />
+            <img src="/expense.png" alt="No expenses" class="w-32 h-32 mb-4 opacity-40" />
 
             <!-- ข้อความ -->
             <p class="font-bold text-lg">No expenses yet</p>
@@ -583,18 +457,13 @@ const getParticipantName = (email) => {
             </p>
           </div>
 
-          <div
-            v-else
-            v-for="(expense, index) in expenses"
-            :key="index"
+          <div v-else v-for="(expense, index) in expenses" :key="index"
             class="bg-[#EEEDED] rounded-xl shadow-lg p-6 flex justify-between items-center mb-4 transition-all duration-300 transform hover:scale-[1.01] hover:shadow-xl border-l-4"
-            :class="expense.isPaid ? 'border-[#0D1282]' : 'border-[#D71313]'"
-          >
+            :class="expense.isPaid ? 'border-[#0D1282]' : 'border-[#D71313]'">
             <!-- เนื้อหาของ expense เดิม -->
             <div class="flex items-center space-x-4">
               <div
-                class="w-14 h-14 bg-[#0D1282] rounded-full flex items-center justify-center text-white text-xl shadow-md"
-              >
+                class="w-14 h-14 bg-[#0D1282] rounded-full flex items-center justify-center text-white text-xl shadow-md">
                 <i :class="['fa-solid', getCategoryIcon(expense.category)]"></i>
               </div>
               <div>
@@ -618,24 +487,17 @@ const getParticipantName = (email) => {
               <p class="text-2xl font-extrabold text-[#0D1282]">
                 {{ expense.amount.toFixed(2) }} {{ expense.currency }}
               </p>
-              <p
-                class="text-sm font-semibold"
-                :class="expense.isPaid ? 'text-green-600' : 'text-[#D71313]'"
-              >
+              <p class="text-sm font-semibold" :class="expense.isPaid ? 'text-green-600' : 'text-[#D71313]'">
                 {{ expense.isPaid ? "Paid" : "Unpaid" }}
               </p>
 
               <div class="flex gap-2 justify-end mt-2">
-                <button
-                  @click="editExpense(index)"
-                  class="px-4 py-1 text-sm rounded-full bg-[#F0DE36] hover:bg-yellow-400 text-[#0D1282] font-semibold shadow-md transition-all duration-200"
-                >
+                <button @click="editExpense(index)"
+                  class="px-4 py-1 text-sm rounded-full bg-[#F0DE36] hover:bg-yellow-400 text-[#0D1282] font-semibold shadow-md transition-all duration-200">
                   Edit
                 </button>
-                <button
-                  @click="deleteExpense(index)"
-                  class="px-4 py-1 text-sm rounded-full bg-[#D71313] hover:bg-red-700 text-white font-semibold shadow-md transition-all duration-200"
-                >
+                <button @click="deleteExpense(index)"
+                  class="px-4 py-1 text-sm rounded-full bg-[#D71313] hover:bg-red-700 text-white font-semibold shadow-md transition-all duration-200">
                   Delete
                 </button>
               </div>
@@ -652,24 +514,17 @@ const getParticipantName = (email) => {
           </h2>
 
           <div class="bg-[#EEEDED] rounded-xl shadow-lg p-6 mb-6">
-            <h3
-              class="text-xl font-bold text-[#0D1282] mb-2 border-b-2 border-[#F0DE36] pb-1"
-            >
+            <h3 class="text-xl font-bold text-[#0D1282] mb-2 border-b-2 border-[#F0DE36] pb-1">
               👥 Trip Members ({{ participants.length }})
             </h3>
             <ul class="list-none text-gray-700 space-y-2">
-              <li
-                v-for="p in participants"
-                :key="p.email"
-                class="mb-2 bg-white p-3 rounded-lg shadow-sm flex justify-between items-center"
-              >
+              <li v-for="p in participants" :key="p.email"
+                class="mb-2 bg-white p-3 rounded-lg shadow-sm flex justify-between items-center">
                 <div class="flex items-center gap-2">
                   <span class="font-bold text-[#0D1282]">{{ p.name }}</span>
                   <span class="text-sm text-gray-500">({{ p.email }})</span>
-                  <span
-                    v-if="p.email === tripLeader"
-                    class="ml-2 text-xs bg-[#F0DE36] text-[#0D1282] font-bold px-2 py-0.5 rounded-full"
-                  >
+                  <span v-if="p.email === tripLeader"
+                    class="ml-2 text-xs bg-[#F0DE36] text-[#0D1282] font-bold px-2 py-0.5 rounded-full">
                     Leader
                   </span>
                 </div>
@@ -678,27 +533,18 @@ const getParticipantName = (email) => {
           </div>
 
           <div class="bg-[#EEEDED] rounded-xl shadow-lg p-6 mb-6">
-            <h3
-              class="text-xl font-bold text-[#0D1282] mb-2 border-b-2 border-[#F0DE36] pb-1"
-            >
+            <h3 class="text-xl font-bold text-[#0D1282] mb-2 border-b-2 border-[#F0DE36] pb-1">
               ⚖️ Balance per person
             </h3>
             <ul class="text-gray-700 space-y-3">
-              <li
-                v-for="p in participants"
-                :key="p.email"
-                class="mb-2 bg-white p-3 rounded-lg shadow-sm"
-              >
+              <li v-for="p in participants" :key="p.email" class="mb-2 bg-white p-3 rounded-lg shadow-sm">
                 <span class="font-bold text-[#0D1282]">{{ p.name }}</span>:
                 Paid
                 <span class="font-semibold text-green-600">
                   {{ balances[p.email].paid.toFixed(2) }} {{ selectedCurrency }}
                 </span>,
                 Should Pay
-                <span
-                  class="font-extrabold"
-                  :class="balances[p.email].share > 0 ? 'text-[#D71313]' : 'text-green-600'"
-                >
+                <span class="font-extrabold" :class="balances[p.email].share > 0 ? 'text-[#D71313]' : 'text-green-600'">
                   {{ balances[p.email].share.toFixed(2) }}
                 </span>
                 {{ selectedCurrency }}
@@ -708,22 +554,17 @@ const getParticipantName = (email) => {
         </template>
       </main>
 
-      <aside
-        class="w-1/4 bg-[#0D1282] border-l border-gray-200 p-6 shadow-xl sticky top-0 h-screen overflow-y-auto"
-      >
+      <aside class="w-1/4 bg-[#0D1282] border-l border-gray-200 p-6 shadow-xl sticky top-0 h-screen overflow-y-auto">
         <div class="text-center mb-6 bg-[#EEEDED] rounded-2xl p-6 shadow-inner">
           <div class="relative w-40 h-40 mx-auto">
-            <div
-              class="absolute top-1/2 left-1/2 w-full h-full rounded-full -translate-x-1/2 -translate-y-1/2"
-              :style="{
-                background: totalCost === 0
-                  ? '#e5e7eb'
-                  : `conic-gradient(
+            <div class="absolute top-1/2 left-1/2 w-full h-full rounded-full -translate-x-1/2 -translate-y-1/2" :style="{
+              background: totalCost === 0
+                ? '#e5e7eb'
+                : `conic-gradient(
                       #F0DE36 0% ${paidPercentage}%,
                       #D71313 ${paidPercentage}% 100%
                     )`
-              }"
-            ></div>
+            }"></div>
             <div class="absolute inset-10 bg-white rounded-full flex items-center justify-center">
               <p class="text-xl font-bold">{{ totalCost.toFixed(2) }}</p>
             </div>
@@ -733,25 +574,18 @@ const getParticipantName = (email) => {
             <span class="text-yellow-600">
               🟡 Paid {{
                 (totalCost - pendingCost).toFixed(2)
-              }} 
+              }}
             </span>
             <span class="text-[#D71313]">
-              🔴 Pending {{ pendingCost.toFixed(2) }} 
+              🔴 Pending {{ pendingCost.toFixed(2) }}
             </span>
           </div>
         </div>
 
         <ul class="bg-[#EEEDED] rounded-xl shadow-lg p-6 space-y-4 mt-8">
-          <li
-            v-for="cat in categories"
-            :key="cat"
-            class="flex justify-between items-center text-[#0D1282] py-2"
-          >
+          <li v-for="cat in categories" :key="cat" class="flex justify-between items-center text-[#0D1282] py-2">
             <div class="flex items-center gap-3">
-              <i
-                :class="['fa-solid', getCategoryIcon(cat)]"
-                class="w-6 text-center text-[#D71313] text-lg"
-              ></i>
+              <i :class="['fa-solid', getCategoryIcon(cat)]" class="w-6 text-center text-[#D71313] text-lg"></i>
               <span class="font-medium">{{ cat }}</span>
             </div>
             <span class="font-bold text-right">
@@ -766,8 +600,10 @@ const getParticipantName = (email) => {
 
 <style scoped>
 .menu-item-wrapper:hover {
-  background-color: #d1fae5; /* Tailwind green-100 */
+  background-color: #d1fae5;
+  /* Tailwind green-100 */
 }
+
 /* button:hover {
   background-color: #2563eb;
 } */
