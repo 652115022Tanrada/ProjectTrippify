@@ -12,7 +12,7 @@ const router = useRouter();
 // const showLoginModal = ref(false);
 const user = ref(null);
 const today = new Date().toISOString().split("T")[0];
-const trip_type = ref('solo')
+const trip_type = ref("solo");
 const from = ref("");
 const to = ref("");
 const startDate = ref("");
@@ -48,7 +48,7 @@ const submitTrip = async () => {
     budget: budget.value,
     currency: currency.value,
     preferences: travelPreferences.value,
-    trip_type: trip_type.value,
+    trip_types: trip_types.value,
   };
 
   try {
@@ -94,7 +94,7 @@ const validateForm = () => {
     !to.value ||
     !startDate.value ||
     !endDate.value ||
-    !budget.value 
+    !budget.value
     // !trip_type.value
   ) {
     Swal.fire({
@@ -131,6 +131,8 @@ const validateForm = () => {
 
   return true;
 };
+
+const trip_types = ref([]);
 
 onMounted(getUser);
 onMounted(() => {
@@ -288,6 +290,71 @@ onMounted(() => {
           </div>
         </div>
 
+        <!-- Travel Type -->
+        <div class="w-full relative bg-white p-4 rounded-xl shadow-sm mt-4">
+          <p class="text-sm font-light text-gray-500 font-kanit mb-3">
+            TRAVEL TYPE
+          </p>
+          <div class="grid grid-cols-3 gap-4">
+            <label
+              v-for="type in [
+                { label: 'Solo', value: 'solo' },
+                { label: 'Couple', value: 'couple' },
+                { label: 'Group', value: 'group' },
+              ]"
+              :key="type.value"
+              class="relative flex items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ease-in-out"
+              :class="{
+                'bg-white border-slate-300 shadow-sm hover:bg-slate-50':
+                  !trip_types.includes(type.value),
+                'bg-[#E5F3FF] border-[#0D1282] shadow-md': trip_types.includes(
+                  type.value
+                ),
+              }"
+            >
+              <!-- ซ่อน checkbox -->
+              <input
+                type="checkbox"
+                class="hidden"
+                :value="type.value"
+                v-model="trip_types"
+              />
+
+              <!-- Label -->
+              <span
+                class="w-full text-xl font-bold font-kanit mt-1 text-center transition-all duration-200"
+                :class="{
+                  'text-[#0D1282]': trip_types.includes(type.value),
+                  'text-black': !trip_types.includes(type.value),
+                }"
+              >
+                {{ type.label }}
+              </span>
+
+              <!-- ไอคอน Checkmark -->
+              <div
+                v-if="trip_types.includes(type.value)"
+                class="absolute top-2 right-2 w-6 h-6 bg-[#0D1282] rounded-full flex items-center justify-center"
+              >
+                <svg
+                  class="w-4 h-4 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  ></path>
+                </svg>
+              </div>
+            </label>
+          </div>
+        </div>
+
         <h3 class="font-semibold mb-5 font-mitr text-[#0D1282] pt-4">
           Choose Your Travel Style:
         </h3>
@@ -401,30 +468,33 @@ onMounted(() => {
           </button>
         </div>
       </div>
-      </div>
     </div>
-    <!-- Loading Overlay with Logo -->
-    <div
-      v-if="isLoading"
-      class="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md pointer-events-none"
-    >
-      <div class="flex flex-col items-center gap-4">
-        <!-- Logo กระดึ๊บขึ้นลง -->
-        <img src="/1.png" alt="Loading Logo" class="w-24 h-24 bounce" />
-        <p class="text-[#000000] font-bold text-lg animate-pulse">
-          Creating your trip...
-        </p>
-      </div>
+  </div>
+  <!-- Loading Overlay with Logo -->
+  <div
+    v-if="isLoading"
+    class="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md pointer-events-none"
+  >
+    <div class="flex flex-col items-center gap-4">
+      <!-- Logo กระดึ๊บขึ้นลง -->
+      <img src="/1.png" alt="Loading Logo" class="w-24 h-24 bounce" />
+      <p class="text-[#000000] font-bold text-lg animate-pulse">
+        Creating your trip...
+      </p>
     </div>
-
+  </div>
 </template>
 <style scoped>
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-15px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
 }
 .bounce {
   animation: bounce 1s ease-in-out infinite;
 }
 </style>
-
