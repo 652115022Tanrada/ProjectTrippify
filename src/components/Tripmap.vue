@@ -1,5 +1,5 @@
 <script setup>
-import { toRefs,onMounted, watch, ref } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 
 const props = defineProps({
   locations: { type: Array, default: () => [] },
@@ -10,15 +10,27 @@ const props = defineProps({
 const map = ref(null);
 const mapLoaded = ref(false);
 const markers = [];
+const nearbyMarkers = [];
 let directionsRenderer = null;
 
+// --- Helpers ---
+const isValidCoord = (v) => typeof v === "number" && !isNaN(v);
+
+function sanitizeLocations(locations) {
+  return locations
+    .map(loc => {
+      const lat = Number(loc.lat);
+      const lng = Number(loc.lng);
+      if (!isValidCoord(lat) || !isValidCoord(lng)) return null;
+      return { ...loc, lat, lng };
+    })
+    .filter(Boolean);
+}
+
+// --- Load Google Maps ---
 function loadGoogleMapsScript() {
   return new Promise((resolve, reject) => {
-    if (window.google && window.google.maps) {
-      resolve();
-      return;
-    }
-
+    if (window.google && window.google.maps) return resolve();
     const script = document.createElement('script');
     script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyAPXZbbrz75ECNK3VD77E9CZULbebHbe9I';
     script.async = true;
@@ -31,196 +43,148 @@ function loadGoogleMapsScript() {
 
 function initMap(center) {
   map.value = new google.maps.Map(document.getElementById("map"), {
-    center: center,
+    center,
     zoom: 13,
   });
   mapLoaded.value = true;
 }
 
+// --- Markers ---
 function clearMarkers() {
-  markers.forEach(marker => marker.setMap(null));
+  markers.forEach(m => m.setMap(null));
   markers.length = 0;
+}
+
+function clearNearbyMarkers() {
+  nearbyMarkers.forEach(m => m.setMap(null));
+  nearbyMarkers.length = 0;
 }
 
 function addMarkers() {
   if (!map.value || !props.locations) return;
-
   clearMarkers();
-
-  props.locations
-    .filter(loc => loc.lat && loc.lng)
-    .forEach((loc, index) => {
-      const marker = new google.maps.Marker({
-        position: { lat: loc.lat, lng: loc.lng },
-        map: map.value,
-        title: loc.name,
-        label: {
-          text: String(index + 1),
-          color: "white",
-          fontWeight: "bold",
-          fontSize: "14px"
-        },
-      });
-      markers.push(marker);
+  const sanitized = sanitizeLocations(props.locations);
+  sanitized.forEach((loc, idx) => {
+    const marker = new google.maps.Marker({
+      map: map.value,
+      position: { lat: loc.lat, lng: loc.lng },
+      title: loc.name,
+      label: { text: String(idx + 1), color: "white", fontWeight: "bold", fontSize: "14px" }
     });
+    markers.push(marker);
+  });
 }
 
-const isValidCoord = (v) => typeof v === "number" && !isNaN(v);
+function addNearbyMarkers() {
+  if (!map.value || !props.nearby) return;
+  clearNearbyMarkers();
+  const sanitized = sanitizeLocations(props.nearby);
+  sanitized.forEach(loc => {
+    const marker = new google.maps.Marker({
+      map: map.value,
+      position: { lat: loc.lat, lng: loc.lng },
+      title: loc.name,
+      icon: { url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" }
+    });
+    nearbyMarkers.push(marker);
+  });
+}
 
-const buildRouteRequest = (locations) => {
-  if (!Array.isArray(locations) || locations.length < 2) return null;
-
-  // filter and coerce to numbers
-  const sanitized = locations
-    .map((loc) => {
-      const latNum = Number(loc.lat);
-      const lngNum = Number(loc.lng);
-      return {
-        ...loc,
-        lat: isValidCoord(latNum) ? latNum : null,
-        lng: isValidCoord(lngNum) ? lngNum : null,
-      };
-    })
-    .filter((l) => isValidCoord(l.lat) && isValidCoord(l.lng));
-
+// --- Route & Directions ---
+function buildRouteRequest(locations) {
+  const sanitized = sanitizeLocations(locations);
   if (sanitized.length < 2) return null;
 
-  const originLoc = sanitized[0];
-  const destLoc = sanitized[sanitized.length - 1];
+  const origin = sanitized[0];
+  const destination = sanitized[sanitized.length - 1];
+  const waypoints = sanitized.slice(1, -1).map(l => ({ location: { lat: l.lat, lng: l.lng }, stopover: true }));
 
-  const origin = { lat: originLoc.lat, lng: originLoc.lng };
-  const destination = { lat: destLoc.lat, lng: destLoc.lng };
-
-  const waypoints = sanitized.slice(1, -1).map((l) => ({
-    location: { lat: l.lat, lng: l.lng },
-    stopover: true,
-  }));
-
-  return {
-    origin,
-    destination,
-    waypoints,
-    travelMode: google.maps.TravelMode.DRIVING,
-  };
-};
+  return { origin, destination, waypoints, travelMode: google.maps.TravelMode.DRIVING };
+}
 
 async function calculateDistances() {
-  if (!props.locations || props.locations.length < 2) return;
+  const sanitized = sanitizeLocations(props.locations);
+  if (sanitized.length < 2) return;
 
   const service = new google.maps.DistanceMatrixService();
-
-  for (let i = 0; i < props.locations.length - 1; i++) {
-    const origin = props.locations[i];
-    const destination = props.locations[i + 1];
-
+  for (let i = 0; i < sanitized.length - 1; i++) {
+    const origin = sanitized[i];
+    const destination = sanitized[i + 1];
     try {
       const response = await new Promise((resolve, reject) => {
         service.getDistanceMatrix(
-          {
-            origins: [{ lat: origin.lat, lng: origin.lng }],
-            destinations: [{ lat: destination.lat, lng: destination.lng }],
-            travelMode: google.maps.TravelMode.DRIVING,
-          },
-          (result, status) => {
-            if (status === 'OK') {
-              resolve(result);
-            } else {
-              reject(`Distance Matrix failed: ${status}`);
-            }
-          }
+          { origins: [{ lat: origin.lat, lng: origin.lng }], destinations: [{ lat: destination.lat, lng: destination.lng }], travelMode: google.maps.TravelMode.DRIVING },
+          (result, status) => (status === 'OK' ? resolve(result) : reject(`Distance Matrix failed: ${status}`))
         );
       });
-
-      const distanceText = response.rows[0].elements[0].distance?.text || 'N/A';
-      destination.distance_to_next = distanceText;
-    } catch (error) {
-      console.error(error);
+      destination.distance_to_next = response.rows[0].elements[0].distance?.text || 'N/A';
+    } catch (err) {
+      console.error(err);
       destination.distance_to_next = 'N/A';
     }
   }
 }
 
 async function drawRoute() {
-  if (!props.locations || props.locations.length < 2 || !map.value) return;
-
   const routeRequest = buildRouteRequest(props.locations);
-  if (!routeRequest) {
-    console.warn("ไม่พอข้อมูลพิกัดที่ถูกต้องสำหรับสร้าง route");
-    return;
-  }
+  if (!routeRequest || !map.value) return;
 
-  const directionsService = new google.maps.DirectionsService();
   if (!directionsRenderer) {
     directionsRenderer = new google.maps.DirectionsRenderer({
       suppressMarkers: true,
-      polylineOptions: {
-        strokeColor: '#1D4ED8',
-        strokeOpacity: 0.8,
-        strokeWeight: 5,
-      },
+      polylineOptions: { strokeColor: '#1D4ED8', strokeOpacity: 0.8, strokeWeight: 5 }
     });
     directionsRenderer.setMap(map.value);
   }
-  // Debug payload
-  console.log("Route request payload:", routeRequest);
 
-  const origin = props.locations[0];
-  const destination = props.locations[props.locations.length - 1];
-  const waypoints = props.locations.slice(1, -1).map(loc => ({
-    location: { lat: loc.lat, lng: loc.lng },
-    stopover: true,
-  }));
+  const { origin, destination, waypoints } = routeRequest;
 
+  const directionsService = new google.maps.DirectionsService();
   directionsService.route(
-    {
-      origin: { lat: origin.lat, lng: origin.lng },
-      destination: { lat: destination.lat, lng: destination.lng },
-      waypoints,
-      optimizeWaypoints: false,
-      travelMode: google.maps.TravelMode.DRIVING,
-    },
+    { origin, destination, waypoints, optimizeWaypoints: false, travelMode: google.maps.TravelMode.DRIVING },
     (result, status) => {
-      if (status === 'OK') {
-        directionsRenderer.setDirections(result);
-      } else {
-        console.error('Directions request failed due to ', status);
-      }
+      if (status === 'OK') directionsRenderer.setDirections(result);
+      else console.error('Directions request failed:', status);
     }
   );
 }
 
+// --- Highlighted ---
+function flyTo(loc) {
+  if (!map.value || !loc) return;
+  const sanitized = sanitizeLocations([loc])[0];
+  if (!sanitized) return;
+  map.value.panTo({ lat: sanitized.lat, lng: sanitized.lng });
+  map.value.setZoom(15);
+}
+
+// --- Lifecycle ---
 onMounted(async () => {
   await loadGoogleMapsScript();
-
-  const firstValidLoc = props.locations.find(loc => loc.lat && loc.lng);
-  if (firstValidLoc) {
-    initMap({ lat: firstValidLoc.lat, lng: firstValidLoc.lng });
+  const firstValid = sanitizeLocations(props.locations)[0];
+  if (firstValid) {
+    initMap({ lat: firstValid.lat, lng: firstValid.lng });
     addMarkers();
+    addNearbyMarkers();
     await calculateDistances();
-    await drawRoute(); // วาดเส้นทาง
+    await drawRoute();
   }
 });
 
-watch(() => props.locations, async (newLocs) => {
-  const firstValidLoc = newLocs.find(loc => loc.lat && loc.lng);
-  if (firstValidLoc && !mapLoaded.value) {
-    initMap({ lat: firstValidLoc.lat, lng: firstValidLoc.lng });
+// --- Watchers ---
+watch(() => props.locations, async () => {
+  if (!mapLoaded.value) {
+    const firstValid = sanitizeLocations(props.locations)[0];
+    if (firstValid) initMap({ lat: firstValid.lat, lng: firstValid.lng });
   }
   addMarkers();
   await calculateDistances();
-  await drawRoute(); 
+  await drawRoute();
 });
 
-// ตัวอย่าง: เมื่อ nearby/highlighted เปลี่ยน ให้รีเรนเดอร์ marker ชุดพิเศษ
-watch(() => props.nearby, () => {
-  // add/remove nearby markers (ใช้สี/ไอคอนต่างจากของแผน)
-});
+watch(() => props.nearby, () => addNearbyMarkers());
 
-watch(() => props.highlighted, (p) => {
-  if (p) {
-    // flyTo(p.lat, p.lng) หรือเปิด popup ที่ marker ของ p
-  }
-});
+watch(() => props.highlighted, (loc) => { if (loc) flyTo(loc); });
 </script>
 
 <template>
