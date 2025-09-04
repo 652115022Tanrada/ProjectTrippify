@@ -55,7 +55,7 @@ const submitJoinLink = () => {
   if (tripId) {
     joinTripLinkModal.value = false
     joinLinkInput.value = ''
-    router.push(`/trip/${tripId}/join`)
+    router.push(`/trip/${tripId}`)
   } else {
     Swal.fire({
       icon: 'error',
@@ -115,7 +115,7 @@ onMounted(() => {
             v-for="trip in savedTrips"
             :key="trip._id"
             class="p-6 rounded-2xl bg-white shadow-xl hover:shadow-2xl hover:bg-sky-50 transition-all duration-300 transform hover:scale-105 cursor-pointer"
-            @click="viewTripReview (trip._id)"
+            @click="viewTripReview (trip.tripId)"
           >
           <div class="flex items-center space-x-4">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-[#0D1282]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
