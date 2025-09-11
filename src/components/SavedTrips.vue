@@ -95,7 +95,6 @@ const submitJoinLink = () => {
     return
   }
 
-  // ดึง tripId จากลิงก์ เช่น http://localhost:5173/trip/123456/join
   const match = joinLinkInput.value.match(/\/trip\/([^/]+)/)
   const tripId = match ? match[1] : null
 
@@ -157,7 +156,7 @@ onMounted(() => {
         <div v-if="savedTrips.length > 0" class="grid grid-cols-1 gap-6 w-full">
           <div
             v-for="trip in savedTrips"
-            :key="trip._id"
+            :key="trip.tripId"
             class="p-6 rounded-2xl bg-white shadow-xl hover:shadow-2xl hover:bg-sky-50 transition-all duration-300 transform hover:scale-105 cursor-pointer"
             @click="viewTripDetail(trip.tripId)"
           >

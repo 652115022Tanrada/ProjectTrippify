@@ -18,9 +18,9 @@ const routes = [
   { path: '/trip/:tripId', component: Tripdetail }, 
   { path: '/saved-trips', component: SavedTrips },
   { path: '/saved-trip-review', component: SavedTripReview },
-  { path: '/expense', component: Expense },
+  { path: '/expense/:tripId', component: Expense },
   { path: '/trip/:tripId/review', component: Review},
-  { path: '/invite/:tripId', component: InvitePage }, // ✅ หน้า invite
+  { path: '/invite/:tripId', component: InvitePage },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',

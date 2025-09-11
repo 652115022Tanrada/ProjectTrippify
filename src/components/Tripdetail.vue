@@ -304,30 +304,37 @@ const addNearbyPlace = (place) => {
 //   },
 //   { deep: true }
 // );
-
 onMounted(async () => {
   try {
     await getUser();
 
     if (route.params.tripId) {
+      // เรียก join ก่อน (POST) ถ้ายังไม่เป็น member
       try {
-        console.log("Fetching trip with ID:", route.params.tripId);
+        await axios.post(
+          `http://localhost:5000/api/trip/${route.params.tripId}/join`,
+          {},
+          { withCredentials: true }
+        );
+      } catch (err) {
+        console.warn("Already a member or join failed:", err);
+      }
+
+      // จากนั้น fetch ข้อมูล trip plan จริง
+      try {
         const { data } = await axios.get(
           `http://localhost:5000/api/trip/${route.params.tripId}`,
           { withCredentials: true }
         );
-        console.log("Trip from backend:", data);
         trip.value = data;
         store.commit("trip/setTripPlan", data);
       } catch (err) {
         console.error("Error fetching trip:", err);
       }
     }
+
     // ถ้ามี location แรก ให้ดึง nearby places
-    if (
-      tripPlan.value?.days?.length > 0 &&
-      tripPlan.value.days[0].locations?.length > 0
-    ) {
+    if (tripPlan.value?.days?.length > 0 && tripPlan.value.days[0].locations?.length > 0) {
       const { lat, lng } = tripPlan.value.days[0].locations[0];
       await fetchNearby(lat, lng, selectedCategory.value);
     }
@@ -335,6 +342,7 @@ onMounted(async () => {
     console.error("Error in onMounted:", err);
   }
 });
+
 
 
 </script>
@@ -374,7 +382,7 @@ onMounted(async () => {
                 </button>
               </div>
 
-              <button @click="goToPage(`/expense?tripId=${tripPlan?.tripId || ''}`)"
+              <button @click="goToPage(`/expense/${tripId}`)"
                 class="flex items-center gap-2 bg-[#D71313] hover:bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-full transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
                   stroke="currentColor">

@@ -13,7 +13,7 @@ const showExpenseModal = ref(false);
 const showCategoryModal = ref(false);
 const activeTab = ref("expenses");
 
-const tripId = route.query.tripId;
+const tripId = route.params.tripId;
 const selectedDate = ref(new Date().toISOString().split("T")[0]);
 const dateInput = ref(null);
 const selectedCategory = ref("");
