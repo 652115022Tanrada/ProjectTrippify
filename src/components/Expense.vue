@@ -12,7 +12,7 @@ const user = ref(null);
 const showExpenseModal = ref(false);
 const showCategoryModal = ref(false);
 const activeTab = ref("expenses");
-
+const trip = ref(null);
 const tripId = route.params.tripId;
 const selectedDate = ref(new Date().toISOString().split("T")[0]);
 const dateInput = ref(null);
@@ -68,7 +68,16 @@ const loadExpenses = async () => {
     console.error("Error loading expenses:", err);
   }
 };
-
+const loadTrip = async () => {
+  try {
+    const res = await axios.get(`http://localhost:5000/api/trip/${tripId}`, {
+      withCredentials: true,
+    });
+    trip.value = res.data;
+  } catch (err) {
+    console.error(err);
+  }
+};
 // ---------------- Save Expense ----------------
 const saveExpense = async () => {
   const newExpense = {
@@ -213,6 +222,7 @@ const getParticipantName = (email) => participants.value.find(p => p.email === e
 onMounted(() => {
   getUser();
   if (tripId) loadExpenses();
+  loadTrip();
 });
 </script>
 
@@ -245,7 +255,7 @@ onMounted(() => {
             </button>
           </div>
 
-          <button @click="openExpenseModalForAdd"
+          <button @click="openExpenseModalForAdd" v-if="trip && trip.role === 'leader'"
             class="mt-8 w-full bg-[#F0DE36] hover:bg-yellow-400 text-[#0D1282] font-bold py-3 px-4 rounded-full shadow-md transition">
             <i class="fa-solid fa-plus-circle mr-2"></i> Add expense
           </button>
@@ -491,7 +501,7 @@ onMounted(() => {
                 {{ expense.isPaid ? "Paid" : "Unpaid" }}
               </p>
 
-              <div class="flex gap-2 justify-end mt-2">
+              <div class="flex gap-2 justify-end mt-2" v-if="trip && trip.role === 'leader'">
                 <button @click="editExpense(index)"
                   class="px-4 py-1 text-sm rounded-full bg-[#F0DE36] hover:bg-yellow-400 text-[#0D1282] font-semibold shadow-md transition-all duration-200">
                   Edit

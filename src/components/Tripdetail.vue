@@ -394,7 +394,7 @@ onMounted(async () => {
             </div>
 
             <div v-show="activeTab === 'plan'">
-              <div class="mb-6 flex justify-end gap-4">
+              <div class="mb-6 flex justify-end gap-4" v-if="trip && trip.role === 'leader'">
                 <!-- Cancel Trip (เทา) -->
                 <button @click="cancelTrip"
                   class="flex items-center justify-center w-12 h-12 bg-gray-400 hover:bg-gray-500 text-white font-semibold rounded-full shadow transition">
