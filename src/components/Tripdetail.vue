@@ -14,7 +14,7 @@ const route = useRoute();
 const router = useRouter();
 const store = useStore();
 const trip = ref(null);
-
+const userRole = ref(null)
 // const showLoginModal = ref(false);
 const user = ref(null);
 const tripId = computed(() => route.params.tripId);
@@ -68,7 +68,9 @@ const saveTrip = async () => {
 
   isSavingTrip.value = true;
   try {
-    const payload = { ...tripPlan.value };
+    const payload = { ...tripPlan.value
+      
+     };
 
     console.log("Saving trip with ID:", payload.tripId || "(new trip)");
 
@@ -394,7 +396,8 @@ onMounted(async () => {
             </div>
 
             <div v-show="activeTab === 'plan'">
-              <div class="mb-6 flex justify-end gap-4" v-if="trip && trip.role === 'leader'">
+              <div class="mb-6 flex justify-end gap-4"   v-if="!trip?.tripId || trip?.role === 'leader'">
+>
                 <!-- Cancel Trip (เทา) -->
                 <button @click="cancelTrip"
                   class="flex items-center justify-center w-12 h-12 bg-gray-400 hover:bg-gray-500 text-white font-semibold rounded-full shadow transition">
