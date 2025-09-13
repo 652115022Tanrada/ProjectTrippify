@@ -163,7 +163,7 @@ onMounted(() => {
         <div class="flex justify-end mb-4">
           <button
             @click="toggleAllDays"
-            class="bg-[#F0DE36] text-[#0D1282] font-semibold px-4 py-2 rounded-lg hover:bg-yellow-400 transition"
+            class="bg-[#0D1282] text-[#FFFFFF] font-semibold px-4 py-2 rounded-lg transition"
           >
             {{ allExpanded ? "Collapse All" : "Expand All" }}
           </button>

@@ -59,7 +59,7 @@ const loadExpenses = async () => {
     expenses.value = res.data.map(e => ({
       ...e,
       amount: parseFloat(e.amount) || 0,
-      isPaid: e.isPaid === 1 || e.isPaid === true,
+      isPaid: e.isPaid === 1 || e.isPaid === '1' || e.isPaid === true || e.isPaid === 'true', // ✅ รองรับทุกแบบ
       splitWith: Array.isArray(e.splitWith) ? e.splitWith : JSON.parse(e.splitWith || "[]")
     }));
   } catch (err) {
@@ -87,7 +87,7 @@ const saveExpense = async () => {
     amount: parseFloat(amount.value),
     paidBy: paidBy.value,
     note: note.value,
-    isPaid: isPaid.value,
+    isPaid: isPaid.value ? 1 : 0, // ✅ แปลงเป็น 1 หรือ 0
     currency: selectedCurrency.value,
     splitWith: splitWith.value,
   };

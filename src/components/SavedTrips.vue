@@ -130,7 +130,7 @@ onMounted(() => {
           <div class="flex space-x-4">
             <button
               @click="router.push('/planner')"
-              class="bg-[#F0DE36] text-[#0D1282] px-8 py-4 rounded-full font-bold text-lg hover:bg-[#FFD700] hover:text-[#0D1282] transition-all duration-300 transform hover:scale-105 shadow-lg"
+              class="bg-[#0D1282] text-[#FFFFFF] px-8 py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
             >
               <span class="flex items-center space-x-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -141,7 +141,7 @@ onMounted(() => {
             </button>
             <button
               @click="joinTripLinkModal = true"
-              class="bg-white text-[#D71313] px-8 py-4 rounded-full font-bold text-lg border-2 border-[#D71313] hover:bg-red-50 transition-all duration-300 transform hover:scale-105 shadow-md"
+              class="bg-[#D71313] text-[#FFFFFF] px-8 py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-md"
             >
               <span class="flex items-center space-x-2">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
