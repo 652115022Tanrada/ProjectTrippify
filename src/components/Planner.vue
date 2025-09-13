@@ -12,7 +12,7 @@ const router = useRouter();
 // const showLoginModal = ref(false);
 const user = ref(null);
 const today = new Date().toISOString().split("T")[0];
-const trip_type = ref("solo");
+const trip_type = ref("");
 const from = ref("");
 const to = ref("");
 const startDate = ref("");
@@ -48,7 +48,7 @@ const submitTrip = async () => {
     budget: budget.value,
     currency: currency.value,
     preferences: travelPreferences.value,
-    trip_types: trip_types.value,
+    trip_type: trip_type.value,
   };
 
   try {
@@ -94,8 +94,8 @@ const validateForm = () => {
     !to.value ||
     !startDate.value ||
     !endDate.value ||
-    !budget.value
-    // !trip_type.value
+    !budget.value||
+    !trip_type.value
   ) {
     Swal.fire({
       icon: "warning",
@@ -131,8 +131,6 @@ const validateForm = () => {
 
   return true;
 };
-
-const trip_types = ref([]);
 
 onMounted(getUser);
 onMounted(() => {
@@ -188,19 +186,7 @@ onMounted(() => {
           />
         </div>
 
-        <!-- <div
-          v-if="travelType === 'group'"
-          class="w-full relative bg-white p-4 rounded-xl shadow-sm mt-4"
-        >
-          <p class="text-sm font-light text-gray-500 font-kanit">GROUP SIZE</p>
-          <input
-            type="number"
-            v-model="groupSize"
-            min="1"
-            placeholder="Number of people"
-            class="w-full border-0 bg-white text-xl shadow-none outline-none font-bold font-kanit mt-1 text-[#0D1282]"
-          />
-        </div> -->
+   
 
         <div class="flex flex-col sm:flex-row gap-2 relative items-center">
           <div class="w-full relative bg-white p-4 rounded-xl shadow-sm">
@@ -306,34 +292,35 @@ onMounted(() => {
               class="relative flex items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ease-in-out"
               :class="{
                 'bg-white border-slate-300 shadow-sm hover:bg-slate-50':
-                  !trip_types.includes(type.value),
-                'bg-[#E5F3FF] border-[#0D1282] shadow-md': trip_types.includes(
+                  !trip_type.includes(type.value),
+                'bg-[#E5F3FF] border-[#0D1282] shadow-md': trip_type.includes(
                   type.value
                 ),
               }"
             >
-              <!-- ซ่อน checkbox -->
-              <input
-                type="checkbox"
-                class="hidden"
-                :value="type.value"
-                v-model="trip_types"
-              />
+           <input
+        type="radio"
+        name="trip_type"
+        class="hidden"
+        :value="type.value"
+        v-model="trip_type"
+      />
 
-              <!-- Label -->
-              <span
-                class="w-full text-xl font-bold font-kanit mt-1 text-center transition-all duration-200"
-                :class="{
-                  'text-[#0D1282]': trip_types.includes(type.value),
-                  'text-black': !trip_types.includes(type.value),
-                }"
-              >
-                {{ type.label }}
-              </span>
+
+        <!-- Label -->
+      <span
+        class="w-full text-xl font-bold font-kanit mt-1 text-center transition-all duration-200"
+        :class="{
+          'text-[#0D1282]': trip_type === type.value,
+          'text-black': trip_type !== type.value,
+        }"
+      >
+        {{ type.label }}
+      </span>
 
               <!-- ไอคอน Checkmark -->
               <div
-                v-if="trip_types.includes(type.value)"
+                v-if="trip_type.includes(type.value)"
                 class="absolute top-2 right-2 w-6 h-6 bg-[#0D1282] rounded-full flex items-center justify-center"
               >
                 <svg

@@ -4,13 +4,11 @@ import { useRoute, useRouter } from "vue-router";
 const route = useRoute();
 const router = useRouter();
 
-// ฟังก์ชัน login → ส่งไป backend Google OAuth
 const loginWithGoogle = () => {
   const tripPath = route.params.tripId
     ? `/trip/${route.params.tripId}`
     : "/";
 
-  // ✅ backend จะ login เสร็จแล้ว redirect กลับมา trip เดิม
   window.location.href = `http://localhost:5000/auth/google?redirect=http://localhost:5173${tripPath}`;
 };
 </script>
