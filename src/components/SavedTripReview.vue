@@ -73,7 +73,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-[#0D1282] text-gray-800 font-kanit">
+  <div class="min-h-screen flex flex-col bg-[#FFFFFF] text-gray-800 font-kanit">
     <!-- Header -->
     <Header :user="user" @update:user="user = $event" />
 
@@ -83,7 +83,7 @@ onMounted(() => {
       <div class="w-full max-w-6xl space-y-8">
         <!-- Header with New Trip Button -->
         <div class="flex justify-between items-center mb-8">
-        <h2 class="text-2xl font-extrabold text-[#F0DE36] mb-4">Your Saved Trips</h2>
+        <h2 class="text-2xl font-extrabold text-[#0D1282] mb-4">Your Saved Trips</h2>
         <div class="flex space-x-4">
           <button
             @click="router.push('/planner')"
@@ -114,7 +114,7 @@ onMounted(() => {
           <div
             v-for="trip in savedTrips"
             :key="trip._id"
-            class="p-6 rounded-2xl bg-white shadow-xl hover:shadow-2xl hover:bg-sky-50 transition-all duration-300 transform hover:scale-105 cursor-pointer"
+            class="p-6 rounded-2xl bg-[#EEEDED] shadow-xl hover:shadow-2xl hover:bg-sky-50 transition-all duration-300 transform hover:scale-105 cursor-pointer"
             @click="viewTripReview (trip.tripId)"
           >
           <div class="flex items-center space-x-4">

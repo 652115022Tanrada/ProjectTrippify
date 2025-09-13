@@ -234,14 +234,14 @@ onMounted(() => {
 
     <div class="flex flex-1 min-h-screen bg-[#EEEDED] ml-24">
       <!-- Sidebar -->
-      <aside class="w-64 bg-[#0D1282] p-6 shadow-xl flex flex-col justify-between text-white relative z-20">
+      <aside class="w-64 bg-[#FFFFFF] p-6 shadow-xl flex flex-col justify-between text-white relative z-20">
         <div>
-          <h2 class="text-2xl font-extrabold text-[#F0DE36] mb-4">Budget</h2>
+          <h2 class="text-2xl font-extrabold text-[#0D1282] mb-4">Budget</h2>
           <div class="space-y-2">
             <button class="w-full text-left rounded-xl p-3 flex items-center gap-3 transition-colors" :class="{
               'bg-[#F0DE36] text-[#0D1282] font-bold':
                 activeTab === 'expenses',
-              'text-white  hover:text-[#F0DE36]/90 transition font-bold':
+              'text-[#0D1282]  hover:text-[#D71313]/90 transition font-bold':
                 activeTab !== 'expenses',
             }" @click="activeTab = 'expenses'">
               <span>🧾</span><span class="text-sm">Expenses</span>
@@ -249,7 +249,7 @@ onMounted(() => {
             <button class="w-full text-left rounded-xl p-3 flex items-center gap-3 transition-colors" :class="{
               'bg-[#F0DE36] text-[#0D1282] font-bold hover:bg-[#F0DE36]':
                 activeTab === 'balance',
-              'text-white  hover:text-[#F0DE36]/90 transition font-bold':
+              'text-[#0D1282]  hover:text-[#D71313]/90 transition font-bold':
                 activeTab !== 'balance',
             }" @click="activeTab = 'balance'">
               <span>⚖️</span><span class="text-sm">Balance</span>
@@ -565,7 +565,7 @@ onMounted(() => {
         </template>
       </main>
 
-      <aside class="w-1/4 bg-[#0D1282] border-l border-gray-200 p-6 shadow-xl sticky top-0 h-screen overflow-y-auto">
+      <aside class="w-1/4 bg-[#FFFFFF] border-l border-gray-200 p-6 shadow-xl sticky top-0 h-screen overflow-y-auto">
         <div class="text-center mb-6 bg-[#EEEDED] rounded-2xl p-6 shadow-inner">
           <div class="relative w-40 h-40 mx-auto">
             <div class="absolute top-1/2 left-1/2 w-full h-full rounded-full -translate-x-1/2 -translate-y-1/2" :style="{

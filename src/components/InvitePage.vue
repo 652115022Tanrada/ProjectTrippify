@@ -17,7 +17,7 @@ const loginWithGoogle = () => {
 
 <template>
   <div
-    class="flex flex-col items-center justify-center h-screen bg-[#F0DE36] space-y-6"
+    class="flex flex-col items-center justify-center h-screen bg-[#FFFFFF] space-y-6"
   >
   <img
       src="/1.png"

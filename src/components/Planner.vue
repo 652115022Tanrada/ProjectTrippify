@@ -166,10 +166,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-[#0D1282]">
+  <div class="min-h-screen flex flex-col bg-[#FFFFFF]">
     <Header :user="user" @update:user="user = $event" />
     <h2
-      class="text-3xl font-extrabold text-center mb-10 font-kanit mt-10 text-white"
+      class="text-3xl font-extrabold text-center mb-10 font-kanit mt-10 text-[#0D1282]"
     >
       SMART TRIP PLANNER
     </h2>

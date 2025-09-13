@@ -77,9 +77,12 @@ const logout = async () => {
 </script>
 
 <template>
-  <header @click.self="toggleSidebar"
-    class="h-screen flex flex-col justify-between items-center py-8 px-2 fixed top-0 left-0 bg-[#F0DE36] z-50 transition-all duration-300 ease-in-out"
-    :class="{ 'w-48 pl-6 pr-4': isSidebarExpanded, 'w-24 pl-2 pr-2': !isSidebarExpanded }">
+  <header
+    @click.self="toggleSidebar"
+    class="h-screen flex flex-col justify-between items-center py-8 px-2 fixed top-0 left-0 bg-[#FFFFFF] z-50 
+    transition-all duration-300 ease-in-out shadow-lg" 
+    :class="{ 'w-48 pl-6 pr-4': isSidebarExpanded, 'w-24 pl-2 pr-2': !isSidebarExpanded }"
+  >
     <!-- Logo -->
     <div class="flex flex-col items-center w-full">
       <router-link to="/">

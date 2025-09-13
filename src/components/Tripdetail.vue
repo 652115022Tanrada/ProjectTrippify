@@ -350,10 +350,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex bg-[#0D1282]">
+  <div class="flex bg-[#FFFFFF]">
     <Header :user="user" @update:user="user = $event" />
 
-    <main class="flex-1 flex overflow-hidden rounded-l-[32px] bg-[#0D1282] ml-36">
+    <main class="flex-1 flex overflow-hidden rounded-l-[32px] bg-[#FFFFFF] ml-36">
       <div v-if="tripPlan" class="flex w-full">
         <div class="w-[50%] p-8 overflow-y-auto">
           <div class="bg-[#EEEDED] rounded-3xl shadow-lg p-8">
@@ -397,7 +397,6 @@ onMounted(async () => {
 
             <div v-show="activeTab === 'plan'">
               <div class="mb-6 flex justify-end gap-4"   v-if="!trip?.tripId || trip?.role === 'leader'">
->
                 <!-- Cancel Trip (เทา) -->
                 <button @click="cancelTrip"
                   class="flex items-center justify-center w-12 h-12 bg-gray-400 hover:bg-gray-500 text-white font-semibold rounded-full shadow transition">
