@@ -4,10 +4,11 @@ import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 import Swal from "sweetalert2";
 import Header from "./Header.vue";
+import { useStore } from "vuex";
 
 const route = useRoute();
 const router = useRouter();
-
+const store = useStore();
 const user = ref(null);
 const showExpenseModal = ref(false);
 const showCategoryModal = ref(false);
@@ -27,16 +28,13 @@ const paidBy = ref("");
 const splitWith = ref([]);
 const editingIndex = ref(null);
 
-const participants = ref([
-  { name: "Tanrada", email: "tanrada@example.com" },
-  { name: "Trippify", email: "trippify@example.com" },
-]);
+const participants = ref([]);
 
-const currentUserEmail = ref("youremail@example.com"); // เปลี่ยนเป็น email จริงจากระบบ auth
+const currentUserEmail = ref("");
 paidBy.value = currentUserEmail.value;
-
-const tripLeader = ref("tanrada@example.com"); // ตัวอย่าง email ของ leader
-const expenses = ref([]);
+const tripLeader = computed(() => {
+  return participants.value.find(p => p.role === "leader")?.gmail || "";
+});const expenses = ref([]);
 
 // ---------------- User ----------------
 const getUser = async () => {
@@ -74,6 +72,9 @@ const loadTrip = async () => {
       withCredentials: true,
     });
     trip.value = res.data;
+    participants.value = trip.value.members || [];
+    currentUserEmail.value = store.state.user?.gmail || "";
+    paidBy.value = currentUserEmail.value;
   } catch (err) {
     console.error(err);
   }
@@ -155,7 +156,7 @@ const editExpense = (index) => {
   selectedCurrency.value = expense.currency;
   note.value = expense.note;
   isPaid.value = !!expense.isPaid; // แปลงเป็น boolean
-  paidBy.value = participants.value.find(p => p.email === expense.paidBy)?.email || currentUserEmail.value;
+  paidBy.value = participants.value.find(p => p.gmail === expense.paidBy)?.gmail || currentUserEmail.value;
   splitWith.value = Array.isArray(expense.splitWith) ? expense.splitWith : JSON.parse(expense.splitWith || "[]");
   editingIndex.value = index;
   showExpenseModal.value = true;
@@ -190,12 +191,12 @@ const categoryTotals = computed(() => {
 
 const balances = computed(() => {
   const result = {};
-  participants.value.forEach(p => result[p.email] = { paid: 0, share: 0 });
+  participants.value.forEach(p => result[p.gmail] = { paid: 0, share: 0 });
   expenses.value.forEach(exp => {
-    const peopleToSplit = exp.splitWith && exp.splitWith.length ? exp.splitWith : participants.value.map(p => p.email);
+    const peopleToSplit = exp.splitWith && exp.splitWith.length ? exp.splitWith : participants.value.map(p => p.gmail);
     const share = exp.amount / peopleToSplit.length;
     if (result[exp.paidBy]) result[exp.paidBy].paid += exp.amount;
-    peopleToSplit.forEach(email => { if (result[email]) result[email].share += share; });
+    peopleToSplit.forEach(gmail => { if (result[gmail]) result[gmail].share += share; });
   });
   return result;
 });
@@ -216,7 +217,7 @@ const getCategoryIcon = (category) => {
     default: return "fa-ellipsis";
   }
 };
-const getParticipantName = (email) => participants.value.find(p => p.email === email)?.name || email;
+const getParticipantName = (gmail) => participants.value.find(p => p.gmail === gmail)?.username || gmail;
 
 // ---------------- Lifecycle ----------------
 onMounted(() => {
@@ -383,8 +384,8 @@ onMounted(() => {
               <label class="block font-semibold text-[#0D1282] mb-2">Paid by</label>
               <select v-model="paidBy"
                 class="w-full border border-[#0D1282]/30 rounded-full px-4 py-3 text-[#0D1282] focus:outline-none focus:ring-2 focus:ring-[#F0DE36] transition">
-                <option v-for="p in participants" :key="p.email" :value="p.email">
-                  {{ p.name }}
+                <option v-for="p in participants" :key="p.gmail" :value="p.gmail">
+                  {{ p.username }}
                 </option>
               </select>
             </div>
@@ -420,28 +421,28 @@ onMounted(() => {
               <label class="block font-semibold text-[#0D1282]">Split with</label>
 
               <div class="space-y-2 max-h-48 overflow-y-auto pr-2">
-                <label v-for="p in participants" :key="p.email"
+                <label v-for="p in participants" :key="p.gmail"
                   class="flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ease-in-out"
                   :class="{
-                    'bg-white border-slate-300 shadow-sm hover:bg-slate-50': !splitWith.includes(p.email),
-                    'bg-[#E5F3FF] border-[#0D1282] shadow-md': splitWith.includes(p.email),
+                    'bg-white border-slate-300 shadow-sm hover:bg-slate-50': !splitWith.includes(p.gmail),
+                    'bg-[#E5F3FF] border-[#0D1282] shadow-md': splitWith.includes(p.gmail),
                   }">
                   <div
                     class="w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 ease-in-out"
                     :class="{
-                      'bg-slate-200': !splitWith.includes(p.email),
-                      'bg-[#0D1282] scale-100': splitWith.includes(p.email),
-                      'scale-0': !splitWith.includes(p.email),
+                      'bg-slate-200': !splitWith.includes(p.gmail),
+                      'bg-[#0D1282] scale-100': splitWith.includes(p.gmail),
+                      'scale-0': !splitWith.includes(p.gmail),
                     }">
-                    <svg v-if="splitWith.includes(p.email)" class="w-4 h-4 text-white" fill="none" stroke="currentColor"
+                    <svg v-if="splitWith.includes(p.gmail)" class="w-4 h-4 text-white" fill="none" stroke="currentColor"
                       viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                   </div>
 
-                  <span class="text-slate-800">{{ p.name }}</span>
+                  <span class="text-slate-800">{{ p.username }}</span>
 
-                  <input type="checkbox" :value="p.email" v-model="splitWith" class="hidden" />
+                  <input type="checkbox" :value="p.gmail" v-model="splitWith" class="hidden" />
                 </label>
               </div>
             </div>
@@ -528,12 +529,12 @@ onMounted(() => {
               👥 Trip Members ({{ participants.length }})
             </h3>
             <ul class="list-none text-gray-700 space-y-2">
-              <li v-for="p in participants" :key="p.email"
+              <li v-for="p in participants" :key="p.gmail"
                 class="mb-2 bg-white p-3 rounded-lg shadow-sm flex justify-between items-center">
                 <div class="flex items-center gap-2">
-                  <span class="font-bold text-[#0D1282]">{{ p.name }}</span>
-                  <span class="text-sm text-gray-500">({{ p.email }})</span>
-                  <span v-if="p.email === tripLeader"
+                  <span class="font-bold text-[#0D1282]">{{ p.username }}</span>
+                  <span class="text-sm text-gray-500">({{ p.gmail }})</span>
+                  <span v-if="p.gmail === tripLeader"
                     class="ml-2 text-xs bg-[#F0DE36] text-[#0D1282] font-bold px-2 py-0.5 rounded-full">
                     Leader
                   </span>
@@ -547,15 +548,15 @@ onMounted(() => {
               ⚖️ Balance per person
             </h3>
             <ul class="text-gray-700 space-y-3">
-              <li v-for="p in participants" :key="p.email" class="mb-2 bg-white p-3 rounded-lg shadow-sm">
-                <span class="font-bold text-[#0D1282]">{{ p.name }}</span>:
+              <li v-for="p in participants" :key="p.gmail" class="mb-2 bg-white p-3 rounded-lg shadow-sm">
+                <span class="font-bold text-[#0D1282]">{{ p.username }}</span>:
                 Paid
                 <span class="font-semibold text-green-600">
-                  {{ balances[p.email].paid.toFixed(2) }} {{ selectedCurrency }}
+                  {{ balances[p.gmail].paid.toFixed(2) }} {{ selectedCurrency }}
                 </span>,
                 Should Pay
-                <span class="font-extrabold" :class="balances[p.email].share > 0 ? 'text-[#D71313]' : 'text-green-600'">
-                  {{ balances[p.email].share.toFixed(2) }}
+                <span class="font-extrabold" :class="balances[p.gmail].share > 0 ? 'text-[#D71313]' : 'text-green-600'">
+                  {{ balances[p.gmail].share.toFixed(2) }}
                 </span>
                 {{ selectedCurrency }}
               </li>
