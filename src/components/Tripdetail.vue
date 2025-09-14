@@ -28,6 +28,9 @@ const inviteLink = ref("");
 const showEditControls = ref(false);
 const isSavingTrip = ref(false);
 
+const searchQuery = ref("");
+const searchResults = ref([]);
+const loadingSearch = ref(false);
 // Nearby state
 const nearbyPlaces = ref([]);
 const allLocations = computed(() => {
@@ -68,9 +71,10 @@ const saveTrip = async () => {
 
   isSavingTrip.value = true;
   try {
-    const payload = { ...tripPlan.value
-      
-     };
+    const payload = {
+      ...tripPlan.value
+
+    };
 
     console.log("Saving trip with ID:", payload.tripId || "(new trip)");
 
@@ -220,8 +224,24 @@ const recalculateCosts = () => {
   });
   tripPlan.value.total_trip_cost = totalTripCost;
 };
-
-
+const searchPlaces = async () => {
+  if (!searchQuery.value) return;
+  loadingSearch.value = true;
+  try {
+    const { data } = await axios.get("http://localhost:5000/api/places/search", {
+    params: {
+    query: searchQuery.value,
+  },
+      withCredentials: true,
+    });
+    searchResults.value = data.places || [];
+  } catch (err) {
+    console.error("Search failed:", err);
+    Swal.fire("Error", "Cannot fetch search results", "error");
+  } finally {
+    loadingSearch.value = false;
+  }
+};
 // คำนวณจุดศูนย์กลางการค้นหา
 const getSearchCenter = () => {
   const locationsInSelectedDay = selectedDay.value?.locations;
@@ -382,6 +402,14 @@ onMounted(async () => {
                 ]">
                   Nearby Places
                 </button>
+                <button @click="activeTab = 'search'" :class="[
+                  'px-6 py-2 text-lg font-bold',
+                  activeTab === 'search'
+                    ? 'text-[#0D1282] border-b-3 border-[#0D1282]'
+                    : 'text-[#000000] hover:text-[#D71313] transition',
+                ]">
+                  Search Places
+                </button>
               </div>
 
               <button @click="goToPage(`/expense/${tripId}`)"
@@ -396,7 +424,7 @@ onMounted(async () => {
             </div>
 
             <div v-show="activeTab === 'plan'">
-              <div class="mb-6 flex justify-end gap-4"   v-if="!trip?.tripId || trip?.role === 'leader'">
+              <div class="mb-6 flex justify-end gap-4" v-if="!trip?.tripId || trip?.role === 'leader'">
                 <!-- Cancel Trip (เทา) -->
                 <button @click="cancelTrip"
                   class="flex items-center justify-center w-12 h-12 bg-gray-400 hover:bg-gray-500 text-white font-semibold rounded-full shadow transition">
@@ -642,8 +670,45 @@ onMounted(async () => {
                 ไม่พบสถานที่ใกล้เคียงสำหรับวันนี้
               </div>
             </div>
+            <div v-if="activeTab === 'search'">
+              <div class="mb-4 flex gap-2">
+                <input v-model="searchQuery" placeholder="Search places..."
+                  class="border rounded-lg px-3 py-2 w-full" />
+                <button @click="searchPlaces" class="bg-[#0D1282] text-white px-4 py-2 rounded-lg hover:bg-blue-800">
+                  Search
+                </button>
+              </div>
+
+              <div v-if="loadingSearch" class="text-center py-4 text-gray-500">
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Searching...
+              </div>
+
+              <div v-else>
+                <ul v-if="searchResults.length > 0" class="space-y-3">
+                  <li v-for="place in searchResults" :key="place.place_id"
+                    class="bg-white shadow rounded-lg p-3 flex justify-between items-center">
+                    <div>
+                      <p class="font-bold text-[#0D1282]">{{ place.name }}</p>
+                      <p class="text-sm text-gray-500">{{ place.address }}</p>
+                      <p v-if="place.rating" class="text-yellow-600 text-sm">
+                        ⭐ {{ place.rating }}
+                      </p>
+                    </div>
+                    <button @click="addNearbyPlace(place)"
+                      class="bg-green-600 text-white px-3 py-1 rounded-full text-sm hover:bg-green-700">
+                      Add
+                    </button>
+                  </li>
+                </ul>
+                <p v-else class="text-gray-500 text-center py-6">
+                  No results found.
+                </p>
+              </div>
+            </div>
+
           </div>
         </div>
+
 
         <!-- Map คงที่ แต่ไม่เต็มจอ -->
         <div class="fixed top-10 right-10 h-[90vh] w-[600px] rounded-xl shadow-lg overflow-hidden">
