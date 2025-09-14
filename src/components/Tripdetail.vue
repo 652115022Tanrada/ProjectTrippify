@@ -224,14 +224,22 @@ const recalculateCosts = () => {
   });
   tripPlan.value.total_trip_cost = totalTripCost;
 };
+// debounce function
+function debounce(fn, delay = 500) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+// search function
 const searchPlaces = async () => {
-  if (!searchQuery.value) return;
+  if (!searchQuery.value.trim()) return;
   loadingSearch.value = true;
   try {
     const { data } = await axios.get("http://localhost:5000/api/places/search", {
-    params: {
-    query: searchQuery.value,
-  },
+      params: { query: searchQuery.value },
       withCredentials: true,
     });
     searchResults.value = data.places || [];
@@ -242,20 +250,18 @@ const searchPlaces = async () => {
     loadingSearch.value = false;
   }
 };
-// คำนวณจุดศูนย์กลางการค้นหา
-const getSearchCenter = () => {
-  const locationsInSelectedDay = selectedDay.value?.locations;
-  if (locationsInSelectedDay && locationsInSelectedDay.length > 0) {
-    // ใช้พิกัดของสถานที่แรกในวันที่เลือก
-    return {
-      lat: locationsInSelectedDay[0].lat,
-      lng: locationsInSelectedDay[0].lng,
-    };
-  }
-  return { lat: 18.7883, lng: 98.9853 }; // ค่าเริ่มต้น: เชียงใหม่
-};
 
-// Fetch nearby places
+// สร้าง debounce ใหม่ ชื่อไม่ซ้ำ
+const debouncedSearchInput = debounce(() => {
+  searchPlaces();
+}, 500);
+
+// watch input
+watch(searchQuery, () => {
+  debouncedSearchInput();
+});
+
+
 const fetchNearby = async (lat, lng, type = "cafe") => {
   if (!lat || !lng) return;
   loadingNearby.value = true;
@@ -263,12 +269,16 @@ const fetchNearby = async (lat, lng, type = "cafe") => {
     const res = await axios.get("http://localhost:5000/api/places/nearby", {
       params: { lat, lng, type, radius: 1000 },
     });
-    // แปลง lat/lng ทุก place เป็น number
-    nearbyPlaces.value = (res.data || []).map(p => ({
+
+    // ตรวจสอบว่ามี array อยู่ใน key 'places'
+    const placesArray = Array.isArray(res.data.places) ? res.data.places : [];
+
+    nearbyPlaces.value = placesArray.map(p => ({
       ...p,
       lat: parseFloat(p.lat),
       lng: parseFloat(p.lng),
     }));
+
     console.log("Nearby places:", nearbyPlaces.value);
   } catch (err) {
     console.error("Failed to fetch nearby places:", err.message);
@@ -277,6 +287,7 @@ const fetchNearby = async (lat, lng, type = "cafe") => {
     loadingNearby.value = false;
   }
 };
+
 
 // Watch day and category change
 watch(
