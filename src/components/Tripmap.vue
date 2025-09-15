@@ -59,22 +59,38 @@ function clearNearbyMarkers() {
   nearbyMarkers.forEach(m => m.setMap(null));
   nearbyMarkers.length = 0;
 }
+// เพิ่มฟังก์ชันสำหรับกำหนดสีของหมุดตามวัน
+const getMarkerColor = (dayNumber) => {
+  const colors = ["#D71313", "#F0DE36", "#0D1282", "#228B22", "#FFA500", "#800080", "#FFC0CB"];
+  // ใช้ modulo เพื่อวนสีซ้ำหากมีวันมากกว่าจำนวนสีที่มี
+  return colors[(dayNumber - 1) % colors.length];
+};
 
 function addMarkers() {
   if (!map.value || !props.locations) return;
   clearMarkers();
   const sanitized = sanitizeLocations(props.locations);
   sanitized.forEach((loc, idx) => {
+    // กำหนดสีหมุดจาก property 'day' ที่เพิ่มเข้ามา
+    const pinColor = getMarkerColor(loc.day);
+    const svgIcon = `
+   <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+    <path fill="${pinColor}" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+</svg>`;
+
     const marker = new google.maps.Marker({
       map: map.value,
       position: { lat: loc.lat, lng: loc.lng },
       title: loc.name,
+      icon: {
+        url: `data:image/svg+xml;utf-8,${encodeURIComponent(svgIcon)}`,
+        scaledSize: new google.maps.Size(32, 32),
+      },
       label: { text: String(idx + 1), color: "white", fontWeight: "bold", fontSize: "14px" }
     });
     markers.push(marker);
   });
 }
-
 function addNearbyMarkers() {
   if (!map.value || !props.nearby) return;
   clearNearbyMarkers();

@@ -37,11 +37,12 @@ const loadingSearch = ref(false);
 // Nearby state
 const nearbyPlaces = ref([]);
 const allLocations = computed(() => {
-  return tripPlan.value?.days?.flatMap((day) =>
+  return tripPlan.value?.days?.flatMap((day, dayIndex) => // เพิ่ม dayIndex เข้ามา
     (day.locations || []).map((loc) => ({
       ...loc,
       lat: parseFloat(loc.lat),
       lng: parseFloat(loc.lng),
+      day: dayIndex + 1, // เพิ่ม property 'day' โดยใช้ dayIndex
     }))
   ) || [];
 });
@@ -544,9 +545,9 @@ onMounted(async () => {
                       </tr>
                     </tbody>
                   </table>
-<p class="mt-4 text-gray-700">
-  How to get there: {{ transportInfo?.how_to_get_there || "N/A" }}
-</p>
+                  <p class="mt-4 text-gray-700">
+                    How to get there: {{ transportInfo?.how_to_get_there || "N/A" }}
+                  </p>
 
                 </div>
 
