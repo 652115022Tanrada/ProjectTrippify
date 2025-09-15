@@ -139,11 +139,10 @@ onMounted(() => {
   script.onload = () => {
     const css = document.createElement("link");
     css.rel = "stylesheet";
-    css.href =
-      "https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css";
+    css.href = "https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css";
     document.head.appendChild(css);
 
-    new window.Litepicker({
+    const picker = new window.Litepicker({
       element: document.getElementById("dateRange"),
       singleMode: false,
       numberOfMonths: 2,
@@ -151,6 +150,7 @@ onMounted(() => {
       autoApply: true,
       format: "YYYY-MM-DD",
       minDate: new Date(),
+      maxDays: 7, // จำกัดสูงสุด 7 วัน
       setup: (picker) => {
         picker.on("selected", (start, end) => {
           startDate.value = start.format("YYYY-MM-DD");
@@ -266,13 +266,11 @@ onMounted(() => {
               placeholder="Enter budget"
               class="w-full border-0 bg-white text-2xl shadow-none outline-none font-bold font-kanit mt-1 text-[#0D1282]"
             />
-            <select
-              v-model="currency"
-              class="absolute right-3 top-1/2 translate-y-2 bg-transparent text-sm text-[#0D1282] outline-none font-semibold font-kanit"
+            <span
+              class="absolute right-3 top-1/2 -translate-y-1 text-2xl text-[#0D1282] font-semibold font-kanit"
             >
-              <option value="THB">THB</option>
-              <option value="USD">USD</option>
-            </select>
+              ฿
+            </span>
           </div>
         </div>
 

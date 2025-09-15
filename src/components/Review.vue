@@ -256,159 +256,149 @@ onMounted(() => {
         </div>
       </div>
       <!-- Trip Reviews -->
-      <div>
-        <h2 class="text-2xl font-bold text-[#0D1282] mb-4">Trip Reviews</h2>
-        <div v-if="error" class="text-red-500">{{ error }}</div>
+<div>
+  <h2 class="text-3xl font-extrabold text-[#0D1282] mb-8">Trip Reviews</h2>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-          <!-- Average Rating -->
-          <div
-            class="bg-white p-6 rounded-xl shadow-md border border-[#EEEDED]"
-          >
-            <h3 class="text-lg font-bold mb-4 text-[#0D1282]">
-              Average Rating
-            </h3>
-            <div class="flex items-center mb-4">
-              <span class="text-4xl font-bold text-[#D71313]">{{
-                averageRating
-              }}</span>
-              <div class="ml-3 flex">
-                <i
-                  v-for="i in 5"
-                  :key="i"
-                  class="fa-star"
-                  :class="
-                    i <= Math.round(averageRating)
-                      ? 'fas text-[#F0DE36]'
-                      : 'far text-gray-300'
-                  "
-                ></i>
-              </div>
-            </div>
-            <div v-for="n in 5" :key="n" class="flex items-center text-sm mb-2">
-              <span class="w-6 font-medium text-gray-700">{{ 6 - n }}</span>
-              <div class="flex-1 mx-2 bg-gray-200 rounded-full h-2">
-                <div
-                  class="bg-[#F0DE36] h-2 rounded-full transition-all duration-500 ease-out"
-                  :style="{ width: getRatingPercentage(6 - n) }"
-                ></div>
-              </div>
-              <span class="w-10 text-right font-medium text-[#0D1282]">{{
-                getRatingPercentage(6 - n)
-              }}</span>
-            </div>
-          </div>
-
-          <!-- Write a Review -->
-          <div
-            class="bg-white p-6 rounded-xl shadow-md border border-[#EEEDED]"
-          >
-             <h3 class="text-xl font-bold mb-4 text-[#0D1282]">
-              Write Your Review
-            </h3>
-            <p class="text-gray-600 mb-6">
-              You can rate and share your travel experience
-            </p>
-
-            <!-- Star Rating -->
-            <div class="flex items-center mb-6">
-              <span class="text-lg mr-3 font-semibold text-gray-700"
-                >Rating :</span
-              >
-              <div class="flex space-x-1">
-                <i
-                  v-for="i in 5"
-                  :key="i"
-                  class="fa-star cursor-pointer text-3xl transition-colors duration-200"
-                  :class="
-                    i <= (hoverRating || newReviewRating)
-                      ? 'fas text-[#F0DE36]'
-                      : 'far text-gray-300'
-                  "
-                  @mouseover="hoverRating = i"
-                  @mouseleave="hoverRating = 0"
-                  @click="newReviewRating = i"
-                ></i>
-              </div>
-            </div>
-
-            <!-- Name & Email -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <input
-                v-model="newReviewName"
-                type="text"
-                placeholder="Your Name (optional)"
-                class="border border-[#EEEDED] rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#F0DE36] transition"
-              />
-              <!-- <input v-model="newReviewEmail" type="email" placeholder="Your Email (not displayed)"
-              class="border border-[#EEEDED] rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#F0DE36] transition" /> -->
-            </div>
-
-            <!-- Comment -->
-            <textarea
-              v-model="newReviewComment"
-              placeholder="Write your review here..."
-              class="w-full h-32 border border-[#EEEDED] rounded-lg p-4 text-gray-700 focus:ring-2 focus:ring-[#F0DE36] outline-none mb-6 transition"
-            />
-
-            <!-- Submit -->
-            <button
-              @click="submitReview"
-              :disabled="submitting"
-              class="w-full bg-[#D71313] text-white font-bold text-lg py-3 rounded-lg hover:bg-[#B70F11] disabled:opacity-50 transition-colors transform hover:scale-105"
-            >
-              {{ submitting ? "Submitting..." : "Submit Review" }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Customer Comments -->
-        <div class="bg-white p-6 rounded-xl shadow-md border border-[#EEEDED]">
-          <h3 class="text-lg font-bold mb-4 text-[#0D1282]">
-            Customer Comments
-          </h3>
-          <div
-            v-if="reviews.length > 0"
-            class="space-y-4 max-h-96 overflow-y-auto pr-2"
-          >
-            <div
-              v-for="review in reviews"
-              :key="review.id"
-              class="bg-gray-50 p-4 rounded-xl shadow-sm border border-[#EEEDED] hover:bg-gray-100 transition-colors"
-            >
-              <div class="flex items-center mb-2">
-                <div
-                  class="w-8 h-8 rounded-full bg-[#0D1282] flex items-center justify-center text-white font-bold text-sm mr-3"
-                >
-                  {{ review.user_name ? review.user_name.charAt(0) : "A" }}
-                </div>
-                <h4 class="font-semibold text-gray-800">
-                  {{ review.user_name || "Anonymous User" }}
-                </h4>
-              </div>
-              <div class="flex mb-2">
-                <i
-                  v-for="i in 5"
-                  :key="i"
-                  class="fa-star"
-                  :class="
-                    i <= review.rating
-                      ? 'fas text-[#F0DE36]'
-                      : 'far text-gray-300'
-                  "
-                ></i>
-              </div>
-              <p class="text-gray-700 text-sm">{{ review.comment }}</p>
-              <span class="block mt-2 text-right text-xs text-gray-500">{{
-                formatDate(review.createdAt)
-              }}</span>
-            </div>
-          </div>
-          <div v-else class="text-gray-500 text-center">
-            No reviews yet for this trip
-          </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+    <div
+      class="bg-white p-8 rounded-3xl shadow-2xl border border-gray-100 transition-transform duration-300 hover:-translate-y-1"
+    >
+      <h3 class="text-xl font-bold mb-4 text-[#0D1282]">
+        Average Rating
+      </h3>
+      <div class="flex items-end mb-6">
+        <span class="text-6xl font-extrabold text-[#D71313] leading-none">{{
+          averageRating
+        }}</span>
+        <div class="ml-4 flex items-center space-x-1">
+          <i
+            v-for="i in 5"
+            :key="i"
+            class="fa-star text-3xl"
+            :class="
+              i <= Math.round(averageRating)
+                ? 'fas text-[#F0DE36]'
+                : 'far text-gray-300'
+            "
+          ></i>
         </div>
       </div>
+      <div v-for="n in 5" :key="n" class="flex items-center text-sm mb-2">
+        <span class="w-6 font-semibold text-gray-700">{{ 6 - n }}</span>
+        <div class="flex-1 mx-3 bg-gray-200 rounded-full h-3">
+          <div
+            class="bg-[#F0DE36] h-3 rounded-full transition-all duration-500 ease-out"
+            :style="{ width: getRatingPercentage(6 - n) }"
+          ></div>
+        </div>
+        <span class="w-10 text-right font-medium text-[#0D1282]">{{
+          getRatingPercentage(6 - n)
+        }}</span>
+      </div>
+    </div>
+
+    <div
+      class="bg-white p-8 rounded-3xl shadow-2xl border border-gray-100 transition-transform duration-300 hover:-translate-y-1"
+    >
+      <h3 class="text-xl font-bold mb-4 text-[#0D1282]">
+        Write Your Review
+      </h3>
+      <p class="text-gray-600 mb-6">
+        Share your experience and help other travelers!
+      </p>
+
+      <div class="flex items-center mb-6">
+        <span class="text-lg mr-4 font-semibold text-gray-700">Rating :</span>
+        <div class="flex space-x-2">
+          <i
+            v-for="i in 5"
+            :key="i"
+            class="fa-star cursor-pointer text-4xl transition-colors duration-200"
+            :class="
+              i <= (hoverRating || newReviewRating)
+                ? 'fas text-[#F0DE36]'
+                : 'far text-gray-300'
+            "
+            @mouseover="hoverRating = i"
+            @mouseleave="hoverRating = 0"
+            @click="newReviewRating = i"
+          ></i>
+        </div>
+      </div>
+
+      <input
+        v-model="newReviewName"
+        type="text"
+        placeholder="Your Name (optional)"
+        class="border border-gray-200 rounded-xl px-4 py-3 w-full mb-4 focus:outline-none focus:ring-2 focus:ring-[#F0DE36] transition"
+      />
+      <textarea
+        v-model="newReviewComment"
+        placeholder="Write your review here..."
+        class="w-full h-32 border border-gray-200 rounded-xl p-4 text-gray-700 focus:ring-2 focus:ring-[#F0DE36] outline-none mb-6 transition"
+      />
+
+      <button
+        @click="submitReview"
+        :disabled="submitting"
+        class="w-full bg-[#D71313] text-white font-bold text-lg py-4 rounded-xl hover:bg-[#B70F11] disabled:opacity-50 transition-colors transform hover:scale-105"
+      >
+        {{ submitting ? "Submitting..." : "Submit Review" }}
+      </button>
+    </div>
+  </div>
+
+  <div
+    class="bg-white p-8 rounded-3xl shadow-2xl border border-gray-100"
+  >
+    <h3 class="text-2xl font-bold mb-6 text-[#0D1282]">
+      Customer Comments
+    </h3>
+    <div
+      v-if="reviews.length > 0"
+      class="space-y-6 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar"
+    >
+      <div
+        v-for="review in reviews"
+        :key="review.id"
+        class="bg-gray-50 p-6 rounded-2xl shadow-sm border border-gray-100 hover:bg-gray-100 transition-colors"
+      >
+        <div class="flex items-start mb-2">
+          <div
+            class="w-12 h-12 rounded-full bg-gradient-to-br from-[#0D1282] to-[#D71313] flex items-center justify-center text-white font-bold text-xl mr-4 flex-shrink-0"
+          >
+            {{ review.user_name ? review.user_name.charAt(0) : "A" }}
+          </div>
+          <div class="flex flex-col">
+            <h4 class="font-semibold text-lg text-gray-800">
+              {{ review.user_name || "Anonymous User" }}
+            </h4>
+            <div class="flex mt-1">
+              <i
+                v-for="i in 5"
+                :key="i"
+                class="fa-star text-base"
+                :class="
+                  i <= review.rating
+                    ? 'fas text-[#F0DE36]'
+                    : 'far text-gray-300'
+                "
+              ></i>
+            </div>
+          </div>
+        </div>
+        <p class="text-gray-700 leading-relaxed mt-4">{{ review.comment }}</p>
+        <span class="block mt-4 text-right text-xs text-gray-500">{{
+          formatDate(review.createdAt)
+        }}</span>
+      </div>
+    </div>
+    <div v-else class="text-gray-500 text-center py-10">
+      <p>No reviews yet for this trip.</p>
+      <p class="mt-2">Be the first to share your experience!</p>
+    </div>
+  </div>
+</div>
     </div>
   </div>
 </template>

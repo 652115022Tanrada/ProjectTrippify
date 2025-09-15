@@ -110,7 +110,7 @@ onMounted(() => {
         </div>
         </div>
 
-        <div v-if="savedTrips.length > 0" class="grid grid-cols-1 gap-6 w-full">
+        <div v-if="savedTrips.length > 0" class="grid grid-cols-2 gap-6 w-full">
           <div
             v-for="trip in savedTrips"
             :key="trip._id"
