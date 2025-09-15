@@ -4,7 +4,7 @@ import axios from 'axios'
 import Swal from 'sweetalert2'
 import { useRouter } from 'vue-router'
 import Header from './Header.vue'
-
+import MiniMap from './MiniMap.vue'
 const savedTrips = ref([])
 const router = useRouter()
 const showLoginModal = ref(false)
@@ -175,6 +175,12 @@ onMounted(() => {
             <div class="mt-4 border-t pt-4 border-gray-100">
               <p class="text-gray-700 font-semibold">Total Cost: <span class="text-green-600">{{ trip.total_trip_cost }} {{ trip.currency || 'THB' }}</span></p>
             </div>
+            <MiniMap 
+  :key="trip.tripId" 
+  :locations="(trip.days || []).flatMap(day => day.locations || [])" 
+  class="w-full h-64 mt-4 rounded-lg"
+/>
+
           </div>
         </div>
 

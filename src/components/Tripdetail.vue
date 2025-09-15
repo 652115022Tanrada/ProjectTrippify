@@ -20,7 +20,10 @@ const user = ref(null);
 const tripId = computed(() => route.params.tripId);
 
 const tripPlan = computed(() => store.getters["trip/getTripPlan"]);
-const transportInfo = computed(() => tripPlan.value?.transport_info || {});
+const transportInfo = computed(() => ({
+  ...tripPlan.value?.transport_info,
+  how_to_get_there: tripPlan.value?.how_to_get_there || "",
+}));
 const tripName = computed(() => tripPlan.value?.tripName || "My Trip");
 
 const loadError = ref("");
@@ -541,7 +544,12 @@ onMounted(async () => {
                       </tr>
                     </tbody>
                   </table>
+<p class="mt-4 text-gray-700">
+  How to get there: {{ transportInfo?.how_to_get_there || "N/A" }}
+</p>
+
                 </div>
+
               </div>
 
               <div v-for="(day, index) in tripPlan.days" :key="index"
