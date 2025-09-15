@@ -232,7 +232,7 @@ onMounted(() => {
   <div class="min-h-screen flex flex-col bg-[#EEEDED] text-gray-800 font-kanit">
     <Header :user="user" @update:user="user = $event" />
 
-    <div class="flex flex-1 min-h-screen bg-[#EEEDED] ml-24">
+    <div class="flex flex-1 min-h-screen bg-[#EEEDED] ml-48">
       <!-- Sidebar -->
       <aside class="w-64 bg-[#FFFFFF] p-6 shadow-xl flex flex-col justify-between text-white relative z-20">
         <div>
