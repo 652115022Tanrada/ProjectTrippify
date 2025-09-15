@@ -113,7 +113,7 @@ onMounted(() => {
         <div v-if="savedTrips.length > 0" class="grid grid-cols-2 gap-6 w-full">
           <div
             v-for="trip in savedTrips"
-            :key="trip._id"
+            :key="trip.tripId"
             class="p-6 rounded-2xl bg-[#EEEDED] shadow-xl hover:shadow-2xl hover:bg-sky-50 transition-all duration-300 transform hover:scale-105 cursor-pointer"
             @click="viewTripReview (trip.tripId)"
           >
@@ -123,9 +123,9 @@ onMounted(() => {
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               <div>
-                <h3 class="text-xl font-bold text-[#0D1282]">{{ trip.tripName || 'Unnamed Trip' }}</h3>
+                <h3 class="text-xl font-bold text-[#0D1282]">{{ trip?.trip_name || tripPlan?.tripName  || 'Unnamed Trip' }}</h3>
                 <p class="text-gray-500 text-sm mt-1">
-                  <span class="font-semibold">Saved on:</span> {{ new Date(trip.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}
+                  <span class="font-semibold">Saved on:</span> {{ new Date(trip.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}
                 </p>
               </div>
             </div>

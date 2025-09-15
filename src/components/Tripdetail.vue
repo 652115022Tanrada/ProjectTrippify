@@ -393,7 +393,7 @@ onMounted(async () => {
         <div class="w-[50%] p-8 overflow-y-auto">
           <div class="bg-[#EEEDED] rounded-3xl shadow-lg p-8">
             <h1 class="text-3xl font-extrabold text-[#000000] mb-2">
-              {{ tripName }}
+              {{ trip?.trip_name || tripPlan?.tripName || "My Trip" }}
             </h1>
             <p class="text-[#000000] text-sm mb-6">
               Your personalized travel itinerary.
