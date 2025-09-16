@@ -144,7 +144,65 @@ onMounted(() => {
           </div>
         </div>
 
-        <div
+        <!-- Trips Grid -->
+        <div v-if="savedTrips.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
+          <div v-for="trip in savedTrips" :key="trip.tripId"
+            class="p-5 sm:p-6 rounded-2xl bg-[#EEEDED] shadow-xl hover:shadow-2xl hover:bg-sky-50 transition-all duration-300 transform hover:scale-105 cursor-pointer"
+            @click="viewTripReview(trip.tripId)">
+            <div class="flex items-center space-x-3 sm:space-x-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 sm:h-10 sm:w-10 text-[#0D1282]" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <div>
+                <h3 class="text-lg sm:text-xl font-bold text-[#0D1282]">
+                  {{ trip.trip_name || "Unnamed Trip" }}
+                </h3>
+                <p class="text-gray-500 text-sm mt-1">
+                  <span class="font-semibold">Date :</span> {{ new Date(trip.days[0].date).toLocaleDateString('en-US')
+                  }} -
+                  {{ new Date(trip.days[trip.days.length - 1].date).toLocaleDateString('en-US') }}
+                </p>
+              </div>
+            </div>
+            <div v-if="trip.members && trip.members.length" class="flex -space-x-2 items-center">
+              <div v-for="member in trip.members.slice().sort((a, b) => b.role === 'leader' ? 1 : 0)"
+                :key="member.user_id" class="relative group w-8 h-8 z-10">
+
+                <!-- Crown for leader -->
+                <span v-if="member.role === 'leader'"
+                  class="absolute -top-2 left-1/2 transform -translate-x-1/2 text-yellow-400 text-sm z-20">
+                  👑
+                </span>
+
+                <!-- Avatar -->
+                <img v-if="member.photo" :src="member.photo" :alt="member.username || 'Unknown user'"
+                  class="w-8 h-8 rounded-full border-2 border-gray-300" />
+                <div v-else
+                  class="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center bg-gray-200 text-gray-500 font-bold text-sm">
+                  {{ member.username?.trim().charAt(0) || '?' }}
+                </div>
+
+                <!-- Tooltip -->
+                <div
+                  class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-[#0D1282] text-white text-xs rounded py-1 px-2 z-30 whitespace-nowrap">
+                  {{ member.username || 'Unknown' }}
+                </div>
+              </div>
+            </div>
+
+
+            <div class="mt-3 sm:mt-4 border-t pt-3 sm:pt-4 border-gray-100">
+              <p class="text-gray-700 font-semibold text-sm sm:text-base">
+                Total Cost:
+                <span class="text-green-600">{{ trip.total_trip_cost }} {{ trip.currency || "THB" }}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+        <!-- <div
           v-if="savedTrips.length > 0"
           class="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full"
         >
@@ -190,12 +248,10 @@ onMounted(() => {
               </p>
             </div>
           </div>
-        </div>
+        </div> -->
 
-        <div
-          v-else
-          class="text-center py-20 text-gray-500 text-xl font-semibold"
-        >
+        <!-- Empty state -->
+        <div v-else class="text-center py-16 sm:py-20 text-gray-500 text-lg sm:text-xl font-semibold">
           <p>You haven't planned any trips yet.</p>
           <p>Let's start your first adventure!</p>
         </div>

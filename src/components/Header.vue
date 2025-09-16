@@ -317,7 +317,6 @@ const logout = async () => {
     </div>
 
     <!-- User Section Drawer -->
-    <!-- User Section Drawer -->
     <div class="flex flex-col items-center w-full py-4 px-4">
       <!-- ถ้าไม่ login -->
       <button

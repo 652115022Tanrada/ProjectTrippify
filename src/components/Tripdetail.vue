@@ -37,14 +37,20 @@ const loadingSearch = ref(false);
 // Nearby state
 const nearbyPlaces = ref([]);
 const allLocations = computed(() => {
-  return tripPlan.value?.days?.flatMap((day, dayIndex) => // เพิ่ม dayIndex เข้ามา
-    (day.locations || []).map((loc) => ({
-      ...loc,
-      lat: parseFloat(loc.lat),
-      lng: parseFloat(loc.lng),
-      day: dayIndex + 1, // เพิ่ม property 'day' โดยใช้ dayIndex
-    }))
-  ) || [];
+  return (
+    tripPlan.value?.days?.flatMap(
+      (
+        day,
+        dayIndex // เพิ่ม dayIndex เข้ามา
+      ) =>
+        (day.locations || []).map((loc) => ({
+          ...loc,
+          lat: parseFloat(loc.lat),
+          lng: parseFloat(loc.lng),
+          day: dayIndex + 1, // เพิ่ม property 'day' โดยใช้ dayIndex
+        }))
+    ) || []
+  );
 });
 
 const selectedDayIndex = ref(0); // วันที่กำลังดู
@@ -386,7 +392,7 @@ onMounted(async () => {
   <div class="flex bg-[#FFFFFF]">
     <Header :user="user" @update:user="user = $event" />
 
-    <main class="flex-1 flex flex-col md:flex-row overflow-hidden md:ml-48">
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden md:ml-48 pt-10">
       <div v-if="tripPlan" class="flex flex-col md:flex-row w-full">
         <div class="w-full md:w-[50%] p-8 md:p-8 overflow-y-auto">
           <div class="bg-[#EEEDED] rounded-3xl shadow-lg p-8">
@@ -397,107 +403,188 @@ onMounted(async () => {
               Your personalized travel itinerary.
             </p>
 
-            <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between mb-6 gap-4 md:gap-0">
+            <div
+              class="flex flex-col md:flex-row items-stretch md:items-center justify-between mb-6 gap-4 md:gap-0"
+            >
               <div class="flex border-b border-gray-500">
-                <button @click="activeTab = 'plan'" :class="[
-                  'px-4 py-2 text-base md:px-6 md:text-lg font-bold',
-                  activeTab === 'plan'
-                    ? 'text-[#0D1282] border-b-3 border-[#0D1282]'
-                    : 'text-[#000000] hover:text-[#D71313] transition',
-                ]">
+                <button
+                  @click="activeTab = 'plan'"
+                  :class="[
+                    'px-4 py-2 text-base md:px-6 md:text-lg font-bold',
+                    activeTab === 'plan'
+                      ? 'text-[#0D1282] border-b-3 border-[#0D1282]'
+                      : 'text-[#000000] hover:text-[#D71313] transition',
+                  ]"
+                >
                   Trip Plan
                 </button>
-                <button @click="activeTab = 'nearby'" :class="[
-                  'px-4 py-2 text-base md:px-6 md:text-lg font-bold',
-                  activeTab === 'nearby'
-                    ? 'text-[#0D1282] border-b-3 border-[#0D1282]'
-                    : 'text-[#000000] hover:text-[#D71313] transition',
-                ]">
+                <button
+                  @click="activeTab = 'nearby'"
+                  :class="[
+                    'px-4 py-2 text-base md:px-6 md:text-lg font-bold',
+                    activeTab === 'nearby'
+                      ? 'text-[#0D1282] border-b-3 border-[#0D1282]'
+                      : 'text-[#000000] hover:text-[#D71313] transition',
+                  ]"
+                >
                   Nearby Places
                 </button>
-                <button @click="activeTab = 'search'" :class="[
-                  'px-4 py-2 text-base md:px-6 md:text-lg font-bold',
-                  activeTab === 'search'
-                    ? 'text-[#0D1282] border-b-3 border-[#0D1282]'
-                    : 'text-[#000000] hover:text-[#D71313] transition',
-                ]">
+                <button
+                  @click="activeTab = 'search'"
+                  :class="[
+                    'px-4 py-2 text-base md:px-6 md:text-lg font-bold',
+                    activeTab === 'search'
+                      ? 'text-[#0D1282] border-b-3 border-[#0D1282]'
+                      : 'text-[#000000] hover:text-[#D71313] transition',
+                  ]"
+                >
                   Search Places
                 </button>
               </div>
 
-              <button @click="goToPage(`/expense/${tripId}`)"
-                class="flex items-center justify-center gap-2 bg-[#D71313] hover:bg-red-600 text-white text-sm font-medium p-2 md:px-4 rounded-full transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
+              <button
+                @click="goToPage(`/expense/${tripId}`)"
+                class="flex items-center justify-center gap-2 bg-[#D71313] hover:bg-red-600 text-white text-sm font-medium p-2 md:px-4 rounded-full transition-colors"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z"
+                  />
                 </svg>
                 Expense
               </button>
             </div>
 
             <div v-show="activeTab === 'plan'">
-              <div class="mb-6 flex justify-end gap-2 md:gap-4" v-if="!trip?.tripId || trip?.role === 'leader'">
+              <div
+                class="mb-6 flex justify-end gap-2 md:gap-4"
+                v-if="!trip?.tripId || trip?.role === 'leader'"
+              >
                 <!-- Cancel Trip (เทา) -->
-                <div class="relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12 group">
+                <div
+                  class="relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12 group"
+                >
                   <div
-                    class="absolute bottom-full mb-2 px-3 py-1 rounded-md bg-gray-800 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                    class="absolute bottom-full mb-2 px-3 py-1 rounded-md bg-gray-800 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                  >
                     Cancel Trip
                   </div>
-                  <button @click="cancelTrip"
-                    class="flex items-center justify-center w-full h-full bg-gray-400 hover:bg-gray-500 text-white font-semibold rounded-full shadow transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                      stroke="currentColor" class="w-6 h-6">
-                      <path stroke-linecap="round" stroke-linejoin="round"
-                        d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                  <button
+                    @click="cancelTrip"
+                    class="flex items-center justify-center w-full h-full bg-gray-400 hover:bg-gray-500 text-white font-semibold rounded-full shadow transition"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="w-6 h-6"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                      />
                     </svg>
                   </button>
                 </div>
 
                 <!-- Modify Trip (เหลือง) -->
-                <div class="relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12 group">
+                <div
+                  class="relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12 group"
+                >
                   <div
-                    class="absolute bottom-full mb-2 px-3 py-1 rounded-md bg-gray-800 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                    class="absolute bottom-full mb-2 px-3 py-1 rounded-md bg-gray-800 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                  >
                     Modify Trip
                   </div>
-                  <button @click="modifyTrip"
-                    class="flex items-center justify-center w-full h-full bg-[#F0DE36] hover:bg-yellow-400 text-[#0D1282] font-semibold rounded-full shadow transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                      stroke="currentColor" class="w-5 h-5 md:w-6 md:h-6">
-                      <path stroke-linecap="round" stroke-linejoin="round"
-                        d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                  <button
+                    @click="modifyTrip"
+                    class="flex items-center justify-center w-full h-full bg-[#F0DE36] hover:bg-yellow-400 text-[#0D1282] font-semibold rounded-full shadow transition"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="w-5 h-5 md:w-6 md:h-6"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                      />
                     </svg>
                   </button>
                 </div>
 
                 <!-- Save Trip (น้ำเงินเข้ม) -->
-                <div class="relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12 group">
+                <div
+                  class="relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12 group"
+                >
                   <div
-                    class="absolute bottom-full mb-2 px-3 py-1 rounded-md bg-gray-800 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                    class="absolute bottom-full mb-2 px-3 py-1 rounded-md bg-gray-800 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                  >
                     Save Trip
                   </div>
-                  <button @click="saveTrip" :disabled="isSavingTrip"
-                    class="flex items-center justify-center w-full h-full bg-[#0D1282] hover:bg-blue-800 text-white font-semibold rounded-full shadow transition disabled:opacity-50 disabled:cursor-not-allowed">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                      stroke="currentColor" class="w-5 h-5 md:w-6 md:h-6">
-                      <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M9 3.75H6.912a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H15M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859M12 3v8.25m0 0-3-3m3 3 3-3" />
+                  <button
+                    @click="saveTrip"
+                    :disabled="isSavingTrip"
+                    class="flex items-center justify-center w-full h-full bg-[#0D1282] hover:bg-blue-800 text-white font-semibold rounded-full shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="w-5 h-5 md:w-6 md:h-6"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M9 3.75H6.912a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H15M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859M12 3v8.25m0 0-3-3m3 3 3-3"
+                      />
                     </svg>
                   </button>
                 </div>
 
                 <!-- Generate Invite Link (แดง) -->
-                <div class="relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12 group">
+                <div
+                  class="relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12 group"
+                >
                   <div
-                    class="absolute bottom-full mb-2 px-3 py-1 rounded-md bg-gray-800 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                    class="absolute bottom-full mb-2 px-3 py-1 rounded-md bg-gray-800 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                  >
                     Generate Invite Link
                   </div>
-                  <button @click="generateInviteLink"
-                    class="flex items-center justify-center w-full h-full bg-[#D71313] hover:bg-red-600 text-white font-semibold rounded-full shadow transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                      stroke="currentColor" class="w-5 h-5 md:w-6 md:h-6">
-                      <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+                  <button
+                    @click="generateInviteLink"
+                    class="flex items-center justify-center w-full h-full bg-[#D71313] hover:bg-red-600 text-white font-semibold rounded-full shadow transition"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="w-5 h-5 md:w-6 md:h-6"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -509,120 +596,263 @@ onMounted(async () => {
                 <div class="relative flex items-center">
                   <input
                     class="w-full border border-gray-300 rounded-full pl-4 pr-12 py-3 text-sm text-gray-500 shadow-sm focus:ring-2 focus:ring-emerald-200 outline-none cursor-pointer bg-white"
-                    :value="inviteLink" readonly @click="copyToClipboard" />
-                  <button @click="copyToClipboard"
+                    :value="inviteLink"
+                    readonly
+                    @click="copyToClipboard"
+                  />
+                  <button
+                    @click="copyToClipboard"
                     class="absolute right-2 top-1/2 -translate-y-1/2 bg-emerald-100 text-emerald-600 p-2 rounded-full hover:bg-emerald-200 transition"
-                    title="Copy to clipboard">
+                    title="Copy to clipboard"
+                  >
                     <i class="fa-solid fa-copy"></i>
                   </button>
                 </div>
               </div>
 
-              <div class="mb-8 bg-white border-b border-gray-200 p-1 md:p-8 rounded-md shadow-sm w-full max-w-full">
+              <div
+                class="mb-8 bg-white border-b border-gray-200 p-6 md:p-8 rounded-md shadow-sm w-full max-w-full"
+              >
                 <h2 class="text-xl md:text-2xl font-bold text-[#0D1282] mb-4">
                   <i class="fa-solid fa-plane-departure mr-2"></i>
                   Transportation
                 </h2>
                 <div
-                  class="static rounded-xl shadow-lg overflow-hidden  h-64 w-full md:fixed md:top-10 md:right-10 md:left-auto md:w-[600px] md:h-[90vh] md:block"
-                  style="min-height: 300px;">
+                  class="static rounded-xl shadow-lg overflow-hidden h-64 w-full md:fixed md:top-10 md:right-10 md:left-auto md:w-[600px] md:h-[90vh] md:block"
+                  style="min-height: 300px"
+                >
                   <Tripmap :locations="allLocations" />
                 </div>
-              <div class="w-full overflow-x-hidden">
-  <table class="w-full table-fixed border-collapse text-sm md:text-base">
-    <thead>
-      <tr class="bg-[#F0DE36] text-[#0D1282] font-bold tracking-wide">
-        <th class="p-1 sm:p-2 md:p-3 rounded-tl-xl"></th>
-        <th class="p-1 sm:p-2 md:p-3 text-center">🚗 Car</th>
-        <th class="p-1 sm:p-2 md:p-3 text-center">🚌 Bus</th>
-        <th class="p-1 sm:p-2 md:p-3 text-center">🚆 Train</th>
-        <th class="p-1 sm:p-2 md:p-3 text-center rounded-tr-xl">✈️ Flight</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr class="border-b border-gray-200 bg-white">
-        <td class="p-1 sm:p-2 md:p-3 text-gray-700 font-medium">Distance</td>
-        <td class="p-1 sm:p-2 md:p-3 text-center">{{ transportInfo.car?.distance || "-" }}</td>
-        <td class="p-1 sm:p-2 md:p-3 text-center">{{ transportInfo.bus?.distance || "-" }}</td>
-        <td class="p-1 sm:p-2 md:p-3 text-center">{{ transportInfo.train?.distance || "-" }}</td>
-        <td class="p-1 sm:p-2 md:p-3 text-center">{{ transportInfo.flight?.distance || "-" }}</td>
-      </tr>
-      <tr class="bg-[#EEEDED]">
-        <td class="p-1 sm:p-2 md:p-3 text-gray-700 font-medium">Duration</td>
-        <td class="p-1 sm:p-2 md:p-3 text-center">{{ transportInfo.car?.duration || "-" }}</td>
-        <td class="p-1 sm:p-2 md:p-3 text-center">{{ transportInfo.bus?.duration || "-" }}</td>
-        <td class="p-1 sm:p-2 md:p-3 text-center">{{ transportInfo.train?.duration || "-" }}</td>
-        <td class="p-1 sm:p-2 md:p-3 text-center">{{ transportInfo.flight?.duration || "-" }}</td>
-      </tr>
-    </tbody>
-  </table>
+                <div class="w-full overflow-x-hidden">
+                  <table
+                    class="w-full table-fixed border-collapse text-sm md:text-base"
+                  >
+                    <thead>
+                      <tr
+                        class="bg-[#F0DE36] text-[#0D1282] font-bold tracking-wide"
+                      >
+                        <th class="p-1 sm:p-2 md:p-3 rounded-tl-xl"></th>
+                        <th class="p-1 sm:p-2 md:p-3 text-center">🚗 Car</th>
+                        <th class="p-1 sm:p-2 md:p-3 text-center">🚌 Bus</th>
+                        <th class="p-1 sm:p-2 md:p-3 text-center">🚆 Train</th>
+                        <th class="p-1 sm:p-2 md:p-3 text-center rounded-tr-xl">
+                          ✈️ Flight
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr class="border-b border-gray-200 bg-white">
+                        <td class="p-1 sm:p-2 md:p-3 text-gray-700 font-medium">
+                          Distance
+                        </td>
+                        <td class="p-1 sm:p-2 md:p-3 text-center">
+                          {{ transportInfo.car?.distance || "-" }}
+                        </td>
+                        <td class="p-1 sm:p-2 md:p-3 text-center">
+                          {{ transportInfo.bus?.distance || "-" }}
+                        </td>
+                        <td class="p-1 sm:p-2 md:p-3 text-center">
+                          {{ transportInfo.train?.distance || "-" }}
+                        </td>
+                        <td class="p-1 sm:p-2 md:p-3 text-center">
+                          {{ transportInfo.flight?.distance || "-" }}
+                        </td>
+                      </tr>
+                      <tr class="bg-[#EEEDED]">
+                        <td class="p-1 sm:p-2 md:p-3 text-gray-700 font-medium">
+                          Duration
+                        </td>
+                        <td class="p-1 sm:p-2 md:p-3 text-center">
+                          {{ transportInfo.car?.duration || "-" }}
+                        </td>
+                        <td class="p-1 sm:p-2 md:p-3 text-center">
+                          {{ transportInfo.bus?.duration || "-" }}
+                        </td>
+                        <td class="p-1 sm:p-2 md:p-3 text-center">
+                          {{ transportInfo.train?.duration || "-" }}
+                        </td>
+                        <td class="p-1 sm:p-2 md:p-3 text-center">
+                          {{ transportInfo.flight?.duration || "-" }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
 
-  <p class="mt-2 sm:mt-4 text-gray-700 text-xs sm:text-sm md:text-base">
-    How to get there: {{ transportInfo?.how_to_get_there || "N/A" }}
-  </p>
-</div>
-
-
+                  <p
+                    class="mt-2 sm:mt-4 text-gray-700 text-xs sm:text-sm md:text-base"
+                  >
+                    How to get there:
+                    {{ transportInfo?.how_to_get_there || "N/A" }}
+                  </p>
+                </div>
               </div>
 
-              <div v-for="(day, index) in tripPlan.days" :key="day.id || index"
-                class="mb-8 bg-white/95 p-1 rounded-2xl shadow-lg border border-[#EEEDED]">
-                <h2 class="text-xl md:text-2xl font-bold text-[#0D1282] mb-4">
+              <div
+                v-for="(day, index) in tripPlan.days"
+                :key="day.id || index"
+                class="mb-8 bg-white/95 p-6 rounded-2xl shadow-lg border border-[#EEEDED]"
+              >
+                <!-- Header -->
+                <h2
+                  class="text-xl md:text-2xl font-bold text-[#0D1282] mb-4 flex items-center"
+                >
                   <span
-                    class="bg-[#D71313] text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full mr-2">{{
-                      index + 1 }}</span>
+                    class="bg-[#D71313] text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full mr-2"
+                  >
+                    {{ index + 1 }}
+                  </span>
                   Day {{ index + 1 }}: {{ day.title }}
                 </h2>
-                <p class="text-gray-500 mb-4 text-sm">{{ new Date(day.date).toLocaleDateString('en-US',
-                  {
-                    year: 'numeric', month: 'long', day: 'numeric'
-                  }) }}</p>
+                <p class="text-gray-500 mb-4 text-sm">
+                  {{
+                    new Date(day.date).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })
+                  }}
+                </p>
                 <p class="text-gray-700 mb-6 text-sm">
                   {{ day.description || day.narrative || "No description." }}
                 </p>
 
-               <!-- Header -->
-<div class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 bg-[#F0DE36] text-[#0D1282] font-semibold text-xs sm:text-sm rounded-t-lg">
-  <div class="break-words">Destination</div>
-  <div class="text-center break-words">Category</div>
-  <div class="text-center break-words">Transport</div>
-  <div class="text-center break-words">Expense</div>
-  <div class="text-center break-words">Distance</div>
-  <div class="text-center"></div>
-</div>
+                <!-- ✅ Desktop Table -->
+                <div class="hidden md:block">
+                  <div
+                    class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-2 px-4 py-3 bg-[#F0DE36] text-[#0D1282] font-semibold text-sm rounded-t-lg"
+                  >
+                    <div>Destination</div>
+                    <div class="text-center">Category</div>
+                    <div class="text-center">Transport</div>
+                    <div class="text-center">Expense</div>
+                    <div class="text-center">Distance</div>
+                    <div class="text-center"></div>
+                  </div>
 
-<!-- Draggable Rows -->
-<draggable v-model="day.locations" :group="'locations'" item-key="name" :disabled="!showEditControls"
-  class="space-y-1 sm:space-y-2" @change="recalculateCosts">
-  <template #item="{ element: loc, index: i }">
-    <div
-      class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 bg-white border-b border-gray-200 text-xs sm:text-sm items-center hover:bg-[#EEEDED] transition rounded-md shadow-sm cursor-grab">
-      <div class="font-medium text-gray-800 break-words">
-        <i class="fa-solid fa-map-pin text-[#0D1282] mr-1 sm:mr-2"></i>{{ loc.name }}
-      </div>
-      <div class="text-center text-gray-600 break-words">{{ loc.category || "N/A" }}</div>
-      <div class="text-center text-gray-600 break-words">{{ loc.transport || "N/A" }}</div>
-      <div class="text-center text-[#D71313] font-medium break-words">
-        {{ loc.estimated_cost || 0 }} {{ loc.currency || tripPlan.currency || "THB" }}
-      </div>
-      <div class="text-center text-gray-600 break-words">{{ loc.distance_to_next || "N/A" }}</div>
-      <div class="text-center" v-if="showEditControls">
-        <button @click="removeLocation(index, i)" class="text-red-500 hover:text-red-700 transition"
-          title="Delete location">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-            stroke="currentColor" class="w-4 h-4 sm:w-6 sm:h-6">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  </template>
-</draggable>
+                  <draggable
+                    v-model="day.locations"
+                    :group="'locations'"
+                    item-key="name"
+                    :disabled="!showEditControls"
+                    class="space-y-2"
+                    @change="recalculateCosts"
+                  >
+                    <template #item="{ element: loc, index: i }">
+                      <div
+                        class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-2 px-4 py-3 bg-white border-b border-gray-200 text-sm items-center hover:bg-[#EEEDED] transition rounded-md shadow-sm cursor-grab"
+                      >
+                        <div class="font-medium text-gray-800">
+                          <i class="fa-solid fa-map-pin text-[#0D1282] mr-2"></i
+                          >{{ loc.name }}
+                        </div>
+                        <div class="text-center text-gray-600">
+                          {{ loc.category || "N/A" }}
+                        </div>
+                        <div class="text-center text-gray-600">
+                          {{ loc.transport || "N/A" }}
+                        </div>
+                        <div class="text-center text-[#D71313] font-medium">
+                          {{ loc.estimated_cost || 0 }}
+                          {{ loc.currency || tripPlan.currency || "THB" }}
+                        </div>
+                        <div class="text-center text-gray-600">
+                          {{ loc.distance_to_next || "N/A" }}
+                        </div>
+                        <div class="text-center" v-if="showEditControls">
+                          <button
+                            @click="removeLocation(index, i)"
+                            class="text-red-500 hover:text-red-700 transition"
+                            title="Delete location"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke-width="1.5"
+                              stroke="currentColor"
+                              class="w-4 h-4 sm:w-6 sm:h-6"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </template>
+                  </draggable>
+                </div>
 
+                <!-- ✅ Mobile Card -->
+                <div class="md:hidden mt-4 space-y-4">
+                  <draggable
+                    v-model="day.locations"
+                    :group="'locations'"
+                    item-key="name"
+                    :disabled="!showEditControls"
+                  >
+                    <template #item="{ element: loc, index: i }">
+                      <div
+                        class="bg-white p-4 rounded-xl shadow border hover:bg-gray-50 transition cursor-grab"
+                      >
+                        <div class="flex items-center mb-2">
+                          <i
+                            class="fa-solid fa-map-pin text-[#0D1282] mr-2"
+                          ></i>
+                          <p class="font-bold text-[#0D1282]">{{ loc.name }}</p>
+                        </div>
+                        <p class="text-sm text-gray-600">
+                          <span class="font-semibold">Category:</span>
+                          {{ loc.category || "N/A" }}
+                        </p>
+                        <p class="text-sm text-gray-600">
+                          <span class="font-semibold">Transport:</span>
+                          {{ loc.transport || "N/A" }}
+                        </p>
+                        <p class="text-sm text-[#D71313] font-medium">
+                          <span class="font-semibold">Expense:</span>
+                          {{ loc.estimated_cost || 0 }}
+                          {{ loc.currency || tripPlan.currency || "THB" }}
+                        </p>
+                        <p class="text-sm text-gray-600">
+                          <span class="font-semibold">Distance:</span>
+                          {{ loc.distance_to_next || "N/A" }}
+                        </p>
+                        <div class="mt-3 text-right" v-if="showEditControls">
+                          <button
+                            @click="removeLocation(index, i)"
+                            class="text-red-500 hover:text-red-700 transition"
+                            title="Delete location"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke-width="1.5"
+                              stroke="currentColor"
+                              class="w-4 h-4 sm:w-6 sm:h-6"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </template>
+                  </draggable>
+                </div>
 
+                <!-- Footer -->
                 <div class="mt-4 text-sm text-gray-700">
-                  <p v-if="day.daily_tips && day.daily_tips.length > 0" class="mb-1">
+                  <p
+                    v-if="day.daily_tips && day.daily_tips.length > 0"
+                    class="mb-1"
+                  >
                     💡 <span class="font-medium">Tips:</span>
                     {{ day.daily_tips.join(", ") }}
                   </p>
@@ -632,7 +862,6 @@ onMounted(async () => {
                   </p>
                 </div>
               </div>
-
               <div
                 class="flex items-center justify-between p-6 bg-[#FFFFFF] rounded-3xl text-[#0D1282] relative overflow-hidden">
                 <svg class="absolute top-0 right-0 h-full opacity-10" viewBox="0 0 100 100" preserveAspectRatio="none"
@@ -663,20 +892,30 @@ onMounted(async () => {
 
             <div v-show="activeTab === 'nearby'">
               <div class="flex flex-wrap gap-2 mb-6">
-                <button v-for="(day, index) in tripPlan.days" :key="index" @click="selectedDayIndex = index" :class="[
-                  'px-4 py-2 rounded-full font-medium text-sm transition-all',
-                  selectedDayIndex === index
-                    ? 'bg-[#F0DE36] text-[#0D1282] shadow-md'
-                    : 'bg-[#0D1282] text-[#EEEDED] hover:bg-[#F0DE36]',
-                ]">
+                <button
+                  v-for="(day, index) in tripPlan.days"
+                  :key="index"
+                  @click="selectedDayIndex = index"
+                  :class="[
+                    'px-4 py-2 rounded-full font-medium text-sm transition-all',
+                    selectedDayIndex === index
+                      ? 'bg-[#F0DE36] text-[#0D1282] shadow-md'
+                      : 'bg-[#0D1282] text-[#EEEDED] hover:bg-[#F0DE36]',
+                  ]"
+                >
                   Day {{ index + 1 }}
                 </button>
               </div>
 
               <div class="mb-4 flex items-center gap-4">
-                <label for="nearbyCategory" class="font-medium text-[#000000]">Category:</label>
-                <select id="nearbyCategory" v-model="selectedCategory"
-                  class="flex-1 py-2 px-4 border border-gray-300 rounded-full bg-white shadow-sm focus:ring-2 focus:ring-sky-200 outline-none">
+                <label for="nearbyCategory" class="font-medium text-[#000000]"
+                  >Category:</label
+                >
+                <select
+                  id="nearbyCategory"
+                  v-model="selectedCategory"
+                  class="flex-1 py-2 px-4 border border-gray-300 rounded-full bg-white shadow-sm focus:ring-2 focus:ring-sky-200 outline-none"
+                >
                   <option value="restaurant">Restaurant</option>
                   <option value="cafe">Cafe</option>
                   <option value="hotel">Hotel</option>
@@ -695,24 +934,39 @@ onMounted(async () => {
               </div>
 
               <div v-if="loadingNearby" class="text-center text-gray-500 p-8">
-                <div class="animate-spin rounded-full h-8 w-8 border-4 border-t-[#0D1282] border-blue-200 mb-4 mx-auto">
-                </div>
+                <div
+                  class="animate-spin rounded-full h-8 w-8 border-4 border-t-[#0D1282] border-blue-200 mb-4 mx-auto"
+                ></div>
                 Searching for nearby places...
               </div>
               <ul v-else-if="nearbyPlaces.length" class="space-y-4">
-                <li v-for="place in nearbyPlaces" :key="place.place_id"
-                  class="bg-white/95 p-4 rounded-xl flex items-center justify-between shadow-sm">
+                <li
+                  v-for="place in nearbyPlaces"
+                  :key="place.place_id"
+                  class="bg-white/95 p-4 rounded-xl flex items-center justify-between shadow-sm"
+                >
                   <div>
                     <p class="font-semibold text-gray-800">{{ place.name }}</p>
                     <p class="text-sm text-gray-500">{{ place.address }}</p>
                   </div>
-                  <button @click="addNearbyPlace(place)"
-                    class="flex items-center gap-1 bg-[#D71313] hover:bg-red-600 text-white p-2 rounded-full shadow transition-all duration-200 text-sm">
+                  <button
+                    @click="addNearbyPlace(place)"
+                    class="flex items-center gap-1 bg-[#D71313] hover:bg-red-600 text-white p-2 rounded-full shadow transition-all duration-200 text-sm"
+                  >
                     <span>Add</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                      stroke="currentColor" class="w-5 h-5">
-                      <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="w-5 h-5"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                      />
                     </svg>
                   </button>
                 </li>
@@ -723,9 +977,15 @@ onMounted(async () => {
             </div>
             <div v-if="activeTab === 'search'">
               <div class="mb-4 flex gap-2">
-                <input v-model="searchQuery" placeholder="Search places..."
-                  class="flex-1 py-2 px-4 border border-gray-300 rounded-full bg-white shadow-sm focus:ring-2 focus:ring-sky-200 outline-none" />
-                <button @click="searchPlaces" class="bg-[#0D1282] text-white px-4 py-2 rounded-lg hover:bg-blue-800">
+                <input
+                  v-model="searchQuery"
+                  placeholder="Search places..."
+                  class="flex-1 py-2 px-4 border border-gray-300 rounded-full bg-white shadow-sm focus:ring-2 focus:ring-sky-200 outline-none"
+                />
+                <button
+                  @click="searchPlaces"
+                  class="bg-[#0D1282] text-white px-4 py-2 rounded-lg hover:bg-blue-800"
+                >
                   Search
                 </button>
               </div>
@@ -736,8 +996,11 @@ onMounted(async () => {
 
               <div v-else>
                 <ul v-if="searchResults.length > 0" class="space-y-3">
-                  <li v-for="place in searchResults" :key="place.place_id"
-                    class="bg-white shadow rounded-lg p-3 flex justify-between items-center">
+                  <li
+                    v-for="place in searchResults"
+                    :key="place.place_id"
+                    class="bg-white shadow rounded-lg p-3 flex justify-between items-center"
+                  >
                     <div>
                       <p class="font-bold text-[#0D1282]">{{ place.name }}</p>
                       <p class="text-sm text-gray-500">{{ place.address }}</p>
@@ -745,13 +1008,24 @@ onMounted(async () => {
                         ⭐ {{ place.rating }}
                       </p>
                     </div>
-                    <button @click="addNearbyPlace(place)"
-                      class="flex items-center gap-1 bg-[#D71313] hover:bg-red-600 text-white p-2 rounded-full shadow transition-all duration-200 text-sm">
+                    <button
+                      @click="addNearbyPlace(place)"
+                      class="flex items-center gap-1 bg-[#D71313] hover:bg-red-600 text-white p-2 rounded-full shadow transition-all duration-200 text-sm"
+                    >
                       <span>Add</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                        stroke="currentColor" class="w-5 h-5">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                        class="w-5 h-5"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                        />
                       </svg>
                     </button>
                   </li>
@@ -768,19 +1042,24 @@ onMounted(async () => {
             </div> -->
           </div>
         </div>
-
-
-
       </div>
-      <div v-else class="flex-1 flex justify-center items-center text-gray-500 bg-white">
+      <div
+        v-else
+        class="flex-1 flex justify-center items-center text-gray-500 bg-white"
+      >
         <div class="text-center">
-          <div class="animate-spin rounded-full h-12 w-12 border-4 border-t-sky-500 border-sky-200 mb-4 mx-auto"></div>
+          <div
+            class="animate-spin rounded-full h-12 w-12 border-4 border-t-sky-500 border-sky-200 mb-4 mx-auto"
+          ></div>
           <p class="text-lg">กำลังโหลดแผนการเดินทาง...</p>
         </div>
       </div>
     </main>
 
-    <div v-if="loadError" class="fixed inset-0 flex items-center justify-center z-50 bg-gray-900 bg-opacity-50">
+    <div
+      v-if="loadError"
+      class="fixed inset-0 flex items-center justify-center z-50 bg-gray-900 bg-opacity-50"
+    >
       <div class="bg-white p-8 rounded-lg shadow-xl text-center">
         <h2 class="text-2xl font-bold text-red-600 mb-4">
           <i class="fa-solid fa-triangle-exclamation mr-2"></i> {{ title }}
