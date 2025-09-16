@@ -388,7 +388,7 @@ onMounted(async () => {
 
     <main class="flex-1 flex flex-col md:flex-row overflow-hidden md:ml-48">
       <div v-if="tripPlan" class="flex flex-col md:flex-row w-full">
-        <div class="w-full md:w-[50%] p-4 md:p-8 overflow-y-auto">
+        <div class="w-full md:w-[50%] p-8 md:p-8 overflow-y-auto">
           <div class="bg-[#EEEDED] rounded-3xl shadow-lg p-8">
             <h1 class="text-3xl font-extrabold text-[#000000] mb-2">
               {{ trip?.trip_name || tripPlan?.tripName || "My Trip" }}
@@ -518,7 +518,7 @@ onMounted(async () => {
                 </div>
               </div>
 
-              <div class="mb-8 bg-white border-b border-gray-200 p-6 md:p-8 rounded-md shadow-sm w-full max-w-full">
+              <div class="mb-8 bg-white border-b border-gray-200 p-1 md:p-8 rounded-md shadow-sm w-full max-w-full">
                 <h2 class="text-xl md:text-2xl font-bold text-[#0D1282] mb-4">
                   <i class="fa-solid fa-plane-departure mr-2"></i>
                   Transportation
@@ -566,7 +566,7 @@ onMounted(async () => {
               </div>
 
               <div v-for="(day, index) in tripPlan.days" :key="day.id || index"
-                class="mb-8 bg-white/95 p-6 rounded-2xl shadow-lg border border-[#EEEDED]">
+                class="mb-8 bg-white/95 p-1 rounded-2xl shadow-lg border border-[#EEEDED]">
                 <h2 class="text-xl md:text-2xl font-bold text-[#0D1282] mb-4">
                   <span
                     class="bg-[#D71313] text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full mr-2">{{
