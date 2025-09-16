@@ -184,7 +184,7 @@ const logout = async () => {
         <img
           :src="props.user.photo"
           alt="User"
-          class="w-10 h-10 object-cover rounded-full flex-shrink-0 border-2 border-indigo-500"
+          class="w-10 h-10 object-cover rounded-full flex-shrink-0 border-2 border-[#0D1282]"
         />
         <div
           class="flex flex-col items-start ml-2 text-gray-900 min-w-0 flex-grow"
@@ -222,14 +222,14 @@ const logout = async () => {
   <header
     class="fixed top-0 left-0 right-0 h-14 bg-white shadow-md z-50 flex items-center justify-between px-4 md:hidden"
   >
-    <img src="/1.png" alt="Logo" class="h-10" />
+    <img src="/1.png" alt="Logo" class="h-12" />
     <button @click="toggleSidebar" class="text-gray-700 text-2xl">☰</button>
   </header>
 
   <!-- Drawer Mobile -->
   <div
     v-if="isSidebarOpen"
-    class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+    class="fixed inset-0 z-40 md:hidden bg-white/30 backdrop-blur-sm"
     @click="toggleSidebar"
   ></div>
   <!-- Drawer Mobile -->
@@ -318,7 +318,7 @@ const logout = async () => {
 
     <!-- User Section Drawer -->
     <!-- User Section Drawer -->
-    <div class="flex flex-col items-center w-full py-4 px-4 border-t">
+    <div class="flex flex-col items-center w-full py-4 px-4">
       <!-- ถ้าไม่ login -->
       <button
         v-if="!props.user"
@@ -337,7 +337,7 @@ const logout = async () => {
         <img
           :src="props.user.photo"
           alt="User"
-          class="w-10 h-10 object-cover rounded-full flex-shrink-0 border-2 border-indigo-500"
+          class="w-10 h-10 object-cover rounded-full flex-shrink-0 border-2 border-[#0D1282]"
         />
         <div
           class="flex flex-col items-start ml-2 text-[#0D1282] min-w-0 flex-grow"

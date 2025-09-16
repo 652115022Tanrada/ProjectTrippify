@@ -89,7 +89,7 @@ onMounted(getUser)
   <div class="min-h-screen flex flex-col bg-[#FFFFFF]">
     <header class="w-full flex justify-between items-center py-4 px-8 fixed top-0 left-0 bg-[#FFFFFF] z-50">
       <router-link to="/">
-        <img src="/1.png" alt="Logo" class="h-25 w-auto object-contain" />
+        <img src="/1.png" alt="Logo" class="h-16 w-auto object-contain md:h-24" />
       </router-link>
 
       <nav class="flex items-center space-x-6 text-[#0D1282] font-bold font-kanit">
