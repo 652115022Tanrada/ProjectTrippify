@@ -386,9 +386,9 @@ onMounted(async () => {
   <div class="flex bg-[#FFFFFF]">
     <Header :user="user" @update:user="user = $event" />
 
-    <main class="flex-1 flex overflow-hidden rounded-l-[32px] bg-[#FFFFFF] ml-48">
-      <div v-if="tripPlan" class="flex w-full">
-        <div class="w-[50%] p-8 overflow-y-auto">
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden md:ml-48">
+      <div v-if="tripPlan" class="flex flex-col md:flex-row w-full">
+        <div class="w-full md:w-[50%] p-4 md:p-8 overflow-y-auto">
           <div class="bg-[#EEEDED] rounded-3xl shadow-lg p-8">
             <h1 class="text-3xl font-extrabold text-[#000000] mb-2">
               {{ trip?.trip_name || tripPlan?.tripName || "My Trip" }}
@@ -579,7 +579,7 @@ onMounted(async () => {
                 <h2 class="text-xl font-bold text-[#0D1282] mb-2 flex items-center">
                   <span
                     class="bg-[#D71313] text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full mr-2">{{
-                    index + 1 }}</span>
+                      index + 1 }}</span>
                   Day {{ index + 1 }}: {{ day.title }}
                 </h2>
                 <p class="text-gray-500 mb-4 text-sm">{{ new Date(day.date).toLocaleDateString('en-US',
@@ -661,7 +661,7 @@ onMounted(async () => {
                     {{ tripPlan.total_trip_cost || 0 }}
                     <span class="text-xl font-normal">{{
                       tripPlan.currency || "THB"
-                      }}</span>
+                    }}</span>
                   </span>
                 </div>
 
@@ -778,10 +778,29 @@ onMounted(async () => {
           </div>
         </div>
 
-        <!-- Map คงที่ แต่ไม่เต็มจอ -->
-        <div class="fixed top-10 right-10 h-[90vh] w-[600px] rounded-xl shadow-lg overflow-hidden">
+        <div class="fixed rounded-xl shadow-lg overflow-hidden
+         top-10 right-10
+         w-[90vw] max-w-[600px] h-[90vh] 
+         md:w-[600px] md:h-[90vh] 
+         block" style="min-height: 300px;">
           <Tripmap :locations="allLocations" />
         </div>
+
+
+        <!-- <div class="block md:hidden w-full aspect-square relative" style="min-height:300px;">
+            <Tripmap :locations="allLocations" />
+          </div>
+
+<div 
+  class="fixed rounded-xl shadow-lg overflow-hidden
+         top-10 right-10 
+         w-[90vw] max-w-[600px] h-[90vh] hidden md:block"
+>
+  <Tripmap :locations="allLocations" />
+</div> -->
+
+
+
       </div>
       <div v-else class="flex-1 flex justify-center items-center text-gray-500 bg-white">
         <div class="text-center">

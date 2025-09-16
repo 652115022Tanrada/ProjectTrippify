@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
+import { loadGoogleMaps } from '../utils/loadGoogleMaps';
 
 const props = defineProps({
   locations: { type: Array, default: () => [] },
@@ -13,7 +14,6 @@ const markers = [];
 const nearbyMarkers = [];
 let directionsRenderer = null;
 
-// --- Helpers ---
 const isValidCoord = (v) => typeof v === "number" && !isNaN(v);
 
 function sanitizeLocations(locations) {
@@ -27,20 +27,6 @@ function sanitizeLocations(locations) {
     .filter(Boolean);
 }
 
-// --- Load Google Maps ---
-function loadGoogleMapsScript() {
-  return new Promise((resolve, reject) => {
-    if (window.google && window.google.maps) return resolve();
-    const script = document.createElement('script');
-    script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyAPXZbbrz75ECNK3VD77E9CZULbebHbe9I';
-    script.async = true;
-    script.defer = true;
-    script.onload = resolve;
-    script.onerror = reject;
-    document.head.appendChild(script);
-  });
-}
-
 function initMap(center) {
   map.value = new google.maps.Map(document.getElementById("map"), {
     center,
@@ -49,7 +35,6 @@ function initMap(center) {
   mapLoaded.value = true;
 }
 
-// --- Markers ---
 function clearMarkers() {
   markers.forEach(m => m.setMap(null));
   markers.length = 0;
@@ -59,10 +44,9 @@ function clearNearbyMarkers() {
   nearbyMarkers.forEach(m => m.setMap(null));
   nearbyMarkers.length = 0;
 }
-// เพิ่มฟังก์ชันสำหรับกำหนดสีของหมุดตามวัน
+
 const getMarkerColor = (dayNumber) => {
-  const colors = [   "#9656a2","#5e62a9","#de324c","#f4895f","#f8e16f", "#95cf92", "#369acc"];
-  // ใช้ modulo เพื่อวนสีซ้ำหากมีวันมากกว่าจำนวนสีที่มี
+  const colors = ["#9656a2","#5e62a9","#de324c","#f4895f","#f8e16f", "#95cf92", "#369acc"];
   return colors[(dayNumber - 1) % colors.length];
 };
 
@@ -71,26 +55,22 @@ function addMarkers() {
   clearMarkers();
   const sanitized = sanitizeLocations(props.locations);
   sanitized.forEach((loc, idx) => {
-    // กำหนดสีหมุดจาก property 'day' ที่เพิ่มเข้ามา
     const pinColor = getMarkerColor(loc.day);
     const svgIcon = `
-   <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-    <path fill="${pinColor}" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-</svg>`;
-
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+        <path fill="${pinColor}" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+      </svg>`;
     const marker = new google.maps.Marker({
       map: map.value,
       position: { lat: loc.lat, lng: loc.lng },
       title: loc.name,
-      icon: {
-        url: `data:image/svg+xml;utf-8,${encodeURIComponent(svgIcon)}`,
-        scaledSize: new google.maps.Size(32, 32),
-      },
+      icon: { url: `data:image/svg+xml;utf-8,${encodeURIComponent(svgIcon)}`, scaledSize: new google.maps.Size(32, 32) },
       label: { text: String(idx + 1), color: "white", fontWeight: "bold", fontSize: "14px" }
     });
     markers.push(marker);
   });
 }
+
 function addNearbyMarkers() {
   if (!map.value || !props.nearby) return;
   clearNearbyMarkers();
@@ -106,7 +86,6 @@ function addNearbyMarkers() {
   });
 }
 
-// --- Route & Directions ---
 function buildRouteRequest(locations) {
   const sanitized = sanitizeLocations(locations);
   if (sanitized.length < 2) return null;
@@ -165,7 +144,6 @@ async function drawRoute() {
   );
 }
 
-// --- Highlighted ---
 function flyTo(loc) {
   if (!map.value || !loc) return;
   const sanitized = sanitizeLocations([loc])[0];
@@ -174,9 +152,8 @@ function flyTo(loc) {
   map.value.setZoom(15);
 }
 
-// --- Lifecycle ---
 onMounted(async () => {
-  await loadGoogleMapsScript();
+  const googleMaps = await loadGoogleMaps();
   const firstValid = sanitizeLocations(props.locations)[0];
   if (firstValid) {
     initMap({ lat: firstValid.lat, lng: firstValid.lng });
@@ -187,7 +164,6 @@ onMounted(async () => {
   }
 });
 
-// --- Watchers ---
 watch(() => props.locations, async () => {
   if (!mapLoaded.value) {
     const firstValid = sanitizeLocations(props.locations)[0];
@@ -199,12 +175,11 @@ watch(() => props.locations, async () => {
 });
 
 watch(() => props.nearby, () => addNearbyMarkers());
-
 watch(() => props.highlighted, (loc) => { if (loc) flyTo(loc); });
 </script>
 
 <template>
   <div class="w-full h-full">
-    <div id="map" class="w-full h-full" style="min-height:400px;"></div>
+    <div id="map" class="w-full aspect-square md:w-auto md:h-full" style="min-height:300px;"></div>
   </div>
 </template>
