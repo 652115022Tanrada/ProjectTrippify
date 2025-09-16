@@ -44,7 +44,7 @@ const expenses = ref([]);
 // ---------------- User ----------------
 const getUser = async () => {
   try {
-    const res = await axios.get(`${baseURL}/auth/user`, {
+    const res = await axios.get(`${import.meta.env.VITE_URL}/auth/user`, {
       withCredentials: true,
     });
     user.value = res.data;
@@ -58,7 +58,7 @@ const getUser = async () => {
 const loadExpenses = async () => {
   if (!tripId) return;
   try {
-    const res = await axios.get(`${baseURL}api/expense/${tripId}`, {
+    const res = await axios.get(`${import.meta.env.VITE_URL}/api/expense/${tripId}`, {
       withCredentials: true,
     });
     expenses.value = res.data.map(e => ({
@@ -73,7 +73,7 @@ const loadExpenses = async () => {
 };
 const loadTrip = async () => {
   try {
-    const res = await axios.get(`${baseURL}/api/trip/${tripId}`, {
+    const res = await axios.get(`${import.meta.env.VITE_URL}/api/trip/${tripId}`, {
       withCredentials: true,
     });
     trip.value = res.data;
@@ -100,11 +100,11 @@ const saveExpense = async () => {
   try {
     if (editingIndex.value !== null) {
       const expenseId = expenses.value[editingIndex.value].expense_id;
-      await axios.put(`${baseURL}/api/expense/${expenseId}`, newExpense, {
+      await axios.put(`${import.meta.env.VITE_URL}/api/expense/${expenseId}`, newExpense, {
         withCredentials: true,
       });
     } else {
-      await axios.post(`${baseURL}/api/expense/${tripId}`, newExpense, {
+      await axios.post(`${import.meta.env.VITE_URL}/api/expense/${tripId}`, newExpense, {
         withCredentials: true,
       });
     }
@@ -140,7 +140,7 @@ const deleteExpense = async (index) => {
 
   if (confirm.isConfirmed) {
     try {
-      await axios.delete(`${baseURL}/api/expense/${expenseId}`, {
+      await axios.delete(`${import.meta.env.VITE_URL}/api/expense/${expenseId}`, {
         withCredentials: true,
       });
       await loadExpenses();

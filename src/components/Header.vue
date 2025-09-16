@@ -41,12 +41,12 @@ const goToPage = (path) => {
 
 
 const loginWithGoogle = () => {
-window.location.href = `${baseURL}/auth/google`;
+window.location.href = `${import.meta.env.VITE_URL}/auth/google`;
 };
 
 const logout = async () => {
   try {
-    await axios.get(`${baseURL}/auth/logout`, {
+    await axios.get(`${import.meta.env.VITE_URL}/auth/logout`, {
       withCredentials: true, // ส่ง cookie/session ไปด้วย
     });
     emit("update:user", null);

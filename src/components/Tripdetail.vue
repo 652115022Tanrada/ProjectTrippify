@@ -9,7 +9,6 @@ import Swal from "sweetalert2";
 import { useRoute } from "vue-router";
 import { ref } from "vue";
 import Header from "./Header.vue";
-const baseURL = import.meta.env.VITE_URL; 
 
 const route = useRoute();
 const router = useRouter();
@@ -66,7 +65,7 @@ const activeTab = ref("plan");
 
 const getUser = async () => {
   try {
-    const res = await axios.get(`${baseURL}/auth/user`, {
+    const res = await axios.get(`${import.meta.env.VITE_URL}/auth/user`, {
       withCredentials: true,
     });
     user.value = res.data;
@@ -276,7 +275,7 @@ const fetchNearby = async (lat, lng, type = "cafe") => {
   if (!lat || !lng) return;
   loadingNearby.value = true;
   try {
-    const res = await axios.get(`${baseURL}/api/places/nearby`, {
+    const res = await axios.get(`${import.meta.env.VITE_URL}/api/places/nearby`, {
       params: { lat, lng, type, radius: 1000 },
     });
 
@@ -354,7 +353,7 @@ onMounted(async () => {
       // เรียก join ก่อน (POST) ถ้ายังไม่เป็น member
       try {
         await axios.post(
-          `${baseURL}/api/trip/${route.params.tripId}/join`,
+          `${import.meta.env.VITE_URL}/api/trip/${route.params.tripId}/join`,
           {},
           { withCredentials: true }
         );

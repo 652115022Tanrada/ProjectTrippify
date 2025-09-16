@@ -17,7 +17,7 @@ const baseURL = import.meta.env.VITE_URL;
 
 const getUser = async () => {
   try {
-    const res = await axios.get(`${baseURL}/auth/user`, {
+    const res = await axios.get(`${import.meta.env.VITE_URL}/auth/user`, {
       withCredentials: true,
     });
     user.value = res.data;
@@ -28,7 +28,7 @@ const getUser = async () => {
 const fetchSavedTrips = async () => {
   try {
 
-    const res = await axios.get(`${baseURL}/api/trip/mine`, {
+    const res = await axios.get(`${import.meta.env.VITE_URL}/api/trip/mine`, {
       withCredentials: true,
     });
     console.log("Fetched trips:", res.data); // 🔍 debug

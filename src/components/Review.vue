@@ -42,7 +42,7 @@ const getUser = async () => {
 // โหลดแผนทริปจาก backend ได้ตามปกติ
 const fetchTripPlan = async () => {
   try {
-    const res = await axios.get(`${baseURL}/api/trip/${tripId}`, {
+    const res = await axios.get(`${import.meta.env.VITE_URL}/api/trip/${tripId}`, {
       withCredentials: true,
     });
     tripPlan.value = res.data;
@@ -52,7 +52,7 @@ const fetchTripPlan = async () => {
 };
 const fetchReviews = async () => {
   try {
-    const res = await axios.get(`${baseURL}/api/reviews/${tripId}`);
+    const res = await axios.get(`${import.meta.env.VITE_URL}/api/reviews/${tripId}`);
     reviews.value = res.data;
   } catch (err) {
     console.error("โหลดรีวิวล้มเหลว:", err);
@@ -106,7 +106,7 @@ const submitReview = async () => {
 
   try {
     const res = await axios.post(
-      `${baseURL}/api/reviews/${tripId}`,
+      `${import.meta.env.VITE_URL}/api/reviews/${tripId}`,
       {
         user_name: newReviewName.value || "Anonymous User",
         rating: newReviewRating.value,

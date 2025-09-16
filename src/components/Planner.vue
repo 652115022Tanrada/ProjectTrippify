@@ -19,7 +19,6 @@ const budget = ref("");
 const currency = ref("THB");
 const tripName = ref("");
 const isLoading = ref(false);
-const baseURL = import.meta.env.VITE_URL; 
 
 const travelPreferences = ref([]);
 const travelStyles = [
@@ -52,7 +51,7 @@ const submitTrip = async () => {
 
   try {
     isLoading.value = true;
-    const res = await axios.post(`${baseURL}/api/trip`, payload);
+    const res = await axios.post(`${import.meta.env.VITE_URL}/api/trip`, payload);
     store.commit("trip/setTripPlan", res.data);
     setTimeout(() => router.push("/tripdetail"), 500);
   } catch (err) {
@@ -70,7 +69,7 @@ const submitTrip = async () => {
 
 const getUser = async () => {
   try {
-    const res = await axios.get(`${baseURL}/auth/user`, {
+    const res = await axios.get(`${import.meta.env.VITE_URL}/auth/user`, {
       withCredentials: true,
     });
     user.value = res.data;

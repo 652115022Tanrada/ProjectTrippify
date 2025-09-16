@@ -10,11 +10,10 @@ const showLoginModal = ref(false);
 const user = ref(null);
 const joinTripLinkModal = ref(false);
 const joinLinkInput = ref("");
-const baseURL = import.meta.env.VITE_URL; 
 
 const getUser = async () => {
   try {
-    const res = await axios.get(`${baseURL}/auth/user`, {
+    const res = await axios.get(`${import.meta.env.VITE_URL}/auth/user`, {
       withCredentials: true,
     });
     user.value = res.data;
@@ -26,7 +25,7 @@ const getUser = async () => {
 const fetchSavedTrips = async () => {
   try {
 
-    const res = await axios.get(`${baseURL}/api/trip/mine`, {
+    const res = await axios.get(`${import.meta.env.VITE_URL}/api/trip/mine`, {
       withCredentials: true,
     });
     console.log("Fetched trips:", res.data); // 🔍 debug
@@ -46,7 +45,7 @@ window.location.href = `${import.meta.env.VITE_URL}/auth/google`;
 
 const logout = async () => {
   try {
-    await axios.get(`${baseURL}/auth/logout`, {
+    await axios.get(`${import.meta.env.VITE_URL}/auth/logout`, {
       withCredentials: true, 
     });
     emit("update:user", null);
