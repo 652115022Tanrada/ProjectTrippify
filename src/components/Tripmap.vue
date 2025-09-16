@@ -61,7 +61,7 @@ function clearNearbyMarkers() {
 }
 // เพิ่มฟังก์ชันสำหรับกำหนดสีของหมุดตามวัน
 const getMarkerColor = (dayNumber) => {
-  const colors = ["#D71313", "#F0DE36", "#0D1282", "#228B22", "#FFA500", "#800080", "#FFC0CB"];
+  const colors = [   "#9656a2","#5e62a9","#de324c","#f4895f","#f8e16f", "#95cf92", "#369acc"];
   // ใช้ modulo เพื่อวนสีซ้ำหากมีวันมากกว่าจำนวนสีที่มี
   return colors[(dayNumber - 1) % colors.length];
 };

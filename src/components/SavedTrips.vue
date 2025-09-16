@@ -166,11 +166,11 @@ onMounted(() => {
               </svg>
               <div>
                 <h3 class="text-xl font-bold text-[#0D1282]">{{ trip.trip_name || 'Unnamed Trip' }}</h3>
+
                 <p class="text-gray-500 text-sm mt-1">
-                  <span class="font-semibold">Saved on:</span> {{ new Date(trip.created_at).toLocaleDateString('en-US',
-                    {
-                      year: 'numeric', month: 'long', day: 'numeric'
-                    }) }}
+                  <span class="font-semibold">Date :</span> {{ new Date(trip.days[0].date).toLocaleDateString('en-US')
+                  }} -
+                  {{ new Date(trip.days[trip.days.length - 1].date).toLocaleDateString('en-US') }}
                 </p>
               </div>
               <div v-if="trip.members && trip.members.length" class="flex -space-x-2 items-center">
@@ -202,7 +202,7 @@ onMounted(() => {
             <div class="mt-4 border-t pt-4 border-gray-100">
               <p class="text-gray-700 font-semibold">Total Cost: <span class="text-green-600">{{ trip.total_trip_cost }}
                   {{ trip.currency || 'THB' }}</span></p>
-              
+
             </div>
           </div>
         </div>
