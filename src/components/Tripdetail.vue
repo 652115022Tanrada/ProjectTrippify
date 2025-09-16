@@ -517,12 +517,17 @@ onMounted(async () => {
                   </button>
                 </div>
               </div>
+              
               <div class="mb-8 bg-white border-b border-gray-200 p-6 rounded-md shadow-sm">
                 <h2 class="text-xl font-bold text-[#0D1282] mb-4">
                   <i class="fa-solid fa-plane-departure mr-2"></i>
                   Transportation
                 </h2>
-
+    <div
+              class="static rounded-xl shadow-lg overflow-hidden  h-64 w-full md:fixed md:top-10 md:right-10 md:left-auto md:w-[600px] md:h-[90vh] md:block"
+              style="min-height: 300px;">
+              <Tripmap :locations="allLocations" />
+            </div>
                 <div class="overflow-x-auto">
                   <table class="w-full text-left border-collapse">
                     <thead>
@@ -775,29 +780,13 @@ onMounted(async () => {
                 </p>
               </div>
             </div>
+            <!-- <div
+              class="static rounded-xl shadow-lg overflow-hidden  h-64 w-full md:fixed md:top-10 md:right-10 md:left-auto md:w-[600px] md:h-[90vh] md:block"
+              style="min-height: 300px;">
+              <Tripmap :locations="allLocations" />
+            </div> -->
           </div>
         </div>
-
-        <div class="fixed rounded-xl shadow-lg overflow-hidden
-         top-10 right-10
-         w-[90vw] max-w-[600px] h-[90vh] 
-         md:w-[600px] md:h-[90vh] 
-         block" style="min-height: 300px;">
-          <Tripmap :locations="allLocations" />
-        </div>
-
-
-        <!-- <div class="block md:hidden w-full aspect-square relative" style="min-height:300px;">
-            <Tripmap :locations="allLocations" />
-          </div>
-
-<div 
-  class="fixed rounded-xl shadow-lg overflow-hidden
-         top-10 right-10 
-         w-[90vw] max-w-[600px] h-[90vh] hidden md:block"
->
-  <Tripmap :locations="allLocations" />
-</div> -->
 
 
 
