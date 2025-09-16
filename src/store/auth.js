@@ -24,7 +24,7 @@ export default {
     async fetchUser({ commit }) {
       try {
         const res = await axios.get(
-          'http://localhost:5000/auth/user',
+          `${import.meta.env.VITE_URL}/auth/user`,
           { withCredentials: true }
         )
         commit('setUser', res.data)

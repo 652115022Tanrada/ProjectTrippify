@@ -1,4 +1,3 @@
-// src/router.js
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from './components/Home.vue'
 import Planner from './components/Planner.vue'
@@ -10,6 +9,7 @@ import InvitePage from './components/InvitePage.vue'
 import Review from './components/Review.vue'
 import SavedTripReview from './components/SavedTripReview.vue'
 import axios from 'axios'
+const baseURL = import.meta.env.VITE_URL; 
 
 const routes = [
   { path: '/', component: Home },
@@ -42,7 +42,7 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   if (to.path.startsWith('/trip/')) {
     try {
-      const res = await axios.get('http://localhost:5000/auth/user', {
+      const res = await axios.get(`${baseURL}/auth/user`, {
         withCredentials: true,
       })
       if (res.data) {

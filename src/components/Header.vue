@@ -16,6 +16,7 @@ const route = useRoute();
 
 const showLoginModal = ref(false);
 const isSidebarOpen = ref(false);
+const baseURL = import.meta.env.VITE_URL; 
 
 const tripId = route.params.tripId;
 
@@ -37,22 +38,16 @@ const goToPage = (path) => {
   }
 };
 
-const goToExpense = () => {
-  if (!tripId) {
-    Swal.fire("Error", "No Trip selected", "error");
-    return;
-  }
-  goToPage(`/expense/${tripId}`);
-};
+
 
 const loginWithGoogle = () => {
-  window.location.href = "http://localhost:5000/auth/google";
+window.location.href = `${baseURL}/auth/google`;
 };
 
 const logout = async () => {
   try {
-    await axios.get("http://localhost:5000/auth/logout", {
-      withCredentials: true,
+    await axios.get(`${baseURL}/auth/logout`, {
+      withCredentials: true, // ส่ง cookie/session ไปด้วย
     });
     emit("update:user", null);
 

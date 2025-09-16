@@ -4,17 +4,17 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import { useRouter } from "vue-router";
 import Header from "./Header.vue";
-// import MiniMap from './MiniMap.vue'
 const savedTrips = ref([]);
 const router = useRouter();
 const showLoginModal = ref(false);
 const user = ref(null);
 const joinTripLinkModal = ref(false);
 const joinLinkInput = ref("");
+const baseURL = import.meta.env.VITE_URL; 
 
 const getUser = async () => {
   try {
-    const res = await axios.get("http://localhost:5000/auth/user", {
+    const res = await axios.get(`${baseURL}/auth/user`, {
       withCredentials: true,
     });
     user.value = res.data;
@@ -25,7 +25,8 @@ const getUser = async () => {
 
 const fetchSavedTrips = async () => {
   try {
-    const res = await axios.get("http://localhost:5000/api/trip/mine", {
+
+    const res = await axios.get(`${baseURL}/api/trip/mine`, {
       withCredentials: true,
     });
     console.log("Fetched trips:", res.data); // 🔍 debug
@@ -36,22 +37,20 @@ const fetchSavedTrips = async () => {
   }
 };
 
-onMounted(async () => {
-  await getUser();
-  await fetchSavedTrips();
-});
+
+
 
 const loginWithGoogle = () => {
-  window.location.href = "http://localhost:5000/auth/google";
+window.location.href = `${import.meta.env.VITE_URL}/auth/google`;
 };
 
 const logout = async () => {
   try {
-    await axios.get("http://localhost:5000/auth/logout", {
-      withCredentials: true,
+    await axios.get(`${baseURL}/auth/logout`, {
+      withCredentials: true, 
     });
-    user.value = null;
-    showLoginModal.value = false;
+    emit("update:user", null);
+
     await Swal.fire({
       icon: "success",
       title: "Logged Out",
@@ -59,8 +58,10 @@ const logout = async () => {
       confirmButtonText: "OK",
       confirmButtonColor: "#0ea5e9",
     });
+
     router.push("/");
   } catch (error) {
+    console.error("Logout failed:", error);
     Swal.fire({
       icon: "error",
       title: "Logout Failed",
@@ -115,10 +116,9 @@ const submitJoinLink = () => {
     });
   }
 };
-
-onMounted(() => {
-  getUser();
-  fetchSavedTrips();
+onMounted(async () => {
+  await getUser();
+  await fetchSavedTrips();
 });
 </script>
 

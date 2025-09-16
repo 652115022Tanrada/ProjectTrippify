@@ -30,6 +30,7 @@ const note = ref("");
 const paidBy = ref("");
 const splitWith = ref([]);
 const editingIndex = ref(null);
+const baseURL = import.meta.env.VITE_URL; 
 
 const participants = ref([]);
 
@@ -43,7 +44,7 @@ const expenses = ref([]);
 // ---------------- User ----------------
 const getUser = async () => {
   try {
-    const res = await axios.get("http://localhost:5000/auth/user", {
+    const res = await axios.get(`${baseURL}/auth/user`, {
       withCredentials: true,
     });
     user.value = res.data;
@@ -57,7 +58,7 @@ const getUser = async () => {
 const loadExpenses = async () => {
   if (!tripId) return;
   try {
-    const res = await axios.get(`http://localhost:5000/api/expense/${tripId}`, {
+    const res = await axios.get(`${baseURL}api/expense/${tripId}`, {
       withCredentials: true,
     });
     expenses.value = res.data.map(e => ({
@@ -72,7 +73,7 @@ const loadExpenses = async () => {
 };
 const loadTrip = async () => {
   try {
-    const res = await axios.get(`http://localhost:5000/api/trip/${tripId}`, {
+    const res = await axios.get(`${baseURL}/api/trip/${tripId}`, {
       withCredentials: true,
     });
     trip.value = res.data;
@@ -99,11 +100,11 @@ const saveExpense = async () => {
   try {
     if (editingIndex.value !== null) {
       const expenseId = expenses.value[editingIndex.value].expense_id;
-      await axios.put(`http://localhost:5000/api/expense/${expenseId}`, newExpense, {
+      await axios.put(`${baseURL}/api/expense/${expenseId}`, newExpense, {
         withCredentials: true,
       });
     } else {
-      await axios.post(`http://localhost:5000/api/expense/${tripId}`, newExpense, {
+      await axios.post(`${baseURL}/api/expense/${tripId}`, newExpense, {
         withCredentials: true,
       });
     }
@@ -139,7 +140,7 @@ const deleteExpense = async (index) => {
 
   if (confirm.isConfirmed) {
     try {
-      await axios.delete(`http://localhost:5000/api/expense/${expenseId}`, {
+      await axios.delete(`${baseURL}/api/expense/${expenseId}`, {
         withCredentials: true,
       });
       await loadExpenses();

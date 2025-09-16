@@ -26,9 +26,11 @@ const hoverRating = ref(0);
 const expandedDays = ref({}); // เก็บสถานะ dropdown ของแต่ละ day
 const allExpanded = ref(false); // สถานะ Expand/Collapse All
 
+const baseURL = import.meta.env.VITE_URL; 
+
 const getUser = async () => {
   try {
-    const res = await axios.get("http://localhost:5000/auth/user", {
+    const res = await axios.get(`${baseURL}/auth/user`, {
       withCredentials: true,
     });
     user.value = res.data;
@@ -40,7 +42,7 @@ const getUser = async () => {
 // โหลดแผนทริปจาก backend ได้ตามปกติ
 const fetchTripPlan = async () => {
   try {
-    const res = await axios.get(`http://localhost:5000/api/trip/${tripId}`, {
+    const res = await axios.get(`${baseURL}/api/trip/${tripId}`, {
       withCredentials: true,
     });
     tripPlan.value = res.data;
@@ -50,7 +52,7 @@ const fetchTripPlan = async () => {
 };
 const fetchReviews = async () => {
   try {
-    const res = await axios.get(`http://localhost:5000/api/reviews/${tripId}`);
+    const res = await axios.get(`${baseURL}/api/reviews/${tripId}`);
     reviews.value = res.data;
   } catch (err) {
     console.error("โหลดรีวิวล้มเหลว:", err);
@@ -104,7 +106,7 @@ const submitReview = async () => {
 
   try {
     const res = await axios.post(
-      `http://localhost:5000/api/reviews/${tripId}`,
+      `${baseURL}/api/reviews/${tripId}`,
       {
         user_name: newReviewName.value || "Anonymous User",
         rating: newReviewRating.value,

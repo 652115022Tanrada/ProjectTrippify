@@ -3,13 +3,14 @@ import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
 const router = useRouter();
+const baseURL = import.meta.env.VITE_URL; 
 
 const loginWithGoogle = () => {
   const tripPath = route.params.tripId
     ? `/trip/${route.params.tripId}`
     : "/";
 
-  window.location.href = `http://localhost:5000/auth/google?redirect=http://localhost:5173${tripPath}`;
+  window.location.href = `${baseURL}/auth/google?redirect=https://trippify.onrender.com${tripPath}`;
 };
 </script>
 

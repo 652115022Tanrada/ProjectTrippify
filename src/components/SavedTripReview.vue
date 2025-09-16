@@ -13,10 +13,11 @@ const showLoginModal = ref(false);
 const user = ref(null);
 const joinTripLinkModal = ref(false);
 const joinLinkInput = ref("");
+const baseURL = import.meta.env.VITE_URL; 
 
 const getUser = async () => {
   try {
-    const res = await axios.get("http://localhost:5000/auth/user", {
+    const res = await axios.get(`${baseURL}/auth/user`, {
       withCredentials: true,
     });
     user.value = res.data;
@@ -24,15 +25,17 @@ const getUser = async () => {
     user.value = null;
   }
 };
-
 const fetchSavedTrips = async () => {
   try {
-    const res = await axios.get("http://localhost:5000/api/trip/mine", {
+
+    const res = await axios.get(`${baseURL}/api/trip/mine`, {
       withCredentials: true,
     });
-    savedTrips.value = res.data;
+    console.log("Fetched trips:", res.data); // 🔍 debug
+    savedTrips.value = Array.isArray(res.data) ? res.data : [];
   } catch (err) {
     console.error("Failed to fetch saved trips:", err);
+    savedTrips.value = [];
   }
 };
 

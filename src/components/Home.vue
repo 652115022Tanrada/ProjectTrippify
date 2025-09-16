@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import Swal from 'sweetalert2'
 import { useRouter } from 'vue-router'
+const baseURL = import.meta.env.VITE_URL; 
 
 const router = useRouter()
 const showLoginModal = ref(false)
@@ -11,7 +12,7 @@ const isLoading = ref(false)
 
 const getUser = async () => {
   try {
-    const res = await axios.get('http://localhost:5000/auth/user', {
+    const res = await axios.get(`${baseURL}/auth/user`, {
       withCredentials: true
     })
     user.value = res.data
@@ -22,12 +23,12 @@ const getUser = async () => {
 }
 
 const loginWithGoogle = () => {
-  window.location.href = 'http://localhost:5000/auth/google'
+  window.location.href =`${baseURL}/auth/google`
 }
 
 const logout = async () => {
   try {
-    await axios.get('http://localhost:5000/auth/logout', {
+    await axios.get(`${baseURL}/auth/google/logout`, {
       withCredentials: true
     })
     user.value = null

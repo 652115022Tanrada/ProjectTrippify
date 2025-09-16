@@ -9,6 +9,7 @@ import Swal from "sweetalert2";
 import { useRoute } from "vue-router";
 import { ref } from "vue";
 import Header from "./Header.vue";
+const baseURL = import.meta.env.VITE_URL; 
 
 const route = useRoute();
 const router = useRouter();
@@ -65,7 +66,7 @@ const activeTab = ref("plan");
 
 const getUser = async () => {
   try {
-    const res = await axios.get("http://localhost:5000/auth/user", {
+    const res = await axios.get(`${baseURL}/auth/user`, {
       withCredentials: true,
     });
     user.value = res.data;
@@ -88,7 +89,7 @@ const saveTrip = async () => {
     console.log("Saving trip with ID:", payload.tripId || "(new trip)");
 
     const response = await axios.post(
-      "http://localhost:5000/api/trip/saveOrUpdate",
+      `${import.meta.env.VITE_URL}/api/trip/saveOrUpdate`,
       payload,
       { withCredentials: true }
     );
@@ -246,7 +247,7 @@ const searchPlaces = async () => {
   loadingSearch.value = true;
   try {
     const { data } = await axios.get(
-      "http://localhost:5000/api/places/search",
+      `${baseURL}/api/places/search`,
       {
         params: { query: searchQuery.value },
         withCredentials: true,
@@ -275,7 +276,7 @@ const fetchNearby = async (lat, lng, type = "cafe") => {
   if (!lat || !lng) return;
   loadingNearby.value = true;
   try {
-    const res = await axios.get("http://localhost:5000/api/places/nearby", {
+    const res = await axios.get(`${baseURL}/api/places/nearby`, {
       params: { lat, lng, type, radius: 1000 },
     });
 
@@ -353,7 +354,7 @@ onMounted(async () => {
       // เรียก join ก่อน (POST) ถ้ายังไม่เป็น member
       try {
         await axios.post(
-          `http://localhost:5000/api/trip/${route.params.tripId}/join`,
+          `${baseURL}/api/trip/${route.params.tripId}/join`,
           {},
           { withCredentials: true }
         );
@@ -364,7 +365,7 @@ onMounted(async () => {
       // จากนั้น fetch ข้อมูล trip plan จริง
       try {
         const { data } = await axios.get(
-          `http://localhost:5000/api/trip/${route.params.tripId}`,
+          `${baseURL}/${route.params.tripId}`,
           { withCredentials: true }
         );
         trip.value = data;
