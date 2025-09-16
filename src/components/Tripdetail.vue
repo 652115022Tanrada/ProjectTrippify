@@ -518,8 +518,8 @@ onMounted(async () => {
                 </div>
               </div>
 
-              <div class="mb-8 bg-white border-b border-gray-200 p-6 rounded-md shadow-sm">
-                <h2 class="text-xl font-bold text-[#0D1282] mb-4">
+              <div class="mb-8 bg-white border-b border-gray-200 p-6 md:p-8 rounded-md shadow-sm w-full max-w-full">
+                <h2 class="text-xl md:text-2xl font-bold text-[#0D1282] mb-4">
                   <i class="fa-solid fa-plane-departure mr-2"></i>
                   Transportation
                 </h2>
@@ -528,60 +528,46 @@ onMounted(async () => {
                   style="min-height: 300px;">
                   <Tripmap :locations="allLocations" />
                 </div>
-                <div class="overflow-x-auto">
-                  <table class="w-full text-left border-collapse">
-                    <thead>
-                      <tr class="bg-[#F0DE36] text-[#0D1282] font-bold text-sm tracking-wide">
-                        <th class="p-3 rounded-tl-xl"></th>
-                        <th class="p-3 text-center">🚗 Car</th>
-                        <th class="p-3 text-center">🚌 Bus</th>
-                        <th class="p-3 text-center">🚆 Train</th>
-                        <th class="p-3 text-center rounded-tr-xl">✈️ Flight</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr class="border-b border-gray-200 bg-white">
-                        <td class="p-3 text-gray-700 font-medium">Distance</td>
-                        <td class="p-3 text-center">
-                          {{ transportInfo.car?.distance || "-" }}
-                        </td>
-                        <td class="p-3 text-center">
-                          {{ transportInfo.bus?.distance || "-" }}
-                        </td>
-                        <td class="p-3 text-center">
-                          {{ transportInfo.train?.distance || "-" }}
-                        </td>
-                        <td class="p-3 text-center">
-                          {{ transportInfo.flight?.distance || "-" }}
-                        </td>
-                      </tr>
-                      <tr class="bg-[#EEEDED]">
-                        <td class="p-3 text-gray-700 font-medium">Duration</td>
-                        <td class="p-3 text-center">
-                          {{ transportInfo.car?.duration || "-" }}
-                        </td>
-                        <td class="p-3 text-center">
-                          {{ transportInfo.bus?.duration || "-" }}
-                        </td>
-                        <td class="p-3 text-center">
-                          {{ transportInfo.train?.duration || "-" }}
-                        </td>
-                        <td class="p-3 text-center">
-                          {{ transportInfo.flight?.duration || "-" }}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <p class="mt-4 text-gray-700">
-                    How to get there:
-                    {{ transportInfo?.how_to_get_there || "N/A" }}
-                  </p>
-                </div>
+              <div class="w-full overflow-x-hidden">
+  <table class="w-full table-fixed border-collapse text-sm md:text-base">
+    <thead>
+      <tr class="bg-[#F0DE36] text-[#0D1282] font-bold tracking-wide">
+        <th class="p-1 sm:p-2 md:p-3 rounded-tl-xl"></th>
+        <th class="p-1 sm:p-2 md:p-3 text-center">🚗 Car</th>
+        <th class="p-1 sm:p-2 md:p-3 text-center">🚌 Bus</th>
+        <th class="p-1 sm:p-2 md:p-3 text-center">🚆 Train</th>
+        <th class="p-1 sm:p-2 md:p-3 text-center rounded-tr-xl">✈️ Flight</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="border-b border-gray-200 bg-white">
+        <td class="p-1 sm:p-2 md:p-3 text-gray-700 font-medium">Distance</td>
+        <td class="p-1 sm:p-2 md:p-3 text-center">{{ transportInfo.car?.distance || "-" }}</td>
+        <td class="p-1 sm:p-2 md:p-3 text-center">{{ transportInfo.bus?.distance || "-" }}</td>
+        <td class="p-1 sm:p-2 md:p-3 text-center">{{ transportInfo.train?.distance || "-" }}</td>
+        <td class="p-1 sm:p-2 md:p-3 text-center">{{ transportInfo.flight?.distance || "-" }}</td>
+      </tr>
+      <tr class="bg-[#EEEDED]">
+        <td class="p-1 sm:p-2 md:p-3 text-gray-700 font-medium">Duration</td>
+        <td class="p-1 sm:p-2 md:p-3 text-center">{{ transportInfo.car?.duration || "-" }}</td>
+        <td class="p-1 sm:p-2 md:p-3 text-center">{{ transportInfo.bus?.duration || "-" }}</td>
+        <td class="p-1 sm:p-2 md:p-3 text-center">{{ transportInfo.train?.duration || "-" }}</td>
+        <td class="p-1 sm:p-2 md:p-3 text-center">{{ transportInfo.flight?.duration || "-" }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p class="mt-2 sm:mt-4 text-gray-700 text-xs sm:text-sm md:text-base">
+    How to get there: {{ transportInfo?.how_to_get_there || "N/A" }}
+  </p>
+</div>
+
+
               </div>
 
               <div v-for="(day, index) in tripPlan.days" :key="day.id || index"
                 class="mb-8 bg-white/95 p-6 rounded-2xl shadow-lg border border-[#EEEDED]">
-                <h2 class="text-xl font-bold text-[#0D1282] mb-2 flex items-center">
+                <h2 class="text-xl md:text-2xl font-bold text-[#0D1282] mb-4">
                   <span
                     class="bg-[#D71313] text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full mr-2">{{
                       index + 1 }}</span>
@@ -595,50 +581,45 @@ onMounted(async () => {
                   {{ day.description || day.narrative || "No description." }}
                 </p>
 
-                <div
-                  class="grid grid-cols-7 gap-2 px-4 py-3 bg-[#F0DE36] text-[#0D1282] font-semibold text-sm rounded-t-lg">
-                  <div class="col-span-2">Destination</div>
-                  <div class="text-center">Category</div>
-                  <div class="text-center">Transport</div>
-                  <div class="text-center">Expense</div>
-                  <div class="text-center">Distance</div>
-                  <div class="text-center"></div>
-                </div>
+               <!-- Header -->
+<div class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 bg-[#F0DE36] text-[#0D1282] font-semibold text-xs sm:text-sm rounded-t-lg">
+  <div class="break-words">Destination</div>
+  <div class="text-center break-words">Category</div>
+  <div class="text-center break-words">Transport</div>
+  <div class="text-center break-words">Expense</div>
+  <div class="text-center break-words">Distance</div>
+  <div class="text-center"></div>
+</div>
 
-                <draggable v-model="day.locations" :group="'locations'" item-key="name" :disabled="!showEditControls"
-                  class="space-y-2" @change="recalculateCosts">
-                  <template #item="{ element: loc, index: i }">
-                    <div
-                      class="grid grid-cols-7 gap-2 px-4 py-3 bg-white border-b border-gray-200 text-sm items-center hover:bg-[#EEEDED] transition rounded-md shadow-sm cursor-grab">
-                      <div class="col-span-2 font-medium text-gray-800">
-                        <i class="fa-solid fa-map-pin text-[#0D1282] mr-2"></i>{{ loc.name }}
-                      </div>
-                      <div class="text-center text-gray-600">
-                        {{ loc.category || "N/A" }}
-                      </div>
-                      <div class="text-center text-gray-600">
-                        {{ loc.transport || "N/A" }}
-                      </div>
-                      <div class="text-center text-[#D71313] font-medium">
-                        {{ loc.estimated_cost || 0 }}
-                        {{ loc.currency || tripPlan.currency || "THB" }}
-                      </div>
-                      <div class="text-center text-gray-600">
-                        {{ loc.distance_to_next || "N/A" }}
-                      </div>
-                      <div class="text-center" v-if="showEditControls">
-                        <button @click="removeLocation(index, i)" class="text-red-500 hover:text-red-700 transition"
-                          title="Delete location">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="size-6">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                              d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  </template>
-                </draggable>
+<!-- Draggable Rows -->
+<draggable v-model="day.locations" :group="'locations'" item-key="name" :disabled="!showEditControls"
+  class="space-y-1 sm:space-y-2" @change="recalculateCosts">
+  <template #item="{ element: loc, index: i }">
+    <div
+      class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 bg-white border-b border-gray-200 text-xs sm:text-sm items-center hover:bg-[#EEEDED] transition rounded-md shadow-sm cursor-grab">
+      <div class="font-medium text-gray-800 break-words">
+        <i class="fa-solid fa-map-pin text-[#0D1282] mr-1 sm:mr-2"></i>{{ loc.name }}
+      </div>
+      <div class="text-center text-gray-600 break-words">{{ loc.category || "N/A" }}</div>
+      <div class="text-center text-gray-600 break-words">{{ loc.transport || "N/A" }}</div>
+      <div class="text-center text-[#D71313] font-medium break-words">
+        {{ loc.estimated_cost || 0 }} {{ loc.currency || tripPlan.currency || "THB" }}
+      </div>
+      <div class="text-center text-gray-600 break-words">{{ loc.distance_to_next || "N/A" }}</div>
+      <div class="text-center" v-if="showEditControls">
+        <button @click="removeLocation(index, i)" class="text-red-500 hover:text-red-700 transition"
+          title="Delete location">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="w-4 h-4 sm:w-6 sm:h-6">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </template>
+</draggable>
+
 
                 <div class="mt-4 text-sm text-gray-700">
                   <p v-if="day.daily_tips && day.daily_tips.length > 0" class="mb-1">
