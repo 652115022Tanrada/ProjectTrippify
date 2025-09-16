@@ -9,6 +9,9 @@ import { useStore } from "vuex";
 const route = useRoute();
 const router = useRouter();
 const store = useStore();
+
+const isMobileMenuOpen = ref(false);
+const showMobileSummary = ref(false);
 const user = ref(null);
 const showExpenseModal = ref(false);
 const showCategoryModal = ref(false);
@@ -34,7 +37,8 @@ const currentUserEmail = ref("");
 paidBy.value = currentUserEmail.value;
 const tripLeader = computed(() => {
   return participants.value.find(p => p.role === "leader")?.gmail || "";
-});const expenses = ref([]);
+});
+const expenses = ref([]);
 
 // ---------------- User ----------------
 const getUser = async () => {
@@ -59,7 +63,7 @@ const loadExpenses = async () => {
     expenses.value = res.data.map(e => ({
       ...e,
       amount: parseFloat(e.amount) || 0,
-      isPaid: e.isPaid === 1 || e.isPaid === '1' || e.isPaid === true || e.isPaid === 'true', // ✅ รองรับทุกแบบ
+      isPaid: e.isPaid === 1 || e.isPaid === '1' || e.isPaid === true || e.isPaid === 'true',
       splitWith: Array.isArray(e.splitWith) ? e.splitWith : JSON.parse(e.splitWith || "[]")
     }));
   } catch (err) {
@@ -87,20 +91,18 @@ const saveExpense = async () => {
     amount: parseFloat(amount.value),
     paidBy: paidBy.value,
     note: note.value,
-    isPaid: isPaid.value ? 1 : 0, // ✅ แปลงเป็น 1 หรือ 0
+    isPaid: isPaid.value ? 1 : 0,
     currency: selectedCurrency.value,
     splitWith: splitWith.value,
   };
 
   try {
     if (editingIndex.value !== null) {
-      // แก้ไข
       const expenseId = expenses.value[editingIndex.value].expense_id;
       await axios.put(`http://localhost:5000/api/expense/${expenseId}`, newExpense, {
         withCredentials: true,
       });
     } else {
-      // เพิ่มใหม่
       await axios.post(`http://localhost:5000/api/expense/${tripId}`, newExpense, {
         withCredentials: true,
       });
@@ -108,6 +110,7 @@ const saveExpense = async () => {
 
     await loadExpenses();
     resetForm();
+    closeExpenseModal();
 
     Swal.fire({
       icon: "success",
@@ -155,7 +158,7 @@ const editExpense = (index) => {
   amount.value = expense.amount;
   selectedCurrency.value = expense.currency;
   note.value = expense.note;
-  isPaid.value = !!expense.isPaid; // แปลงเป็น boolean
+  isPaid.value = !!expense.isPaid;
   paidBy.value = participants.value.find(p => p.gmail === expense.paidBy)?.gmail || currentUserEmail.value;
   splitWith.value = Array.isArray(expense.splitWith) ? expense.splitWith : JSON.parse(expense.splitWith || "[]");
   editingIndex.value = index;
@@ -205,8 +208,12 @@ const balances = computed(() => {
 const openExpenseModalForAdd = () => {
   resetForm();
   showExpenseModal.value = true;
+  isMobileMenuOpen.value = false;
 };
-const closeExpenseModal = () => showExpenseModal.value = false;
+const closeExpenseModal = () => {
+  showExpenseModal.value = false;
+  resetForm();
+};
 const openDatePicker = () => dateInput.value?.showPicker?.() || dateInput.value?.click();
 const getCategoryIcon = (category) => {
   switch (category) {
@@ -227,30 +234,24 @@ onMounted(() => {
 });
 </script>
 
-
 <template>
   <div class="min-h-screen flex flex-col bg-[#EEEDED] text-gray-800 font-kanit">
     <Header :user="user" @update:user="user = $event" />
 
-    <div class="flex flex-1 min-h-screen bg-[#EEEDED] ml-48">
-      <!-- Sidebar -->
-      <aside class="w-64 bg-[#FFFFFF] p-6 shadow-xl flex flex-col justify-between text-white relative z-20">
+    <div class="flex flex-1 min-h-screen bg-[#EEEDED] sm:ml-48 md:ml-48">
+      <aside class="hidden sm:block sm:w-64 md:w-72 bg-[#FFFFFF] p-6 shadow-xl flex flex-col justify-between text-white relative z-20">
         <div>
           <h2 class="text-2xl font-extrabold text-[#0D1282] mb-4">Budget</h2>
           <div class="space-y-2">
             <button class="w-full text-left rounded-xl p-3 flex items-center gap-3 transition-colors" :class="{
-              'bg-[#F0DE36] text-[#0D1282] font-bold':
-                activeTab === 'expenses',
-              'text-[#0D1282]  hover:text-[#D71313]/90 transition font-bold':
-                activeTab !== 'expenses',
+              'bg-[#F0DE36] text-[#0D1282] font-bold': activeTab === 'expenses',
+              'text-[#0D1282] hover:text-[#D71313]/90 transition font-bold': activeTab !== 'expenses',
             }" @click="activeTab = 'expenses'">
               <span>🧾</span><span class="text-sm">Expenses</span>
             </button>
             <button class="w-full text-left rounded-xl p-3 flex items-center gap-3 transition-colors" :class="{
-              'bg-[#F0DE36] text-[#0D1282] font-bold hover:bg-[#F0DE36]':
-                activeTab === 'balance',
-              'text-[#0D1282]  hover:text-[#D71313]/90 transition font-bold':
-                activeTab !== 'balance',
+              'bg-[#F0DE36] text-[#0D1282] font-bold hover:bg-[#F0DE36]': activeTab === 'balance',
+              'text-[#0D1282] hover:text-[#D71313]/90 transition font-bold': activeTab !== 'balance',
             }" @click="activeTab = 'balance'">
               <span>⚖️</span><span class="text-sm">Balance</span>
             </button>
@@ -270,198 +271,55 @@ onMounted(() => {
         </div>
       </aside>
 
-      <!-- Modal -->
-      <div v-if="showExpenseModal"
-        class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-        <div class="flex flex-row gap-6"> <!-- ✅ flex-row -->
-          <div
-            class="bg-[#EEEDED] rounded-3xl w-[420px] p-6 shadow-2xl relative flex flex-col max-h-[500px] overflow-y-auto">
-            <h2 class="text-2xl font-bold text-center mb-6 text-[#0D1282]">
-              New Expense
-            </h2>
+      <div class="p-4 sm:hidden flex items-center justify-between bg-[#FFFFFF] fixed top-0 left-0 right-0 z-40">
+        <button @click="isMobileMenuOpen = !isMobileMenuOpen" class="text-[#0D1282] text-2xl">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <h2 class="text-xl font-extrabold text-[#0D1282]">Budget</h2>
+      </div>
 
-            <!-- Category / Date -->
-            <div class="flex gap-2 mb-6">
-              <!-- Category -->
-              <button
-                class="flex-1 border border-[#0D1282]/30 rounded-full py-3 text-sm text-[#0D1282] font-semibold transition hover:bg-[#0D1282]/10"
-                @click="showCategoryModal = true">
-                📂 {{ selectedCategory || "Category" }}
+      <div v-if="isMobileMenuOpen" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 sm:hidden" @click="isMobileMenuOpen = false">
+        <div class="fixed top-0 left-0 w-64 bg-[#FFFFFF] p-6 shadow-xl h-screen flex flex-col justify-between z-50" @click.stop>
+          <div>
+            <h2 class="text-2xl font-extrabold text-[#0D1282] mb-4">Budget</h2>
+            <div class="space-y-2">
+              <button class="w-full text-left rounded-xl p-3 flex items-center gap-3 transition-colors" :class="{
+                'bg-[#F0DE36] text-[#0D1282] font-bold': activeTab === 'expenses',
+                'text-[#0D1282] hover:text-[#D71313]/90 transition font-bold': activeTab !== 'expenses',
+              }" @click="activeTab = 'expenses'; isMobileMenuOpen = false;">
+                <span>🧾</span><span class="text-sm">Expenses</span>
               </button>
-
-              <!-- Date -->
-              <button @click="openDatePicker"
-                class="flex-1 border border-[#0D1282]/30 rounded-full py-3 text-sm text-[#0D1282] font-semibold transition hover:bg-[#0D1282]/10">
-                📅
-                {{
-                  new Date(selectedDate).toLocaleDateString("en-GB", {
-                    day: "2-digit",
-                    month: "short",
-                  })
-                }}
-              </button>
-              <!-- Hidden date input -->
-              <input ref="dateInput" v-model="selectedDate" type="date" :min="new Date().toISOString().split('T')[0]"
-                class="hidden" />
-            </div>
-
-            <!-- Category Modal -->
-            <div v-if="showCategoryModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-              <div class="bg-[#EEEDED] p-6 rounded-2xl w-80 shadow-xl relative">
-                <h3 class="text-xl font-bold mb-4 text-[#0D1282]">
-                  Select Category
-                </h3>
-                <button @click="showCategoryModal = false"
-                  class="absolute top-4 right-4 text-gray-400 hover:text-[#0D1282] transition">
-                  ✕
-                </button>
-                <ul>
-                  <li v-for="cat in categories" :key="cat" @click="
-                    selectedCategory = cat;
-                  showCategoryModal = false;
-                  " class="cursor-pointer p-3 hover:bg-[#F0DE36]/40 rounded-xl flex items-center gap-3 transition">
-                    <i :class="['fa-solid', getCategoryIcon(cat)]" class="w-5 text-center text-[#0D1282]"></i>
-                    {{ cat }}
-                  </li>
-                </ul>
-                <div class="mt-4 border-t pt-4">
-                  <button
-                    class="w-full bg-[#D71313]/10 text-[#D71313] py-2 rounded-full hover:bg-[#D71313]/20 transition font-semibold"
-                    @click="
-                      selectedCategory = '';
-                    showCategoryModal = false;
-                    ">
-                    Clear
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Amount Input -->
-            <div
-              class="flex items-center justify-center mb-4 border border-[#0D1282]/30 rounded-full overflow-hidden focus-within:ring-2 focus-within:ring-[#F0DE36] transition">
-              <input v-model="amount" type="number" min="0" step="0.01"
-                class="w-32 px-4 py-3 text-2xl font-bold text-[#0D1282] text-right focus:outline-none bg-transparent"
-                placeholder="0.00" />
-              <div class="w-px h-8 bg-[#0D1282]/20"></div>
-              <select v-model="selectedCurrency"
-                class="px-4 py-3 text-base text-[#0D1282] bg-transparent focus:outline-none cursor-pointer">
-                <option v-for="cur in currencies" :key="cur" :value="cur">
-                  {{ cur }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Expense name -->
-            <div
-              class="flex items-center bg-white p-3 rounded-xl border border-[#0D1282]/30 mb-4 focus-within:ring-2 focus-within:ring-[#F0DE36] transition">
-              <i class="fa-solid fa-note-sticky text-[#0D1282]/60 mr-3"></i>
-              <input type="text" placeholder="Enter expense name..."
-                class="w-full outline-none bg-transparent text-[#0D1282]" v-model="note" />
-            </div>
-
-            <!-- Status toggle -->
-            <div class="flex justify-between items-center mb-6">
-              <span class="text-[#0D1282] font-medium">Status</span>
-              <label class="flex items-center cursor-pointer">
-                <!-- v-model ผูกกับ isPaid ซึ่งต้องเป็น boolean -->
-                <input type="checkbox" v-model="isPaid" class="sr-only" />
-                <div class="w-12 h-6 rounded-full shadow-inner relative transition-colors duration-300"
-                  :class="isPaid ? 'bg-emerald-500' : 'bg-gray-300'">
-                  <div
-                    class="dot absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300"
-                    :class="isPaid ? 'translate-x-full' : 'translate-x-0.5'"></div>
-                </div>
-                <span class="ml-3 font-semibold" :class="isPaid ? 'text-emerald-600' : 'text-gray-500'">
-                  {{ isPaid ? "Paid" : "Unpaid" }}
-                </span>
-              </label>
-            </div>
-
-
-            <!-- Paid By -->
-            <div class="mb-6">
-              <label class="block font-semibold text-[#0D1282] mb-2">Paid by</label>
-              <select v-model="paidBy"
-                class="w-full border border-[#0D1282]/30 rounded-full px-4 py-3 text-[#0D1282] focus:outline-none focus:ring-2 focus:ring-[#F0DE36] transition">
-                <option v-for="p in participants" :key="p.gmail" :value="p.gmail">
-                  {{ p.username }}
-                </option>
-              </select>
-            </div>
-
-
-            <!-- Buttons -->
-            <div class="flex justify-end gap-4">
-              <button @click="closeExpenseModal"
-                class="px-6 py-3 rounded-full bg-[#EEEDED] text-[#0D1282] font-semibold border border-[#0D1282]/30 hover:bg-[#D71313] transition">
-                Cancel
-              </button>
-              <button @click="
-                saveExpense();
-              closeExpenseModal();
-              "
-                class="px-8 py-3 rounded-full bg-[#0D1282] text-white font-bold hover:bg-[#0D1282]/90 shadow-md transition">
-                Save expense
+              
+              <button class="w-full text-left rounded-xl p-3 flex items-center gap-3 transition-colors" :class="{
+                'bg-[#F0DE36] text-[#0D1282] font-bold hover:bg-[#F0DE36]': activeTab === 'balance',
+                'text-[#0D1282] hover:text-[#D71313]/90 transition font-bold': activeTab !== 'balance',
+              }" @click="activeTab = 'balance'; isMobileMenuOpen = false;">
+                <span>⚖️</span><span class="text-sm">Balance</span>
               </button>
             </div>
 
-            <!-- Close Icon -->
-            <button @click="closeExpenseModal"
-              class="absolute top-4 right-4 text-gray-400 hover:text-[#D71313] text-2xl font-bold transition">
-              ✕
-            </button>
-          </div>
-          <div
-            class="bg-[#EEEDED] rounded-3xl w-[420px] p-6 shadow-2xl relative flex flex-col max-h-[500px] overflow-y-auto">
-            <h2 class="text-2xl font-bold text-center mb-6 text-[#0D1282]">
-              Participants
-            </h2>
-            <div class="space-y-3">
-              <label class="block font-semibold text-[#0D1282]">Split with</label>
-
-              <div class="space-y-2 max-h-48 overflow-y-auto pr-2">
-                <label v-for="p in participants" :key="p.gmail"
-                  class="flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ease-in-out"
-                  :class="{
-                    'bg-white border-slate-300 shadow-sm hover:bg-slate-50': !splitWith.includes(p.gmail),
-                    'bg-[#E5F3FF] border-[#0D1282] shadow-md': splitWith.includes(p.gmail),
-                  }">
-                  <div
-                    class="w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 ease-in-out"
-                    :class="{
-                      'bg-slate-200': !splitWith.includes(p.gmail),
-                      'bg-[#0D1282] scale-100': splitWith.includes(p.gmail),
-                      'scale-0': !splitWith.includes(p.gmail),
-                    }">
-                    <svg v-if="splitWith.includes(p.gmail)" class="w-4 h-4 text-white" fill="none" stroke="currentColor"
-                      viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                  </div>
-
-                  <span class="text-slate-800">{{ p.username }}</span>
-
-                  <input type="checkbox" :value="p.gmail" v-model="splitWith" class="hidden" />
-                </label>
-              </div>
+            <div class="mt-8 p-4 bg-[#EEEDED] rounded-xl text-sm text-[#0D1282]">
+              <p class="font-semibold mb-2">Manage your budget together</p>
+              <p class="text-gray-600 text-xs">
+                Invite your friends to budget your trip together!
+              </p>
             </div>
           </div>
+          
+          <button @click="isMobileMenuOpen = false" class="mt-8 w-full bg-red-100 text-red-700 font-bold py-3 px-4 rounded-full shadow-md transition">
+            Close Menu
+          </button>
         </div>
       </div>
 
-      <main class="flex-1 p-8 overflow-y-auto bg-white">
+      <main class="flex-1 p-4 md:p-8 overflow-y-auto bg-white" :class="{ 'pt-16 sm:pt-8': !isMobileMenuOpen, 'pt-16': isMobileMenuOpen }">
         <template v-if="activeTab === 'expenses'">
-          <h3 class="text-3xl font-extrabold text-[#0D1282] mb-6 border-b-2 border-[#D71313] pb-2">
+          <h3 class="text-2xl md:text-3xl font-extrabold text-[#0D1282] mb-4 md:mb-6 border-b-2 border-[#D71313] pb-1 md:pb-2">
             📝 Saved Expenses
           </h3>
 
-          <div v-if="expenses.length === 0"
-            class="flex flex-col items-center justify-center text-center text-gray-500 min-h-[60vh]">
-            <!-- รูปภาพ -->
+          <div v-if="expenses.length === 0" class="flex flex-col items-center justify-center text-center text-gray-500 min-h-[60vh]">
             <img src="/expense.png" alt="No expenses" class="w-32 h-32 mb-4 opacity-40" />
-
-            <!-- ข้อความ -->
             <p class="font-bold text-lg">No expenses yet</p>
             <p class="text-sm text-gray-400">
               Add custom expenses or start planning your trip.
@@ -471,10 +329,8 @@ onMounted(() => {
           <div v-else v-for="(expense, index) in expenses" :key="index"
             class="bg-[#EEEDED] rounded-xl shadow-lg p-6 flex justify-between items-center mb-4 transition-all duration-300 transform hover:scale-[1.01] hover:shadow-xl border-l-4"
             :class="expense.isPaid ? 'border-[#0D1282]' : 'border-[#D71313]'">
-            <!-- เนื้อหาของ expense เดิม -->
             <div class="flex items-center space-x-4">
-              <div
-                class="w-14 h-14 bg-[#0D1282] rounded-full flex items-center justify-center text-white text-xl shadow-md">
+              <div class="w-10 h-10 md:w-14 md:h-14 bg-[#0D1282] rounded-full flex items-center justify-center text-white text-xl shadow-md flex-shrink-0">
                 <i :class="['fa-solid', getCategoryIcon(expense.category)]"></i>
               </div>
               <div>
@@ -482,13 +338,9 @@ onMounted(() => {
                   {{ expense.note }}
                 </p>
                 <p class="text-sm text-gray-600">
-                  <span class="font-medium text-[#0D1282]">{{
-                    expense.category
-                  }}</span>
+                  <span class="font-medium text-[#0D1282]">{{ expense.category }}</span>
                   by
-                  <span class="text-gray-800 font-semibold">{{
-                    getParticipantName(expense.paidBy)
-                  }}</span>
+                  <span class="text-gray-800 font-semibold">{{ getParticipantName(expense.paidBy) }}</span>
                   on {{ expense.date }}
                 </p>
               </div>
@@ -517,7 +369,7 @@ onMounted(() => {
         </template>
 
         <template v-if="activeTab === 'balance'">
-          <h2 class="text-3xl font-extrabold text-[#0D1282] mb-4">
+          <h2 class="text-2xl md:text-3xl font-extrabold text-[#0D1282] mb-2 md:mb-4">
             Total Expense:
             <span class="font-extrabold text-[#D71313]">
               {{ totalCost.toFixed(2) }} {{ selectedCurrency }}
@@ -529,16 +381,13 @@ onMounted(() => {
               👥 Trip Members ({{ participants.length }})
             </h3>
             <ul class="list-none text-gray-700 space-y-2">
-              <li v-for="p in participants" :key="p.gmail"
-                class="mb-2 bg-white p-3 rounded-lg shadow-sm flex justify-between items-center">
-                <div class="flex items-center gap-2">
-                  <span class="font-bold text-[#0D1282]">{{ p.username }}</span>
-                  <span class="text-sm text-gray-500">({{ p.gmail }})</span>
-                  <span v-if="p.gmail === tripLeader"
-                    class="ml-2 text-xs bg-[#F0DE36] text-[#0D1282] font-bold px-2 py-0.5 rounded-full">
-                    Leader
-                  </span>
-                </div>
+              <li v-for="p in participants" :key="p.gmail" class="mb-2 bg-white p-3 rounded-lg shadow-sm flex items-center gap-2">
+                <span class="font-bold text-[#0D1282]">{{ p.username }}</span>
+                <span class="text-sm text-gray-500 truncate">({{ p.gmail }})</span>
+                <span v-if="p.gmail === tripLeader"
+                  class="ml-auto text-xs bg-[#F0DE36] text-[#0D1282] font-bold px-2 py-0.5 rounded-full">
+                  Leader
+                </span>
               </li>
             </ul>
           </div>
@@ -548,33 +397,39 @@ onMounted(() => {
               ⚖️ Balance per person
             </h3>
             <ul class="text-gray-700 space-y-3">
-              <li v-for="p in participants" :key="p.gmail" class="mb-2 bg-white p-3 rounded-lg shadow-sm">
-                <span class="font-bold text-[#0D1282]">{{ p.username }}</span>:
-                Paid
-                <span class="font-semibold text-green-600">
-                  {{ balances[p.gmail].paid.toFixed(2) }} {{ selectedCurrency }}
-                </span>,
-                Should Pay
-                <span class="font-extrabold" :class="balances[p.gmail].share > 0 ? 'text-[#D71313]' : 'text-green-600'">
-                  {{ balances[p.gmail].share.toFixed(2) }}
-                </span>
-                {{ selectedCurrency }}
+              <li v-for="p in participants" :key="p.gmail" class="bg-white p-4 rounded-lg shadow-sm flex flex-col gap-2">
+                <div class="flex justify-between items-center">
+                  <span class="font-bold text-[#0D1282] text-lg">{{ p.username }}</span>
+                  <span v-if="p.gmail === currentUserEmail" class="text-sm text-gray-500 italic"> (You)</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-600">Paid:</span>
+                  <span class="font-semibold text-green-600">
+                    {{ balances[p.gmail].paid.toFixed(2) }} {{ selectedCurrency }}
+                  </span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-600">Should Pay:</span>
+                  <span class="font-extrabold" :class="balances[p.gmail].share > 0 ? 'text-[#D71313]' : 'text-green-600'">
+                    {{ balances[p.gmail].share.toFixed(2) }} {{ selectedCurrency }}
+                  </span>
+                </div>
               </li>
             </ul>
           </div>
         </template>
       </main>
 
-      <aside class="w-1/4 bg-[#FFFFFF] border-l border-gray-200 p-6 shadow-xl sticky top-0 h-screen overflow-y-auto">
+      <aside class="hidden md:block md:w-1/3 lg:w-1/4 bg-[#FFFFFF] border-l border-gray-200 p-6 shadow-xl sticky top-0 h-screen overflow-y-auto">
         <div class="text-center mb-6 bg-[#EEEDED] rounded-2xl p-6 shadow-inner">
           <div class="relative w-40 h-40 mx-auto">
             <div class="absolute top-1/2 left-1/2 w-full h-full rounded-full -translate-x-1/2 -translate-y-1/2" :style="{
               background: totalCost === 0
                 ? '#e5e7eb'
                 : `conic-gradient(
-                      #F0DE36 0% ${paidPercentage}%,
-                      #D71313 ${paidPercentage}% 100%
-                    )`
+                    #F0DE36 0% ${paidPercentage}%,
+                    #D71313 ${paidPercentage}% 100%
+                  )`
             }"></div>
             <div class="absolute inset-10 bg-white rounded-full flex items-center justify-center">
               <p class="text-xl font-bold">{{ totalCost.toFixed(2) }}</p>
@@ -583,9 +438,7 @@ onMounted(() => {
           <p class="text-xl font-bold mt-4 text-[#0D1282]">Total trip cost</p>
           <div class="flex justify-center space-x-4 mt-2 text-sm font-semibold">
             <span class="text-yellow-600">
-              🟡 Paid {{
-                (totalCost - pendingCost).toFixed(2)
-              }}
+              🟡 Paid {{ (totalCost - pendingCost).toFixed(2) }}
             </span>
             <span class="text-[#D71313]">
               🔴 Pending {{ pendingCost.toFixed(2) }}
@@ -605,17 +458,227 @@ onMounted(() => {
           </li>
         </ul>
       </aside>
+
+      <div class="fixed bottom-4 right-4 z-40 sm:hidden flex flex-col items-end space-y-4">
+        <button @click="openExpenseModalForAdd" v-if="trip && trip.role === 'leader'"
+          class="w-16 h-16 rounded-full bg-[#F0DE36] hover:bg-yellow-400 text-[#0D1282] shadow-2xl flex items-center justify-center transition-all duration-300 transform hover:scale-110">
+          <i class="fa-solid fa-plus text-2xl font-bold"></i>
+        </button>
+        
+        <button @click="showMobileSummary = !showMobileSummary"
+          class="w-16 h-16 rounded-full bg-[#0D1282] text-white shadow-xl flex items-center justify-center text-xl font-bold transition-all duration-300 transform hover:scale-110">
+          <i class="fa-solid fa-chart-pie"></i>
+        </button>
+
+        <button @click="isMobileMenuOpen = !isMobileMenuOpen"
+          class="w-16 h-16 rounded-full bg-[#0D1282] text-white shadow-xl flex items-center justify-center text-xl font-bold transition-all duration-300 transform hover:scale-110">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+
+      <div v-if="showMobileSummary" class="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end" @click="showMobileSummary = false">
+        <div class="w-full bg-[#FFFFFF] p-6 rounded-t-3xl shadow-xl z-50" @click.stop>
+          <h3 class="text-xl font-bold text-[#0D1282] mb-4 border-b-2 border-[#F0DE36] pb-1">Summary</h3>
+          <div class="text-center mb-6 bg-[#EEEDED] rounded-2xl p-6 shadow-inner">
+            <div class="relative w-32 h-32 mx-auto">
+              <div class="absolute top-1/2 left-1/2 w-full h-full rounded-full -translate-x-1/2 -translate-y-1/2" :style="{
+                background: totalCost === 0
+                  ? '#e5e7eb'
+                  : `conic-gradient(
+                      #F0DE36 0% ${paidPercentage}%,
+                      #D71313 ${paidPercentage}% 100%
+                    )`
+              }"></div>
+              <div class="absolute inset-8 bg-white rounded-full flex items-center justify-center">
+                <p class="text-lg font-bold">{{ totalCost.toFixed(2) }}</p>
+              </div>
+            </div>
+            <p class="text-lg font-bold mt-3 text-[#0D1282]">Total trip cost</p>
+            <div class="flex justify-center space-x-4 mt-2 text-sm font-semibold">
+              <span class="text-yellow-600">
+                🟡 Paid {{ (totalCost - pendingCost).toFixed(2) }}
+              </span>
+              <span class="text-[#D71313]">
+                🔴 Pending {{ pendingCost.toFixed(2) }}
+              </span>
+            </div>
+          </div>
+          <ul class="bg-[#EEEDED] rounded-xl shadow-lg p-6 space-y-4">
+            <li v-for="cat in categories" :key="cat" class="flex justify-between items-center text-[#0D1282] py-2">
+              <div class="flex items-center gap-3">
+                <i :class="['fa-solid', getCategoryIcon(cat)]" class="w-6 text-center text-[#D71313] text-lg"></i>
+                <span class="font-medium">{{ cat }}</span>
+              </div>
+              <span class="font-bold text-right">
+                {{ categoryTotals[cat].toFixed(2) }} {{ selectedCurrency }}
+              </span>
+            </li>
+          </ul>
+          <button @click="showMobileSummary = false" class="mt-6 w-full bg-red-100 text-red-700 font-bold py-2 px-4 rounded-full shadow-md transition">
+            Close Summary
+          </button>
+        </div>
+      </div>
+
+      <div v-if="showExpenseModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="flex flex-col md:flex-row gap-6 w-full max-w-4xl overflow-y-auto">
+          <div class="bg-[#EEEDED] rounded-3xl w-full p-6 shadow-2xl relative flex flex-col max-h-[80vh] overflow-y-auto">
+            <h2 class="text-2xl font-bold text-center mb-6 text-[#0D1282]">
+              {{ editingIndex !== null ? 'Edit Expense' : 'New Expense' }}
+            </h2>
+
+            <div class="flex flex-col sm:flex-row gap-2 mb-6">
+              <button class="flex-1 border border-[#0D1282]/30 rounded-full py-3 text-sm text-[#0D1282] font-semibold transition hover:bg-[#0D1282]/10"
+                @click="showCategoryModal = true">
+                📂 {{ selectedCategory || "Category" }}
+              </button>
+
+              <button @click="openDatePicker"
+                class="flex-1 border border-[#0D1282]/30 rounded-full py-3 text-sm text-[#0D1282] font-semibold transition hover:bg-[#0D1282]/10">
+                📅
+                {{ new Date(selectedDate).toLocaleDateString("en-GB", {
+                  day: "2-digit",
+                  month: "short",
+                })
+                }}
+              </button>
+              <input ref="dateInput" v-model="selectedDate" type="date" :min="new Date().toISOString().split('T')[0]" class="hidden" />
+            </div>
+
+            <div class="flex items-center justify-center mb-4 border border-[#0D1282]/30 rounded-full overflow-hidden focus-within:ring-2 focus-within:ring-[#F0DE36] transition">
+              <input v-model="amount" type="number" min="0" step="0.01" class="w-32 px-4 py-3 text-2xl font-bold text-[#0D1282] text-right focus:outline-none bg-transparent"
+                placeholder="0.00" />
+              <div class="w-px h-8 bg-[#0D1282]/20"></div>
+              <select v-model="selectedCurrency" class="px-4 py-3 text-base text-[#0D1282] bg-transparent focus:outline-none cursor-pointer">
+                <option v-for="cur in currencies" :key="cur" :value="cur">
+                  {{ cur }}
+                </option>
+              </select>
+            </div>
+
+            <div class="flex items-center bg-white p-3 rounded-xl border border-[#0D1282]/30 mb-4 focus-within:ring-2 focus-within:ring-[#F0DE36] transition">
+              <i class="fa-solid fa-note-sticky text-[#0D1282]/60 mr-3"></i>
+              <input type="text" placeholder="Enter expense name..." class="w-full outline-none bg-transparent text-[#0D1282]" v-model="note" />
+            </div>
+
+            <div class="flex justify-between items-center mb-6">
+              <span class="text-[#0D1282] font-medium">Status</span>
+              <label class="flex items-center cursor-pointer">
+                <input type="checkbox" v-model="isPaid" class="sr-only" />
+                <div class="w-12 h-6 rounded-full shadow-inner relative transition-colors duration-300" :class="isPaid ? 'bg-emerald-500' : 'bg-gray-300'">
+                  <div class="dot absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300" :class="isPaid ? 'translate-x-full' : 'translate-x-0.5'"></div>
+                </div>
+                <span class="ml-3 font-semibold" :class="isPaid ? 'text-emerald-600' : 'text-gray-500'">
+                  {{ isPaid ? "Paid" : "Unpaid" }}
+                </span>
+              </label>
+            </div>
+
+            <div class="mb-6">
+              <label class="block font-semibold text-[#0D1282] mb-2">Paid by</label>
+              <select v-model="paidBy" class="w-full border border-[#0D1282]/30 rounded-full px-4 py-3 text-[#0D1282] focus:outline-none focus:ring-2 focus:ring-[#F0DE36] transition">
+                <option v-for="p in participants" :key="p.gmail" :value="p.gmail">
+                  {{ p.username }}
+                </option>
+              </select>
+            </div>
+
+            <div class="flex justify-end gap-4 mt-auto">
+              <button @click="closeExpenseModal" class="px-6 py-3 rounded-full bg-[#EEEDED] text-[#0D1282] font-semibold border border-[#0D1282]/30 hover:bg-[#D71313] transition">
+                Cancel
+              </button>
+              <button @click="saveExpense" class="px-8 py-3 rounded-full bg-[#0D1282] text-white font-bold hover:bg-[#0D1282]/90 shadow-md transition">
+                Save expense
+              </button>
+            </div>
+
+            <button @click="closeExpenseModal" class="absolute top-4 right-4 text-gray-400 hover:text-[#D71313] text-2xl font-bold transition">
+              ✕
+            </button>
+          </div>
+
+          <div class="bg-[#EEEDED] rounded-3xl w-full md:w-[420px] p-6 shadow-2xl relative flex flex-col max-h-[80vh] overflow-y-auto">
+            <h2 class="text-2xl font-bold text-center mb-6 text-[#0D1282]">
+              Participants
+            </h2>
+            <div class="space-y-3">
+              <label class="block font-semibold text-[#0D1282]">Split with</label>
+
+              <div class="space-y-2 max-h-48 overflow-y-auto pr-2">
+                <label v-for="p in participants" :key="p.gmail"
+                  class="flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ease-in-out"
+                  :class="{
+                    'bg-white border-slate-300 shadow-sm hover:bg-slate-50': !splitWith.includes(p.gmail),
+                    'bg-[#E5F3FF] border-[#0D1282] shadow-md': splitWith.includes(p.gmail),
+                  }">
+                  <div class="w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 ease-in-out" :class="{
+                    'bg-slate-200': !splitWith.includes(p.gmail),
+                    'bg-[#0D1282] scale-100': splitWith.includes(p.gmail),
+                    'scale-0': !splitWith.includes(p.gmail),
+                  }">
+                    <svg v-if="splitWith.includes(p.gmail)" class="w-4 h-4 text-white" fill="none" stroke="currentColor"
+                      viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </div>
+                  <span class="text-slate-800">{{ p.username }}</span>
+                  <input type="checkbox" :value="p.gmail" v-model="splitWith" class="hidden" />
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="showCategoryModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-[#EEEDED] p-6 rounded-2xl w-full max-w-sm shadow-xl relative">
+          <h3 class="text-xl font-bold mb-4 text-[#0D1282]">
+            Select Category
+          </h3>
+          <button @click="showCategoryModal = false" class="absolute top-4 right-4 text-gray-400 hover:text-[#0D1282] transition">
+            ✕
+          </button>
+          <ul>
+            <li v-for="cat in categories" :key="cat" @click="
+              selectedCategory = cat;
+              showCategoryModal = false;
+            " class="cursor-pointer p-3 hover:bg-[#F0DE36]/40 rounded-xl flex items-center gap-3 transition">
+              <i :class="['fa-solid', getCategoryIcon(cat)]" class="w-5 text-center text-[#0D1282]"></i>
+              {{ cat }}
+            </li>
+          </ul>
+          <div class="mt-4 border-t pt-4">
+            <button
+              class="w-full bg-[#D71313]/10 text-[#D71313] py-2 rounded-full hover:bg-[#D71313]/20 transition font-semibold"
+              @click="
+                selectedCategory = '';
+                showCategoryModal = false;
+              ">
+              Clear
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+/* Add any specific styles here if needed, but Tailwind should cover most cases */
 .menu-item-wrapper:hover {
   background-color: #d1fae5;
-  /* Tailwind green-100 */
 }
 
-/* button:hover {
-  background-color: #2563eb;
-} */
+/* Styles for the toggle switch */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
 </style>

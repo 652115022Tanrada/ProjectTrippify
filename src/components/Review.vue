@@ -154,9 +154,9 @@ onMounted(() => {
   <div class="min-h-screen bg-[#FFFFFF]">
     <Header :user="user" @update:user="user = $event" />
 
-    <div class="max-w-5xl mx-auto py-10 px-4 space-y-8">
+    <div class="max-w-5xl mx-auto py-10 px-4 space-y-8 ">
       <div v-if="tripPlan">
-        <h1 class="text-2xl font-bold text-[#0D1282] mb-6">
+        <h1 class="text-2xl font-bold text-[#0D1282] pt-6 mb-6 text-center sm:text-left">
           {{ tripName || "Unnamed Trip" }}
         </h1>
         <!-- Trip Days Expand/Collapse All -->
