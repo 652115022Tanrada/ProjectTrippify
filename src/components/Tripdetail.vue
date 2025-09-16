@@ -397,10 +397,10 @@ onMounted(async () => {
               Your personalized travel itinerary.
             </p>
 
-            <div class="flex items-center justify-between mb-6">
-              <div class="flex border-b border-gray-500 mb-6">
+            <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between mb-6 gap-4 md:gap-0">
+              <div class="flex border-b border-gray-500">
                 <button @click="activeTab = 'plan'" :class="[
-                  'px-6 py-2 text-lg font-bold',
+                  'px-4 py-2 text-base md:px-6 md:text-lg font-bold',
                   activeTab === 'plan'
                     ? 'text-[#0D1282] border-b-3 border-[#0D1282]'
                     : 'text-[#000000] hover:text-[#D71313] transition',
@@ -408,7 +408,7 @@ onMounted(async () => {
                   Trip Plan
                 </button>
                 <button @click="activeTab = 'nearby'" :class="[
-                  'px-6 py-2 text-lg font-bold',
+                  'px-4 py-2 text-base md:px-6 md:text-lg font-bold',
                   activeTab === 'nearby'
                     ? 'text-[#0D1282] border-b-3 border-[#0D1282]'
                     : 'text-[#000000] hover:text-[#D71313] transition',
@@ -416,7 +416,7 @@ onMounted(async () => {
                   Nearby Places
                 </button>
                 <button @click="activeTab = 'search'" :class="[
-                  'px-6 py-2 text-lg font-bold',
+                  'px-4 py-2 text-base md:px-6 md:text-lg font-bold',
                   activeTab === 'search'
                     ? 'text-[#0D1282] border-b-3 border-[#0D1282]'
                     : 'text-[#000000] hover:text-[#D71313] transition',
@@ -426,7 +426,7 @@ onMounted(async () => {
               </div>
 
               <button @click="goToPage(`/expense/${tripId}`)"
-                class="flex items-center gap-2 bg-[#D71313] hover:bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-full transition-colors">
+                class="flex items-center justify-center gap-2 bg-[#D71313] hover:bg-red-600 text-white text-sm font-medium p-2 md:px-4 rounded-full transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
                   stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round"
@@ -437,15 +437,15 @@ onMounted(async () => {
             </div>
 
             <div v-show="activeTab === 'plan'">
-              <div class="mb-6 flex justify-end gap-4" v-if="!trip?.tripId || trip?.role === 'leader'">
+              <div class="mb-6 flex justify-end gap-2 md:gap-4" v-if="!trip?.tripId || trip?.role === 'leader'">
                 <!-- Cancel Trip (เทา) -->
-                <div class="relative flex items-center justify-center w-12 h-12 group">
+                <div class="relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12 group">
                   <div
                     class="absolute bottom-full mb-2 px-3 py-1 rounded-md bg-gray-800 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                     Cancel Trip
                   </div>
                   <button @click="cancelTrip"
-                    class="flex items-center justify-center w-12 h-12 bg-gray-400 hover:bg-gray-500 text-white font-semibold rounded-full shadow transition">
+                    class="flex items-center justify-center w-full h-full bg-gray-400 hover:bg-gray-500 text-white font-semibold rounded-full shadow transition">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                       stroke="currentColor" class="w-6 h-6">
                       <path stroke-linecap="round" stroke-linejoin="round"
@@ -455,15 +455,15 @@ onMounted(async () => {
                 </div>
 
                 <!-- Modify Trip (เหลือง) -->
-                <div class="relative flex items-center justify-center w-12 h-12 group">
+                <div class="relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12 group">
                   <div
                     class="absolute bottom-full mb-2 px-3 py-1 rounded-md bg-gray-800 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                     Modify Trip
                   </div>
                   <button @click="modifyTrip"
-                    class="flex items-center justify-center w-12 h-12 bg-[#F0DE36] hover:bg-yellow-400 text-[#0D1282] font-semibold rounded-full shadow transition">
+                    class="flex items-center justify-center w-full h-full bg-[#F0DE36] hover:bg-yellow-400 text-[#0D1282] font-semibold rounded-full shadow transition">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                      stroke="currentColor" class="w-6 h-6">
+                      stroke="currentColor" class="w-5 h-5 md:w-6 md:h-6">
                       <path stroke-linecap="round" stroke-linejoin="round"
                         d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                     </svg>
@@ -471,15 +471,15 @@ onMounted(async () => {
                 </div>
 
                 <!-- Save Trip (น้ำเงินเข้ม) -->
-                <div class="relative flex items-center justify-center w-12 h-12 group">
+                <div class="relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12 group">
                   <div
                     class="absolute bottom-full mb-2 px-3 py-1 rounded-md bg-gray-800 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                     Save Trip
                   </div>
                   <button @click="saveTrip" :disabled="isSavingTrip"
-                    class="flex items-center justify-center w-12 h-12 bg-[#0D1282] hover:bg-blue-800 text-white font-semibold rounded-full shadow transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    class="flex items-center justify-center w-full h-full bg-[#0D1282] hover:bg-blue-800 text-white font-semibold rounded-full shadow transition disabled:opacity-50 disabled:cursor-not-allowed">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                      stroke="currentColor" class="w-6 h-6">
+                      stroke="currentColor" class="w-5 h-5 md:w-6 md:h-6">
                       <path stroke-linecap="round" stroke-linejoin="round"
                         d="M9 3.75H6.912a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H15M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859M12 3v8.25m0 0-3-3m3 3 3-3" />
                     </svg>
@@ -487,15 +487,15 @@ onMounted(async () => {
                 </div>
 
                 <!-- Generate Invite Link (แดง) -->
-                <div class="relative flex items-center justify-center w-12 h-12 group">
+                <div class="relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12 group">
                   <div
                     class="absolute bottom-full mb-2 px-3 py-1 rounded-md bg-gray-800 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                     Generate Invite Link
                   </div>
                   <button @click="generateInviteLink"
-                    class="flex items-center justify-center w-12 h-12 bg-[#D71313] hover:bg-red-600 text-white font-semibold rounded-full shadow transition">
+                    class="flex items-center justify-center w-full h-full bg-[#D71313] hover:bg-red-600 text-white font-semibold rounded-full shadow transition">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                      stroke="currentColor" class="w-6 h-6">
+                      stroke="currentColor" class="w-5 h-5 md:w-6 md:h-6">
                       <path stroke-linecap="round" stroke-linejoin="round"
                         d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
                     </svg>
@@ -517,17 +517,17 @@ onMounted(async () => {
                   </button>
                 </div>
               </div>
-              
+
               <div class="mb-8 bg-white border-b border-gray-200 p-6 rounded-md shadow-sm">
                 <h2 class="text-xl font-bold text-[#0D1282] mb-4">
                   <i class="fa-solid fa-plane-departure mr-2"></i>
                   Transportation
                 </h2>
-    <div
-              class="static rounded-xl shadow-lg overflow-hidden  h-64 w-full md:fixed md:top-10 md:right-10 md:left-auto md:w-[600px] md:h-[90vh] md:block"
-              style="min-height: 300px;">
-              <Tripmap :locations="allLocations" />
-            </div>
+                <div
+                  class="static rounded-xl shadow-lg overflow-hidden  h-64 w-full md:fixed md:top-10 md:right-10 md:left-auto md:w-[600px] md:h-[90vh] md:block"
+                  style="min-height: 300px;">
+                  <Tripmap :locations="allLocations" />
+                </div>
                 <div class="overflow-x-auto">
                   <table class="w-full text-left border-collapse">
                     <thead>
