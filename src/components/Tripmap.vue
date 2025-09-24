@@ -7,6 +7,7 @@ const props = defineProps({
   nearby: { type: Array, default: () => [] },
   highlighted: { type: Object, default: null }
 });
+const googleRef = ref(null);
 
 const map = ref(null);
 const mapLoaded = ref(false);
@@ -153,8 +154,8 @@ function flyTo(loc) {
 }
 
 onMounted(async () => {
-  const googleMaps = await loadGoogleMaps();
-  const firstValid = sanitizeLocations(props.locations)[0];
+googleRef.value = await loadGoogleMaps();
+ const firstValid = sanitizeLocations(props.locations)[0];
   if (firstValid) {
     initMap({ lat: firstValid.lat, lng: firstValid.lng });
     addMarkers();
