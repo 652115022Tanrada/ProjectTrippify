@@ -1,4 +1,3 @@
-// src/store/trip.js
 import axios from "axios";
 
 export default {
@@ -9,6 +8,7 @@ export default {
 mutations: {
   setTripPlan(state, data) {
     state.tripPlan = data || { days: [] }
+    
   },
   updateTripPlan(state, data) {
     state.tripPlan = { ...state.tripPlan, ...data }

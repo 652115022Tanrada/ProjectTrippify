@@ -7,8 +7,8 @@ const props = defineProps({
   nearby: { type: Array, default: () => [] },
   highlighted: { type: Object, default: null }
 });
-const googleRef = ref(null);
 
+const googleRef = ref(null);
 const map = ref(null);
 const mapLoaded = ref(false);
 const markers = [];
@@ -87,43 +87,9 @@ function addNearbyMarkers() {
   });
 }
 
-function buildRouteRequest(locations) {
-  const sanitized = sanitizeLocations(locations);
-  if (sanitized.length < 2) return null;
-
-  const origin = sanitized[0];
-  const destination = sanitized[sanitized.length - 1];
-  const waypoints = sanitized.slice(1, -1).map(l => ({ location: { lat: l.lat, lng: l.lng }, stopover: true }));
-
-  return { origin, destination, waypoints, travelMode: google.maps.TravelMode.DRIVING };
-}
-
-async function calculateDistances() {
+async function drawRouteAndDistances() {
   const sanitized = sanitizeLocations(props.locations);
-  if (sanitized.length < 2) return;
-
-  const service = new google.maps.DistanceMatrixService();
-  for (let i = 0; i < sanitized.length - 1; i++) {
-    const origin = sanitized[i];
-    const destination = sanitized[i + 1];
-    try {
-      const response = await new Promise((resolve, reject) => {
-        service.getDistanceMatrix(
-          { origins: [{ lat: origin.lat, lng: origin.lng }], destinations: [{ lat: destination.lat, lng: destination.lng }], travelMode: google.maps.TravelMode.DRIVING },
-          (result, status) => (status === 'OK' ? resolve(result) : reject(`Distance Matrix failed: ${status}`))
-        );
-      });
-      destination.distance_to_next = response.rows[0].elements[0].distance?.text || 'N/A';
-    } catch (err) {
-      console.error(err);
-      destination.distance_to_next = 'N/A';
-    }
-  }
-}
-
-async function drawRoute() {
-  const routeRequest = buildRouteRequest(props.locations);
-  if (!routeRequest || !map.value) return;
+  if (sanitized.length < 2 || !map.value) return;
 
   if (!directionsRenderer) {
     directionsRenderer = new google.maps.DirectionsRenderer({
@@ -133,14 +99,30 @@ async function drawRoute() {
     directionsRenderer.setMap(map.value);
   }
 
-  const { origin, destination, waypoints } = routeRequest;
+  const origin = sanitized[0];
+  const destination = sanitized[sanitized.length - 1];
+  const waypoints = sanitized.slice(1, -1).map(l => ({ location: { lat: l.lat, lng: l.lng }, stopover: true }));
 
   const directionsService = new google.maps.DirectionsService();
   directionsService.route(
     { origin, destination, waypoints, optimizeWaypoints: false, travelMode: google.maps.TravelMode.DRIVING },
     (result, status) => {
-      if (status === 'OK') directionsRenderer.setDirections(result);
-      else console.error('Directions request failed:', status);
+      if (status === 'OK') {
+        directionsRenderer.setDirections(result);
+
+        // บันทึกระยะทางและเวลาในแต่ละจุด
+        const legs = result.routes[0].legs;
+        legs.forEach((leg, idx) => {
+          if (sanitized[idx + 1]) {
+            sanitized[idx + 1].distance_to_next = (leg.distance.value / 1000).toFixed(1) + " km";
+            sanitized[idx + 1].duration_to_next = leg.duration.text;
+          }
+        });
+
+        console.log("Updated locations with distance:", sanitized);
+      } else {
+        console.error('Directions request failed:', status);
+      }
     }
   );
 }
@@ -154,14 +136,13 @@ function flyTo(loc) {
 }
 
 onMounted(async () => {
-googleRef.value = await loadGoogleMaps();
- const firstValid = sanitizeLocations(props.locations)[0];
+  googleRef.value = await loadGoogleMaps();
+  const firstValid = sanitizeLocations(props.locations)[0];
   if (firstValid) {
     initMap({ lat: firstValid.lat, lng: firstValid.lng });
     addMarkers();
     addNearbyMarkers();
-    await calculateDistances();
-    await drawRoute();
+    await drawRouteAndDistances();
   }
 });
 
@@ -171,8 +152,7 @@ watch(() => props.locations, async () => {
     if (firstValid) initMap({ lat: firstValid.lat, lng: firstValid.lng });
   }
   addMarkers();
-  await calculateDistances();
-  await drawRoute();
+  await drawRouteAndDistances();
 });
 
 watch(() => props.nearby, () => addNearbyMarkers());

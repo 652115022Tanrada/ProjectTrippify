@@ -8,7 +8,7 @@ export function loadGoogleMaps() {
     if (window.google && window.google.maps) return resolve(window.google.maps);
 
     const script = document.createElement('script');
-    script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyAPXZbbrz75ECNK3VD77E9CZULbebHbe9I';
+    script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyCnAPqvMNHOL4H3wNKe-GzrdQGMbICduJo';
     script.async = true;
     script.defer = true;
     script.onload = () => resolve(window.google.maps);

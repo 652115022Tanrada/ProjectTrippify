@@ -181,6 +181,9 @@ onMounted(() => {
                   }} -
                   {{ new Date(trip.days[trip.days.length - 1].date).toLocaleDateString('en-US') }}
                 </p>
+                  <p class="text-gray-500 text-sm mt-1">
+                  <span class="font-semibold">{{ trip.from_location }}</span>-<span class="font-semibold">{{ trip.to_location }}</span>
+                </p>
               </div>
             </div>
             <div v-if="trip.members && trip.members.length" class="flex -space-x-2 items-center">

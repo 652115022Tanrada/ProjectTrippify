@@ -95,7 +95,6 @@ const saveTrip = async () => {
 
     const savedTrip = response.data;
 
-    // ✅ ตรวจสอบว่า backend ส่ง tripId กลับมา
     if (!savedTrip.tripId) {
       console.error("Trip ID missing from backend!", savedTrip);
       Swal.fire({
@@ -106,10 +105,8 @@ const saveTrip = async () => {
       return;
     }
 
-    // อัปเดต Vuex และ local trip
     trip.value = savedTrip;
 
-    // ✅ อัปเดต tripPlan.tripId เพื่อให้ name และ invite link ถูกต้อง
     tripPlan.value.tripId = savedTrip.tripId;
     store.commit("trip/updateTripPlan", savedTrip);
 
@@ -242,16 +239,19 @@ function debounce(fn, delay = 500) {
 
 // search function
 const searchPlaces = async () => {
-  if (!searchQuery.value.trim()) return;
+  if (!searchQuery.value.trim()) {
+    return;
+  }
+
   loadingSearch.value = true;
   try {
-    const { data } = await axios.get(
-      "http://localhost:5000/api/places/search",
-      {
-        params: { query: searchQuery.value },
-        withCredentials: true,
-      }
-    );
+    const { data } = await axios.get("http://localhost:5000/api/places/search", {
+      params: { 
+        query: searchQuery.value,     
+        to_location: trip.value?.to_location
+      },
+      withCredentials: true,
+    });
     searchResults.value = data.places || [];
   } catch (err) {
     console.error("Search failed:", err);
@@ -260,6 +260,7 @@ const searchPlaces = async () => {
     loadingSearch.value = false;
   }
 };
+
 
 // สร้าง debounce ใหม่ ชื่อไม่ซ้ำ
 const debouncedSearchInput = debounce(() => {
