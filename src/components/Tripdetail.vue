@@ -247,8 +247,8 @@ const searchPlaces = async () => {
   try {
     const { data } = await axios.get("http://localhost:5000/api/places/search", {
       params: { 
-        query: searchQuery.value,     
-        to_location: trip.value?.to_location
+      query: searchQuery.value,     
+      to_location: trip.value?.to_location || tripPlan.value?.tripName || "Thailand"
       },
       withCredentials: true,
     });
@@ -298,7 +298,6 @@ const fetchNearby = async (lat, lng, type = "cafe") => {
   }
 };
 
-// Watch day and category change
 watch(
   () => [selectedDayIndex.value, selectedCategory.value],
   async ([newIndex, newCategory]) => {
@@ -404,7 +403,7 @@ onMounted(async () => {
               Your personalized travel itinerary.
             </p>
            <div class="w-full h-64 md:fixed md:top-10 md:right-10 md:w-[600px] md:h-[90vh] rounded-xl shadow-lg overflow-hidden">
-              <Tripmap :locations="allLocations" />
+<Tripmap v-model:locations="allLocations" :trip-plan="tripPlan" />
             </div>
             <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between mb-6 gap-4 md:gap-0">
               <div class="flex border-b border-gray-500">
@@ -843,11 +842,7 @@ onMounted(async () => {
                 </p>
               </div>
             </div>
-            <!-- <div
-              class="static rounded-xl shadow-lg overflow-hidden  h-64 w-full md:fixed md:top-10 md:right-10 md:left-auto md:w-[600px] md:h-[90vh] md:block"
-              style="min-height: 300px;">
-              <Tripmap :locations="allLocations" />
-            </div> -->
+      
           </div>
         </div>
       </div>

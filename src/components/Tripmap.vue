@@ -1,13 +1,16 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, toRefs } from 'vue';
 import { loadGoogleMaps } from '../utils/loadGoogleMaps';
 
 const props = defineProps({
   locations: { type: Array, default: () => [] },
   nearby: { type: Array, default: () => [] },
-  highlighted: { type: Object, default: null }
+  highlighted: { type: Object, default: null },
+  tripPlan: { type: Object, default: null },
 });
+const { tripPlan } = toRefs(props);
 
+const emit = defineEmits(["update:locations"]);
 const googleRef = ref(null);
 const map = ref(null);
 const mapLoaded = ref(false);
@@ -47,7 +50,7 @@ function clearNearbyMarkers() {
 }
 
 const getMarkerColor = (dayNumber) => {
-  const colors = ["#9656a2","#5e62a9","#de324c","#f4895f","#f8e16f", "#95cf92", "#369acc"];
+  const colors = ["#9656a2", "#5e62a9", "#de324c", "#f4895f", "#f8e16f", "#95cf92", "#369acc"];
   return colors[(dayNumber - 1) % colors.length];
 };
 
@@ -109,15 +112,19 @@ async function drawRouteAndDistances() {
     (result, status) => {
       if (status === 'OK') {
         directionsRenderer.setDirections(result);
-
-        // บันทึกระยะทางและเวลาในแต่ละจุด
         const legs = result.routes[0].legs;
+
         legs.forEach((leg, idx) => {
-          if (sanitized[idx + 1]) {
-            sanitized[idx + 1].distance_to_next = (leg.distance.value / 1000).toFixed(1) + " km";
-            sanitized[idx + 1].duration_to_next = leg.duration.text;
+          if (tripPlan.value?.days) {
+            const dayIndex = sanitized[idx + 1].day - 1;
+            const locIndex = tripPlan.value.days[dayIndex].locations.findIndex(l => l.id === sanitized[idx + 1].id);
+            if (locIndex !== -1) {
+              tripPlan.value.days[dayIndex].locations[locIndex].distance_to_next = (leg.distance.value / 1000).toFixed(1) + " km";
+              tripPlan.value.days[dayIndex].locations[locIndex].duration_to_next = leg.duration.text;
+            }
           }
         });
+        emit("update:locations", sanitized);
 
         console.log("Updated locations with distance:", sanitized);
       } else {
