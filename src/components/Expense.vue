@@ -5,7 +5,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import Header from "./Header.vue";
 import { useStore } from "vuex";
-
+const API_URL = import.meta.env.VITE_API_URL
 const route = useRoute();
 const router = useRouter();
 const store = useStore();
@@ -43,7 +43,7 @@ const expenses = ref([]);
 // ---------------- User ----------------
 const getUser = async () => {
   try {
-    const res = await axios.get("http://localhost:5000/auth/user", {
+    const res = await axios.get(`${API_URL}/auth/user`, {
       withCredentials: true,
     });
     user.value = res.data;
@@ -57,7 +57,7 @@ const getUser = async () => {
 const loadExpenses = async () => {
   if (!tripId) return;
   try {
-    const res = await axios.get(`http://localhost:5000/api/expense/${tripId}`, {
+    const res = await axios.get(`${API_URL}/api/expense/${tripId}`, {
       withCredentials: true,
     });
     expenses.value = res.data.map(e => ({
@@ -72,7 +72,7 @@ const loadExpenses = async () => {
 };
 const loadTrip = async () => {
   try {
-    const res = await axios.get(`http://localhost:5000/api/trip/${tripId}`, {
+    const res = await axios.get(`${API_URL}/api/trip/${tripId}`, {
       withCredentials: true,
     });
     trip.value = res.data;
@@ -99,11 +99,11 @@ const saveExpense = async () => {
   try {
     if (editingIndex.value !== null) {
       const expenseId = expenses.value[editingIndex.value].expense_id;
-      await axios.put(`http://localhost:5000/api/expense/${expenseId}`, newExpense, {
+      await axios.put(`${API_URL}/api/expense/${expenseId}`, newExpense, {
         withCredentials: true,
       });
     } else {
-      await axios.post(`http://localhost:5000/api/expense/${tripId}`, newExpense, {
+      await axios.post(`${API_URL}/api/expense/${tripId}`, newExpense, {
         withCredentials: true,
       });
     }
@@ -139,7 +139,7 @@ const deleteExpense = async (index) => {
 
   if (confirm.isConfirmed) {
     try {
-      await axios.delete(`http://localhost:5000/api/expense/${expenseId}`, {
+      await axios.delete(`${API_URL}/api/expense/${expenseId}`, {
         withCredentials: true,
       });
       await loadExpenses();

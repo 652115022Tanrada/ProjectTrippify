@@ -4,6 +4,7 @@ import { useRouter, useRoute } from "vue-router";
 import { useStore } from "vuex";
 import Swal from "sweetalert2";
 import axios from "axios";
+const API_URL = import.meta.env.VITE_API_URL
 
 const props = defineProps({
   user: { type: Object, default: null },
@@ -37,21 +38,14 @@ const goToPage = (path) => {
   }
 };
 
-const goToExpense = () => {
-  if (!tripId) {
-    Swal.fire("Error", "No Trip selected", "error");
-    return;
-  }
-  goToPage(`/expense/${tripId}`);
-};
 
 const loginWithGoogle = () => {
-  window.location.href = "http://localhost:5000/auth/google";
+  window.location.href = `${API_URL}/auth/google`;
 };
 
 const logout = async () => {
   try {
-    await axios.get("http://localhost:5000/auth/logout", {
+    await axios.get(`${API_URL}/auth/logout`, {
       withCredentials: true,
     });
     emit("update:user", null);

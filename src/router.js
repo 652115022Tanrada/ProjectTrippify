@@ -10,6 +10,7 @@ import InvitePage from './components/InvitePage.vue'
 import Review from './components/Review.vue'
 import SavedTripReview from './components/SavedTripReview.vue'
 import axios from 'axios'
+const API_URL = import.meta.env.VITE_API_URL
 
 const routes = [
   { path: '/', component: Home },
@@ -42,7 +43,7 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   if (to.path.startsWith('/trip/')) {
     try {
-      const res = await axios.get('http://localhost:5000/auth/user', {
+      const res = await axios.get(`${API_URL}/auth/user`, {
         withCredentials: true,
       })
       if (res.data) {

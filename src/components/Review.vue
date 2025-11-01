@@ -5,6 +5,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import Header from "./Header.vue";
 import draggable from "vuedraggable";
+const API_URL = import.meta.env.VITE_API_URL
 
 const route = useRoute();
 const user = ref(null);
@@ -28,7 +29,7 @@ const allExpanded = ref(false); // สถานะ Expand/Collapse All
 
 const getUser = async () => {
   try {
-    const res = await axios.get("http://localhost:5000/auth/user", {
+    const res = await axios.get(`${API_URL}auth/user`, {
       withCredentials: true,
     });
     user.value = res.data;
@@ -40,7 +41,7 @@ const getUser = async () => {
 // โหลดแผนทริปจาก backend ได้ตามปกติ
 const fetchTripPlan = async () => {
   try {
-    const res = await axios.get(`http://localhost:5000/api/trip/${tripId}`, {
+    const res = await axios.get(`${API_URL}api/trip/${tripId}`, {
       withCredentials: true,
     });
     tripPlan.value = res.data;
@@ -50,7 +51,7 @@ const fetchTripPlan = async () => {
 };
 const fetchReviews = async () => {
   try {
-    const res = await axios.get(`http://localhost:5000/api/reviews/${tripId}`);
+    const res = await axios.get(`${API_URL}/api/reviews/${tripId}`);
     reviews.value = res.data;
   } catch (err) {
     console.error("โหลดรีวิวล้มเหลว:", err);
@@ -104,7 +105,7 @@ const submitReview = async () => {
 
   try {
     const res = await axios.post(
-      `http://localhost:5000/api/reviews/${tripId}`,
+      `${API_URL}/api/reviews/${tripId}`,
       {
         user_name: newReviewName.value || "Anonymous User",
         rating: newReviewRating.value,

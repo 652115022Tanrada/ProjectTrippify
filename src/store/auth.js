@@ -1,4 +1,5 @@
 import axios from 'axios'
+const API_URL = import.meta.env.VITE_API_URL
 
 export default {
   namespaced: true,
@@ -24,7 +25,7 @@ export default {
     async fetchUser({ commit }) {
       try {
         const res = await axios.get(
-          'http://localhost:5000/auth/user',
+          `${API_URL}/auth/user`,
           { withCredentials: true }
         )
         commit('setUser', res.data)

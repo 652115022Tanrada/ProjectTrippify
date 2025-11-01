@@ -10,6 +10,7 @@ const isLoading = ref(false);
 const tripName = ref(""); // 🆕 เก็บชื่อทริป
 const isFetching = ref(true); // 🆕 สถานะโหลดข้อมูลทริป
 const tripMembers = ref([]);
+const API_URL = import.meta.env.VITE_API_URL
 
 // ดึงข้อมูลทริปจาก tripId
 const fetchTripDetail = async () => {
@@ -17,7 +18,7 @@ const fetchTripDetail = async () => {
     const tripId = route.params.tripId;
     if (!tripId) return;
 
-    const res = await axios.get(`http://localhost:5000/api/trip/${tripId}`, { withCredentials: true });
+    const res = await axios.get(`${API_URL}/api/trip/${tripId}`, { withCredentials: true });
     tripName.value = res.data.trip_name || "Unnamed Trip";
     tripMembers.value = res.data.members || [];
   } catch (err) {
@@ -44,7 +45,7 @@ const loginWithGoogle = () => {
   isLoading.value = true;
   const tripPath = route.params.tripId ? `/trip/${route.params.tripId}` : "/";
 
-  window.location.href = `http://localhost:5000/auth/google?redirect=http://localhost:5173${tripPath}`;
+  window.location.href = `${API_URL}/auth/google?redirect=http://localhost:5173${tripPath}`;
 };
 </script>
 

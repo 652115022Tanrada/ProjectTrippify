@@ -13,10 +13,11 @@ const showLoginModal = ref(false);
 const user = ref(null);
 const joinTripLinkModal = ref(false);
 const joinLinkInput = ref("");
+const API_URL = import.meta.env.VITE_API_URL
 
 const getUser = async () => {
   try {
-    const res = await axios.get("http://localhost:5000/auth/user", {
+    const res = await axios.get(`${API_URL}/auth/user`, {
       withCredentials: true,
     });
     user.value = res.data;
@@ -27,7 +28,7 @@ const getUser = async () => {
 
 const fetchSavedTrips = async () => {
   try {
-    const res = await axios.get("http://localhost:5000/api/trip/mine", {
+    const res = await axios.get(`${API_URL}/api/trip/mine`, {
       withCredentials: true,
     });
     savedTrips.value = res.data;
