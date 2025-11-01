@@ -10,8 +10,11 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
+    allowedHosts: [
+      'projecttrippify-production.up.railway.app', 
+    ],
   },
   test: {
-    environment: 'jsdom'  // ✅ ให้ test Vue component ได้
+    environment: 'jsdom'
   }
 })
