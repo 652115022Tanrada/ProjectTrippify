@@ -7,7 +7,8 @@ import { useRouter } from "vue-router";
 import draggable from "vuedraggable";
 import Swal from "sweetalert2";
 import { useRoute } from "vue-router";
-import { ref } from "vue";
+import { ref ,nextTick } from "vue";
+
 import Header from "./Header.vue";
 const API_URL = import.meta.env.VITE_API_URL
 
