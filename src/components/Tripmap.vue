@@ -90,48 +90,37 @@ function addNearbyMarkers() {
   });
 }
 
-async function drawRouteAndDistances() {
-  const sanitized = sanitizeLocations(props.locations);
-  if (sanitized.length < 2 || !map.value) return;
+function drawRouteAndDistances() {
+  return new Promise((resolve, reject) => {
+    const sanitized = sanitizeLocations(props.locations);
+    if (sanitized.length < 2 || !map.value) return resolve();
 
-  if (!directionsRenderer) {
-    directionsRenderer = new google.maps.DirectionsRenderer({
-      suppressMarkers: true,
-      polylineOptions: { strokeColor: '#1D4ED8', strokeOpacity: 0.8, strokeWeight: 5 }
-    });
-    directionsRenderer.setMap(map.value);
-  }
-
-  const origin = sanitized[0];
-  const destination = sanitized[sanitized.length - 1];
-  const waypoints = sanitized.slice(1, -1).map(l => ({ location: { lat: l.lat, lng: l.lng }, stopover: true }));
-
-  const directionsService = new google.maps.DirectionsService();
-  directionsService.route(
-    { origin, destination, waypoints, optimizeWaypoints: false, travelMode: google.maps.TravelMode.DRIVING },
-    (result, status) => {
-      if (status === 'OK') {
-        directionsRenderer.setDirections(result);
-        const legs = result.routes[0].legs;
-
-        legs.forEach((leg, idx) => {
-          if (tripPlan.value?.days) {
-            const dayIndex = sanitized[idx + 1].day - 1;
-            const locIndex = tripPlan.value.days[dayIndex].locations.findIndex(l => l.id === sanitized[idx + 1].id);
-            if (locIndex !== -1) {
-              tripPlan.value.days[dayIndex].locations[locIndex].distance_to_next = (leg.distance.value / 1000).toFixed(1) + " km";
-              tripPlan.value.days[dayIndex].locations[locIndex].duration_to_next = leg.duration.text;
-            }
-          }
-        });
-        emit("update:locations", sanitized);
-
-        console.log("Updated locations with distance:", sanitized);
-      } else {
-        console.error('Directions request failed:', status);
-      }
+    if (!directionsRenderer) {
+      directionsRenderer = new google.maps.DirectionsRenderer({
+        suppressMarkers: true,
+        polylineOptions: { strokeColor: '#1D4ED8', strokeOpacity: 0.8, strokeWeight: 5 }
+      });
+      directionsRenderer.setMap(map.value);
     }
-  );
+
+    const origin = sanitized[0];
+    const destination = sanitized[sanitized.length - 1];
+    const waypoints = sanitized.slice(1, -1).map(l => ({ location: { lat: l.lat, lng: l.lng }, stopover: true }));
+
+    const directionsService = new google.maps.DirectionsService();
+    directionsService.route(
+      { origin, destination, waypoints, optimizeWaypoints: false, travelMode: google.maps.TravelMode.DRIVING },
+      (result, status) => {
+        if (status === 'OK') {
+          directionsRenderer.setDirections(result);
+          resolve();
+        } else {
+          console.error('Directions request failed:', status);
+          resolve();
+        }
+      }
+    );
+  });
 }
 
 function flyTo(loc) {
@@ -141,30 +130,48 @@ function flyTo(loc) {
   map.value.panTo({ lat: sanitized.lat, lng: sanitized.lng });
   map.value.setZoom(15);
 }
+const mapInitialized = ref(false);
 
-onMounted(async () => {
-  googleRef.value = await loadGoogleMaps();
-  const firstValid = sanitizeLocations(props.locations)[0];
-  if (firstValid) {
-    initMap({ lat: firstValid.lat, lng: firstValid.lng });
+watch(
+  () => props.locations,
+  async (locs) => {
+    const sanitized = sanitizeLocations(locs);
+    if (!sanitized.length) return;
+
+    // ถ้ายังไม่สร้าง map
+    if (!mapInitialized.value) {
+      initMap({ lat: sanitized[0].lat, lng: sanitized[0].lng });
+      mapInitialized.value = true;
+    }
+
     addMarkers();
     addNearbyMarkers();
     await drawRouteAndDistances();
-  }
+  },
+  { immediate: true, deep: true }
+);
+
+onMounted(async () => {
+  googleRef.value = await loadGoogleMaps();
 });
 
 watch(
   () => props.locations,
   (newLocs, oldLocs) => {
     if (!mapLoaded.value) return;
+
     const oldIds = (oldLocs || []).map((l) => l.id || `${l.day}-${l.name}`);
     const newIds = (newLocs || []).map((l) => l.id || `${l.day}-${l.name}`);
+
+    // ถ้าจำนวนและ id เหมือนเดิม → ไม่ต้องทำอะไรเลย
     if (JSON.stringify(oldIds) === JSON.stringify(newIds)) return;
+
     addMarkers();
     drawRouteAndDistances();
   },
   { deep: true }
 );
+
 
 watch(() => props.nearby, () => addNearbyMarkers());
 watch(() => props.highlighted, (loc) => { if (loc) flyTo(loc); });
