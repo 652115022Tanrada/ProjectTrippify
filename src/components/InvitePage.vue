@@ -45,7 +45,7 @@ const loginWithGoogle = () => {
   isLoading.value = true;
   const tripPath = route.params.tripId ? `/trip/${route.params.tripId}` : "/";
 
-  window.location.href = `${API_URL}/auth/google?redirect=http://localhost:5173${tripPath}`;
+  window.location.href = `${API_URL}/auth/google?redirect=https://projecttrippify-production.up.railway.app${tripPath}`;
 };
 </script>
 
