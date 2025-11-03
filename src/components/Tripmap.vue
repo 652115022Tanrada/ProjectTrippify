@@ -153,14 +153,18 @@ onMounted(async () => {
   }
 });
 
-watch(() => props.locations, async () => {
-  if (!mapLoaded.value) {
-    const firstValid = sanitizeLocations(props.locations)[0];
-    if (firstValid) initMap({ lat: firstValid.lat, lng: firstValid.lng });
-  }
-  addMarkers();
-  await drawRouteAndDistances();
-});
+watch(
+  () => props.locations,
+  (newLocs, oldLocs) => {
+    if (!mapLoaded.value) return;
+    const oldIds = (oldLocs || []).map((l) => l.id || `${l.day}-${l.name}`);
+    const newIds = (newLocs || []).map((l) => l.id || `${l.day}-${l.name}`);
+    if (JSON.stringify(oldIds) === JSON.stringify(newIds)) return;
+    addMarkers();
+    drawRouteAndDistances();
+  },
+  { deep: true }
+);
 
 watch(() => props.nearby, () => addNearbyMarkers());
 watch(() => props.highlighted, (loc) => { if (loc) flyTo(loc); });
