@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, watch, toRefs } from 'vue';
 import { loadGoogleMaps } from '../utils/loadGoogleMaps';
-
+ 
 const props = defineProps({
   locations: { type: Array, default: () => [] },
   nearby: { type: Array, default: () => [] },
@@ -9,7 +9,7 @@ const props = defineProps({
   tripPlan: { type: Object, default: null },
 });
 const { tripPlan } = toRefs(props);
-
+ 
 const emit = defineEmits(["update:locations"]);
 const googleRef = ref(null);
 const map = ref(null);
@@ -17,9 +17,9 @@ const mapLoaded = ref(false);
 const markers = [];
 const nearbyMarkers = [];
 let directionsRenderer = null;
-
+ 
 const isValidCoord = (v) => typeof v === "number" && !isNaN(v);
-
+ 
 function sanitizeLocations(locations) {
   return locations
     .map(loc => {
@@ -30,7 +30,7 @@ function sanitizeLocations(locations) {
     })
     .filter(Boolean);
 }
-
+ 
 function initMap(center) {
   map.value = new google.maps.Map(document.getElementById("map"), {
     center,
@@ -38,22 +38,22 @@ function initMap(center) {
   });
   mapLoaded.value = true;
 }
-
+ 
 function clearMarkers() {
   markers.forEach(m => m.setMap(null));
   markers.length = 0;
 }
-
+ 
 function clearNearbyMarkers() {
   nearbyMarkers.forEach(m => m.setMap(null));
   nearbyMarkers.length = 0;
 }
-
+ 
 const getMarkerColor = (dayNumber) => {
   const colors = ["#9656a2", "#5e62a9", "#de324c", "#f4895f", "#f8e16f", "#95cf92", "#369acc"];
   return colors[(dayNumber - 1) % colors.length];
 };
-
+ 
 function addMarkers() {
   if (!map.value || !props.locations) return;
   clearMarkers();
@@ -74,7 +74,7 @@ function addMarkers() {
     markers.push(marker);
   });
 }
-
+ 
 function addNearbyMarkers() {
   if (!map.value || !props.nearby) return;
   clearNearbyMarkers();
@@ -89,12 +89,12 @@ function addNearbyMarkers() {
     nearbyMarkers.push(marker);
   });
 }
-
+ 
 function drawRouteAndDistances() {
   return new Promise((resolve, reject) => {
     const sanitized = sanitizeLocations(props.locations);
     if (sanitized.length < 2 || !map.value) return resolve();
-
+ 
     if (!directionsRenderer) {
       directionsRenderer = new google.maps.DirectionsRenderer({
         suppressMarkers: true,
@@ -102,11 +102,11 @@ function drawRouteAndDistances() {
       });
       directionsRenderer.setMap(map.value);
     }
-
+ 
     const origin = sanitized[0];
     const destination = sanitized[sanitized.length - 1];
     const waypoints = sanitized.slice(1, -1).map(l => ({ location: { lat: l.lat, lng: l.lng }, stopover: true }));
-
+ 
     const directionsService = new google.maps.DirectionsService();
     directionsService.route(
       { origin, destination, waypoints, optimizeWaypoints: false, travelMode: google.maps.TravelMode.DRIVING },
@@ -122,7 +122,7 @@ function drawRouteAndDistances() {
     );
   });
 }
-
+ 
 function flyTo(loc) {
   if (!map.value || !loc) return;
   const sanitized = sanitizeLocations([loc])[0];
@@ -131,52 +131,53 @@ function flyTo(loc) {
   map.value.setZoom(15);
 }
 const mapInitialized = ref(false);
-
+ 
 watch(
   () => props.locations,
   async (locs) => {
     const sanitized = sanitizeLocations(locs);
     if (!sanitized.length) return;
-
+ 
     // ถ้ายังไม่สร้าง map
     if (!mapInitialized.value) {
+      await loadGoogleMaps(); // ✅ รอให้โหลด Maps API เสร็จก่อน
       initMap({ lat: sanitized[0].lat, lng: sanitized[0].lng });
       mapInitialized.value = true;
     }
-
+ 
     addMarkers();
     addNearbyMarkers();
     await drawRouteAndDistances();
   },
   { immediate: true, deep: true }
 );
-
+ 
 onMounted(async () => {
   googleRef.value = await loadGoogleMaps();
 });
-
+ 
 watch(
   () => props.locations,
   (newLocs, oldLocs) => {
     if (!mapLoaded.value) return;
-
+ 
     const oldIds = (oldLocs || []).map((l) => l.id || `${l.day}-${l.name}`);
     const newIds = (newLocs || []).map((l) => l.id || `${l.day}-${l.name}`);
-
+ 
     // ถ้าจำนวนและ id เหมือนเดิม → ไม่ต้องทำอะไรเลย
     if (JSON.stringify(oldIds) === JSON.stringify(newIds)) return;
-
+ 
     addMarkers();
     drawRouteAndDistances();
   },
   { deep: true }
 );
-
-
+ 
+ 
 watch(() => props.nearby, () => addNearbyMarkers());
 watch(() => props.highlighted, (loc) => { if (loc) flyTo(loc); });
 </script>
-
+ 
 <template>
   <div class="w-full h-full">
     <div id="map" class="w-full aspect-square md:w-auto md:h-full" style="min-height:300px;"></div>
