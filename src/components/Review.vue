@@ -29,7 +29,7 @@ const allExpanded = ref(false); // สถานะ Expand/Collapse All
 
 const getUser = async () => {
   try {
-    const res = await axios.get(`${API_URL}auth/user`, {
+    const res = await axios.get(`${API_URL}/auth/user`, {
       withCredentials: true,
     });
     user.value = res.data;
